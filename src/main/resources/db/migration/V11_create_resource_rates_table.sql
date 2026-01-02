@@ -12,7 +12,6 @@ CREATE TABLE resource_rates
             CASE
                 WHEN rate_type = 'BASE' AND start_at IS NULL AND end_at IS NULL
                     THEN resource_id
-                ELSE NULL
                 END
             ) STORED,
     amount           BIGINT       NOT NULL,
@@ -24,7 +23,7 @@ CREATE TABLE resource_rates
     updated_at       TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
 
     PRIMARY KEY (id),
-    
+
     UNIQUE KEY uk_resource_rates_base (base_default_key),
     KEY idx_resource_rates_lookup (resource_id, rate_type, start_at, end_at, priority),
 
