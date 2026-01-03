@@ -25,6 +25,7 @@ CREATE TABLE resources
     CHECK (type IN ('VENUE', 'FLOOR', 'ROW', 'SEAT')),
     CHECK (status IN ('ACTIVE', 'INACTIVE', 'MAINTENANCE', 'DELETED')),
     CHECK (capacity >= 1),
+    CHECK (type <> 'SEAT' OR capacity = 1),
 
     CONSTRAINT fk_resources_parent
         FOREIGN KEY (parent_id) REFERENCES resources (id)
