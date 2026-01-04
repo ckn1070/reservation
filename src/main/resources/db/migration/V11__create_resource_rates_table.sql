@@ -37,7 +37,7 @@ CREATE TABLE resource_rates
 
     CONSTRAINT fk_resource_rates_resource
         FOREIGN KEY (resource_id) REFERENCES resources (id)
-            ON DELETE CASCADE ON UPDATE RESTRICT
+            ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_0900_ai_ci;
