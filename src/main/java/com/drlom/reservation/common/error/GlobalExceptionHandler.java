@@ -51,7 +51,7 @@ public class GlobalExceptionHandler {
   }
 
   /**
-   * @Valid 검증 실패 처리
+   * Valid 검증 실패 처리
    *
    * <p>Spring Validation 어노테이션 위반 시 발생
    */
