@@ -3,11 +3,13 @@ package com.drlom.reservation.identity.domain;
 import java.util.Optional;
 
 /**
- * User Aggregate Root Repository Interface
+ * User Repository Interface
  *
- * <p>- Repository: - Domain 계층에 인터페이스 정의 (DIP) - Infrastructure 계층에서 구현
+ * <p>- Domain 계층에 인터페이스 정의 (DIP)
  *
- * <p>- Aggregate Root 단위로 저장/조회 - Collection처럼 사용 (save, findById, delete 등)
+ * <p>- Infrastructure 계층에서 구현
+ *
+ * <p>- Aggregate Root 단위로 저장/조회
  */
 public interface UserRepository {
 

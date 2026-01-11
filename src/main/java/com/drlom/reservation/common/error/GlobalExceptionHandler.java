@@ -147,7 +147,7 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
   }
 
-  /** 에러 응답 DTO */
+  // 에러 응답 DTO
   @Getter
   @Builder
   public static class ErrorResponse {
@@ -157,7 +157,7 @@ public class GlobalExceptionHandler {
     private final LocalDateTime timestamp;
   }
 
-  /** 필드 에러 상세 정보 */
+  // 필드 에러 상세 정보
   @Getter
   @Builder
   public static class FieldErrorDetail {

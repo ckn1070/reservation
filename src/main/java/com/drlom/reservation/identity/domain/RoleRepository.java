@@ -4,9 +4,11 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Role Entity Repository Interface
+ * Role Repository Interface
  *
- * <p>- Repository : - Domain 계층에 인터페이스 정의 (DIP) - Infrastructure 계층에서 구현
+ * <p>- Domain 계층에 인터페이스 정의 (DIP)
+ *
+ * <p>- Infrastructure 계층에서 구현
  *
  * <p>- Role은 User Aggregate의 일부이지만 별도 저장소 제공 (편의성)
  */
