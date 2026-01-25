@@ -332,7 +332,7 @@ class RefreshTokenUseCaseTest {
     @ParameterizedTest(name = "refreshToken이 {1}이면 예외 발생")
     @MethodSource("invalidRefreshTokenProvider")
     @DisplayName("유효하지 않은 refreshToken으로 요청 시 예외 발생")
-    void refreshWithInvalidToken(String invalidToken, String description) {
+    void refreshWithInvalidToken(String invalidToken) {
       // given
       RefreshTokenCommand invalidCommand =
           RefreshTokenCommand.builder().refreshToken(invalidToken).build();
