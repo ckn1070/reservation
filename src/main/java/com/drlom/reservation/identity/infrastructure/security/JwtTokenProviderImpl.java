@@ -8,6 +8,9 @@ import com.drlom.reservation.identity.domain.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +47,8 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
     log.debug("JWT 토큰 생성: userId={}", user.getId());
 
     long now = System.currentTimeMillis();
+    long accessTokenExpiresMs = now + accessTokenValidityMs;
+    long refreshTokenExpiresMs = now + refreshTokenValidityMs;
 
     // Access Token 생성
     String accessToken =
@@ -52,7 +57,7 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
             .claim("email", user.getEmail().getValue())
             .claim("roles", user.getRoles().stream().map(Role::getName).toList())
             .issuedAt(new Date(now))
-            .expiration(new Date(now + accessTokenValidityMs))
+            .expiration(new Date(accessTokenExpiresMs))
             .signWith(secretKey)
             .compact();
 
@@ -61,14 +66,21 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
         Jwts.builder()
             .subject(String.valueOf(user.getId()))
             .issuedAt(new Date(now))
-            .expiration(new Date(now + refreshTokenValidityMs))
+            .expiration(new Date(refreshTokenExpiresMs))
             .signWith(secretKey)
             .compact();
+
+    // 만료 시간 LocalDateTime 변환
+    LocalDateTime accessTokenExpiresAt =
+        LocalDateTime.ofInstant(Instant.ofEpochMilli(accessTokenExpiresMs), ZoneOffset.UTC);
+    LocalDateTime refreshTokenExpiresAt =
+        LocalDateTime.ofInstant(Instant.ofEpochMilli(refreshTokenExpiresMs), ZoneOffset.UTC);
 
     return TokenResult.builder()
         .accessToken(accessToken)
         .refreshToken(refreshToken)
-        .expiresIn(accessTokenValidityMs / 1000) // 초 단위
+        .accessTokenExpiresAt(accessTokenExpiresAt)
+        .refreshTokenExpiresAt(refreshTokenExpiresAt)
         .build();
   }
 
