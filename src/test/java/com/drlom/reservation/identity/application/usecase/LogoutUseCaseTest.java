@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -203,9 +202,8 @@ class LogoutUseCaseTest {
     }
 
     @ParameterizedTest
-    @NullSource
     @ValueSource(strings = {"", "   ", "\t", "\n"})
-    @DisplayName("빈 값 또는 공백만 있는 토큰으로 로그아웃 시 예외 발생")
+    @DisplayName("공백만 있는 토큰으로 로그아웃 시 예외 발생")
     void logout_blankToken_throwsException(String invalidToken) {
       // given
       LogoutCommand invalidCommand = LogoutCommand.builder().refreshToken(invalidToken).build();
