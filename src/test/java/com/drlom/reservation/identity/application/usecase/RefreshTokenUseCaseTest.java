@@ -21,14 +21,15 @@ import com.drlom.reservation.identity.infrastructure.security.JwtTokenProvider;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -319,11 +320,19 @@ class RefreshTokenUseCaseTest {
   @DisplayName("Command 검증 테스트")
   class CommandValidationTest {
 
-    @ParameterizedTest(name = "refreshToken이 \"{0}\"이면 예외 발생")
-    @NullAndEmptySource
-    @ValueSource(strings = {"   ", "\t", "\n"})
+    static Stream<Arguments> invalidRefreshTokenProvider() {
+      return Stream.of(
+          Arguments.of(null, "null"),
+          Arguments.of("", "빈 문자열"),
+          Arguments.of("   ", "공백만"),
+          Arguments.of("\t", "탭"),
+          Arguments.of("\n", "개행"));
+    }
+
+    @ParameterizedTest(name = "refreshToken이 {1}이면 예외 발생")
+    @MethodSource("invalidRefreshTokenProvider")
     @DisplayName("유효하지 않은 refreshToken으로 요청 시 예외 발생")
-    void refreshWithInvalidToken(String invalidToken) {
+    void refreshWithInvalidToken(String invalidToken, String description) {
       // given
       RefreshTokenCommand invalidCommand =
           RefreshTokenCommand.builder().refreshToken(invalidToken).build();
