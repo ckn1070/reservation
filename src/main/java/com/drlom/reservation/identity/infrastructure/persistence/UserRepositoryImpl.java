@@ -33,14 +33,20 @@ public class UserRepositoryImpl implements UserRepository {
   public User save(User user) {
     log.debug("User 저장: email={}", user.getEmail().getValue());
 
-    // Domain Role → RoleJpaEntity 조회
-    Set<RoleJpaEntity> roleJpaEntities =
-        user.getRoles().stream()
-            .map(role -> roleJpaRepository.findById(role.getId()).orElseThrow())
-            .collect(Collectors.toSet());
+    UserJpaEntity jpaEntity;
 
-    // Domain → JPA Entity 변환
-    UserJpaEntity jpaEntity = entityMapper.toJpaEntity(user, roleJpaEntities);
+    if (user.getId() != null) {
+      // UPDATE: 기존 엔티티 조회 후 업데이트
+      jpaEntity = jpaRepository.findById(user.getId()).orElseThrow();
+      entityMapper.updateJpaEntity(jpaEntity, user);
+    } else {
+      // INSERT: 새 엔티티 생성
+      Set<RoleJpaEntity> roleJpaEntities =
+          user.getRoles().stream()
+              .map(role -> roleJpaRepository.findById(role.getId()).orElseThrow())
+              .collect(Collectors.toSet());
+      jpaEntity = entityMapper.toJpaEntity(user, roleJpaEntities);
+    }
 
     // JPA 저장
     UserJpaEntity savedEntity = jpaRepository.save(jpaEntity);
