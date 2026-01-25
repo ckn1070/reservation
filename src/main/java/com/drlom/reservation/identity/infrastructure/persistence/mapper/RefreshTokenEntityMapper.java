@@ -47,4 +47,21 @@ public class RefreshTokenEntityMapper {
     return RefreshTokenJpaEntity.create(
         domain.getUserId(), domain.getTokenHash(), domain.getIssuedAt(), domain.getExpiresAt());
   }
+
+  /**
+   * 기존 JPA Entity 업데이트 (폐기 시간 등)
+   *
+   * @param jpaEntity 기존 JPA Entity
+   * @param domain Domain RefreshToken
+   */
+  public void updateJpaEntity(RefreshTokenJpaEntity jpaEntity, RefreshToken domain) {
+    if (jpaEntity == null || domain == null) {
+      return;
+    }
+
+    // 폐기 시간만 업데이트 (다른 필드는 불변)
+    if (domain.getRevokedAt() != null) {
+      jpaEntity.revoke(domain.getRevokedAt());
+    }
+  }
 }

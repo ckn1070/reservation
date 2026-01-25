@@ -4,6 +4,7 @@ import com.drlom.reservation.identity.domain.RefreshToken;
 import com.drlom.reservation.identity.domain.RefreshTokenRepository;
 import com.drlom.reservation.identity.infrastructure.persistence.entity.RefreshTokenJpaEntity;
 import com.drlom.reservation.identity.infrastructure.persistence.mapper.RefreshTokenEntityMapper;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -27,9 +28,30 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
   public RefreshToken save(RefreshToken refreshToken) {
     log.debug("RefreshToken 저장: userId={}", refreshToken.getUserId());
 
+    // ID가 있으면 UPDATE, 없으면 INSERT
+    if (refreshToken.getId() != null) {
+      // UPDATE: 기존 엔티티 조회 후 업데이트
+      RefreshTokenJpaEntity existingEntity =
+          jpaRepository.findById(refreshToken.getId()).orElse(null);
+
+      if (existingEntity != null) {
+        entityMapper.updateJpaEntity(existingEntity, refreshToken);
+        RefreshTokenJpaEntity savedEntity = jpaRepository.save(existingEntity);
+        return entityMapper.toDomain(savedEntity);
+      }
+    }
+
+    // INSERT: 새 엔티티 생성
     RefreshTokenJpaEntity jpaEntity = entityMapper.toJpaEntity(refreshToken);
     RefreshTokenJpaEntity savedEntity = jpaRepository.save(jpaEntity);
 
     return entityMapper.toDomain(savedEntity);
+  }
+
+  @Override
+  public Optional<RefreshToken> findByTokenHash(byte[] tokenHash) {
+    log.debug("RefreshToken 조회: tokenHash로 검색");
+
+    return jpaRepository.findByTokenHash(tokenHash).map(entityMapper::toDomain);
   }
 }
