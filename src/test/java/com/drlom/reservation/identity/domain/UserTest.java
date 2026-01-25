@@ -474,14 +474,15 @@ class UserTest {
     }
 
     @Test
-    @DisplayName("자기 자신과 비교 시 동등하다")
+    @DisplayName("자기 자신과 비교 시 동등하다 (reflexivity)")
     void equalityWithSelf() {
       // given
       Profile profile = Profile.of("홍길동", "010-1234-5678");
-      User user = User.signUp(Email.of("user@example.com"), "password", profile, Set.of(Role.create("ROLE_USER")));
+      Set<Role> roles = Set.of(Role.create("ROLE_USER"));
+      User user = User.signUp(Email.of("user@example.com"), "password", profile, roles);
 
-      // when & then
-      assertThat(user).isEqualTo(user);
+      // when & then: equals() 계약의 반사성 검증
+      assertThat(user.equals(user)).isTrue();
     }
 
     @Test

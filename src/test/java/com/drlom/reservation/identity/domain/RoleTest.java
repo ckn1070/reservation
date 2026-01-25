@@ -109,7 +109,8 @@ class RoleTest {
       Role role2 = Role.create("ROLE_USER");
 
       // when & then
-      assertThat(role1).isNotEqualTo(role2).isEqualTo(role1); // ID가 null이면 참조 기반 동등성
+      assertThat(role1).isNotEqualTo(role2); // ID가 null이므로 다른 객체
+      assertThat(role1.equals(role1)).isTrue(); // 같은 참조는 동등 (reflexivity)
     }
   }
 

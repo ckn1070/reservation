@@ -260,13 +260,13 @@ class EmailTest {
     }
 
     @Test
-    @DisplayName("자기 자신과 비교 시 동등하다")
+    @DisplayName("자기 자신과 비교 시 동등하다 (reflexivity)")
     void equalityWithSelf() {
       // given
       Email email = Email.of("user@example.com");
 
-      // when & then
-      assertThat(email).isEqualTo(email);
+      // when & then: equals() 계약의 반사성 검증
+      assertThat(email.equals(email)).isTrue();
     }
   }
 }
