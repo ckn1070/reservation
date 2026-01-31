@@ -25,12 +25,14 @@ public class User {
 
   private final Long id;
   private final Email email;
-  private final Password password;
+  private Password password;
   private final Profile profile;
   private UserStatus status;
   private LocalDateTime lastLoginAt;
   private final Set<Role> roles;
+  private boolean passwordChangeRequired;
 
+  @SuppressWarnings("java:S107") // Aggregate Root 생성에 모든 필드가 필요, Builder 패턴으로 외부 노출 제한
   private User(
       Long id,
       Email email,
@@ -38,7 +40,8 @@ public class User {
       Profile profile,
       UserStatus status,
       LocalDateTime lastLoginAt,
-      Set<Role> roles) {
+      Set<Role> roles,
+      boolean passwordChangeRequired) {
     this.id = id;
     this.email = email;
     this.password = password;
@@ -46,6 +49,7 @@ public class User {
     this.status = status;
     this.lastLoginAt = lastLoginAt;
     this.roles = roles;
+    this.passwordChangeRequired = passwordChangeRequired;
   }
 
   /**
@@ -68,7 +72,34 @@ public class User {
         profile,
         UserStatus.ACTIVE, // 기본 상태: 활성
         null, // 아직 로그인 전
-        new HashSet<>(roles) // 방어적 복사
+        new HashSet<>(roles), // 방어적 복사
+        false // 일반 회원가입은 비밀번호 변경 불필요
+        );
+  }
+
+  /**
+   * 임시 비밀번호로 관리자 생성 (비밀번호 변경 필수)
+   *
+   * @param email 이메일 (Value Object)
+   * @param temporaryPassword 임시 비밀번호 평문
+   * @param profile 프로필 (Value Object)
+   * @param roles 역할 집합 (최소 1개 필수)
+   * @return User Aggregate Root (passwordChangeRequired = true)
+   */
+  public static User createWithTemporaryPassword(
+      Email email, String temporaryPassword, Profile profile, Set<Role> roles) {
+    validateRoles(roles);
+    Password password = Password.fromRawPassword(temporaryPassword);
+
+    return new User(
+        null, // ID는 영속화 후 부여
+        email,
+        password,
+        profile,
+        UserStatus.ACTIVE,
+        null,
+        new HashSet<>(roles),
+        true // 임시 비밀번호로 생성된 경우 비밀번호 변경 필수
         );
   }
 
@@ -90,6 +121,7 @@ public class User {
     private UserStatus status;
     private LocalDateTime lastLoginAt;
     private Set<Role> roles;
+    private boolean passwordChangeRequired;
 
     public ReconstituteBuilder id(Long id) {
       this.id = id;
@@ -126,8 +158,14 @@ public class User {
       return this;
     }
 
+    public ReconstituteBuilder passwordChangeRequired(boolean passwordChangeRequired) {
+      this.passwordChangeRequired = passwordChangeRequired;
+      return this;
+    }
+
     public User build() {
-      return new User(id, email, password, profile, status, lastLoginAt, new HashSet<>(roles));
+      return new User(
+          id, email, password, profile, status, lastLoginAt, new HashSet<>(roles), passwordChangeRequired);
     }
   }
 
