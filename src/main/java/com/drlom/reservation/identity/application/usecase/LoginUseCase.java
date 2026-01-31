@@ -64,14 +64,20 @@ public class LoginUseCase {
     // 4. 사용자 상태 검증 (정지/삭제 여부)
     user.validateActiveStatus();
 
-    // 5. 마지막 로그인 시간 업데이트 및 저장
+    // 5. 비밀번호 변경 필요 여부 검증
+    if (user.isPasswordChangeRequired()) {
+      log.warn("비밀번호 변경 필요: email={}", email.getValue());
+      throw new BusinessException(ErrorCode.PASSWORD_CHANGE_REQUIRED);
+    }
+
+    // 6. 마지막 로그인 시간 업데이트 및 저장
     user.updateLastLoginAt();
     userRepository.save(user);
 
-    // 6. JWT 토큰 발급
+    // 7. JWT 토큰 발급
     TokenResult tokenResult = jwtTokenProvider.generateTokens(user);
 
-    // 7. Refresh Token DB 저장
+    // 8. Refresh Token DB 저장
     RefreshToken refreshToken =
         RefreshToken.create(
             user.getId(), tokenResult.getRefreshToken(), tokenResult.getRefreshTokenExpiresAt());
@@ -79,7 +85,7 @@ public class LoginUseCase {
 
     log.info("로그인 성공: userId={}, email={}", user.getId(), user.getEmail().getValue());
 
-    // 8. LoginResult 반환 (토큰 + 사용자 정보)
+    // 9. LoginResult 반환 (토큰 + 사용자 정보)
     return LoginResult.of(user, tokenResult);
   }
 }
