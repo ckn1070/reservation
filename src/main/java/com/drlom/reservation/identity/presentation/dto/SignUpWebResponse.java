@@ -2,6 +2,7 @@ package com.drlom.reservation.identity.presentation.dto;
 
 import com.drlom.reservation.identity.application.dto.result.UserResult;
 import com.drlom.reservation.identity.domain.UserStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.Set;
 import lombok.Builder;
@@ -16,14 +17,31 @@ import lombok.Getter;
  */
 @Getter
 @Builder
+@Schema(description = "회원가입 응답")
 public class SignUpWebResponse {
 
+  @Schema(description = "사용자 ID", example = "1")
   private Long id;
+
+  @Schema(description = "이메일 주소", example = "user@example.com")
   private String email;
+
+  @Schema(description = "사용자 이름", example = "홍길동")
   private String name;
+
+  @Schema(description = "전화번호", example = "010-1234-5678")
   private String phone;
+
+  @Schema(
+      description = "사용자 상태",
+      example = "ACTIVE",
+      allowableValues = {"ACTIVE", "SUSPENDED", "DELETED"})
   private UserStatus status;
+
+  @Schema(description = "사용자 역할 목록", example = "[\"ROLE_USER\"]")
   private Set<String> roles;
+
+  @Schema(description = "생성 시간 (UTC)", example = "2026-01-31T12:34:56")
   private LocalDateTime createdAt;
 
   /**

@@ -1,6 +1,7 @@
 package com.drlom.reservation.identity.presentation.dto;
 
 import com.drlom.reservation.identity.application.dto.result.TokenResult;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -11,12 +12,24 @@ import lombok.Getter;
  */
 @Getter
 @Builder
+@Schema(description = "토큰 응답")
 public class TokenWebResponse {
 
+  @Schema(
+      description = "Access Token (API 인증용, 유효기간 1시간)",
+      example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
   private String accessToken;
+
+  @Schema(
+      description = "Refresh Token (토큰 재발급용, 유효기간 7일)",
+      example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
   private String refreshToken;
-  private String tokenType; // "Bearer"
-  private Long expiresIn; // Access Token 만료 시간 (초)
+
+  @Schema(description = "토큰 타입", example = "Bearer")
+  private String tokenType;
+
+  @Schema(description = "Access Token 만료 시간 (초)", example = "3600")
+  private Long expiresIn;
 
   /**
    * TokenResult로부터 TokenWebResponse 생성
