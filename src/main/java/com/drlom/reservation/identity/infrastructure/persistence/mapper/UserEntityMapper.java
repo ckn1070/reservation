@@ -49,6 +49,7 @@ public class UserEntityMapper {
         .profile(Profile.reconstitute(jpaEntity.getName(), jpaEntity.getPhone()))
         .status(jpaEntity.getStatus())
         .lastLoginAt(jpaEntity.getLastLoginAt())
+        .passwordChangeRequired(jpaEntity.isPasswordChangeRequired())
         .roles(roles)
         .build();
   }
@@ -71,7 +72,8 @@ public class UserEntityMapper {
             domain.getPasswordHash(),
             domain.getName(),
             domain.getPhone(),
-            domain.getStatus());
+            domain.getStatus(),
+            domain.isPasswordChangeRequired());
 
     // Role 연결
     roleJpaEntities.forEach(jpaEntity::addRole);
@@ -85,7 +87,7 @@ public class UserEntityMapper {
   }
 
   /**
-   * Domain → 기존 JPA Entity 업데이트 (상태 변경)
+   * Domain → 기존 JPA Entity 업데이트
    *
    * @param jpaEntity 기존 UserJpaEntity
    * @param domain Domain User
@@ -102,5 +104,11 @@ public class UserEntityMapper {
     if (domain.getLastLoginAt() != null) {
       jpaEntity.updateLastLoginAt(domain.getLastLoginAt());
     }
+
+    // 비밀번호 업데이트
+    jpaEntity.updatePassword(domain.getPasswordHash());
+
+    // 비밀번호 변경 필요 여부 업데이트
+    jpaEntity.updatePasswordChangeRequired(domain.isPasswordChangeRequired());
   }
 }

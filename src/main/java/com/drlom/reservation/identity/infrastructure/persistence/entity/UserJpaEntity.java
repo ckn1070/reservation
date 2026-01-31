@@ -48,6 +48,9 @@ public class UserJpaEntity extends JpaBaseEntity {
   @Column(name = "last_login_at")
   private LocalDateTime lastLoginAt;
 
+  @Column(name = "is_password_change_required", nullable = false)
+  private boolean passwordChangeRequired;
+
   @OneToMany(
       mappedBy = "user",
       cascade = CascadeType.ALL,
@@ -63,16 +66,23 @@ public class UserJpaEntity extends JpaBaseEntity {
    * @param name 이름
    * @param phone 전화번호
    * @param status 상태
+   * @param passwordChangeRequired 비밀번호 변경 필요 여부
    * @return UserJpaEntity
    */
   public static UserJpaEntity create(
-      String email, String passwordHash, String name, String phone, UserStatus status) {
+      String email,
+      String passwordHash,
+      String name,
+      String phone,
+      UserStatus status,
+      boolean passwordChangeRequired) {
     UserJpaEntity entity = new UserJpaEntity();
     entity.email = email;
     entity.passwordHash = passwordHash;
     entity.name = name;
     entity.phone = phone;
     entity.status = status;
+    entity.passwordChangeRequired = passwordChangeRequired;
     return entity;
   }
 
@@ -86,8 +96,10 @@ public class UserJpaEntity extends JpaBaseEntity {
    * @param phone 전화번호
    * @param status 상태
    * @param lastLoginAt 마지막 로그인 시간
+   * @param passwordChangeRequired 비밀번호 변경 필요 여부
    * @return UserJpaEntity
    */
+  @SuppressWarnings("java:S107") // DB 재구성용으로 모든 필드가 필요
   public static UserJpaEntity reconstitute(
       Long id,
       String email,
@@ -95,7 +107,8 @@ public class UserJpaEntity extends JpaBaseEntity {
       String name,
       String phone,
       UserStatus status,
-      LocalDateTime lastLoginAt) {
+      LocalDateTime lastLoginAt,
+      boolean passwordChangeRequired) {
     UserJpaEntity entity = new UserJpaEntity();
     entity.id = id;
     entity.email = email;
@@ -104,6 +117,7 @@ public class UserJpaEntity extends JpaBaseEntity {
     entity.phone = phone;
     entity.status = status;
     entity.lastLoginAt = lastLoginAt;
+    entity.passwordChangeRequired = passwordChangeRequired;
     return entity;
   }
 
@@ -133,5 +147,23 @@ public class UserJpaEntity extends JpaBaseEntity {
    */
   public void updateStatus(UserStatus status) {
     this.status = status;
+  }
+
+  /**
+   * 비밀번호 변경
+   *
+   * @param passwordHash 새로운 해싱된 비밀번호
+   */
+  public void updatePassword(String passwordHash) {
+    this.passwordHash = passwordHash;
+  }
+
+  /**
+   * 비밀번호 변경 필요 여부 설정
+   *
+   * @param passwordChangeRequired 비밀번호 변경 필요 여부
+   */
+  public void updatePasswordChangeRequired(boolean passwordChangeRequired) {
+    this.passwordChangeRequired = passwordChangeRequired;
   }
 }
