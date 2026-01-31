@@ -1,5 +1,6 @@
 package com.drlom.reservation.common.error;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -150,19 +151,35 @@ public class GlobalExceptionHandler {
   // 에러 응답 DTO
   @Getter
   @Builder
+  @Schema(description = "에러 응답")
   public static class ErrorResponse {
+
+    @Schema(description = "에러 코드", example = "USER_ALREADY_EXISTS")
     private final String code;
+
+    @Schema(description = "에러 메시지", example = "이미 등록된 이메일입니다")
     private final String message;
+
+    @Schema(description = "필드 에러 목록 (유효성 검증 실패 시)")
     private final List<FieldErrorDetail> fieldErrors;
+
+    @Schema(description = "에러 발생 시간 (UTC)", example = "2026-01-31T12:34:56")
     private final LocalDateTime timestamp;
   }
 
   // 필드 에러 상세 정보
   @Getter
   @Builder
+  @Schema(description = "필드 에러 상세")
   public static class FieldErrorDetail {
+
+    @Schema(description = "필드명", example = "email")
     private final String field;
+
+    @Schema(description = "거부된 값", example = "invalid-email")
     private final String rejectedValue;
+
+    @Schema(description = "에러 메시지", example = "이메일 형식이 올바르지 않습니다")
     private final String message;
   }
 }
