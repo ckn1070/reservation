@@ -214,6 +214,17 @@ public class User {
   }
 
   /**
+   * 비밀번호 변경
+   *
+   * @param newRawPassword 새로운 평문 비밀번호
+   * @throws BusinessException 비밀번호가 비어있는 경우
+   */
+  public void changePassword(String newRawPassword) {
+    this.password = Password.fromRawPassword(newRawPassword);
+    this.passwordChangeRequired = false;
+  }
+
+  /**
    * 역할 조회 (불변 컬렉션 반환)
    *
    * @return 역할 집합 (수정 불가)
