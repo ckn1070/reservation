@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -127,6 +128,25 @@ public class GlobalExceptionHandler {
             .build();
 
     return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+  }
+
+  /**
+   * 권한 부족 예외 처리
+   *
+   * <p>@PreAuthorize 등 메서드 수준 보안에서 권한 부족 시 발생
+   */
+  @ExceptionHandler(AuthorizationDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAuthorizationDenied(AuthorizationDeniedException ex) {
+    log.warn("AuthorizationDeniedException: {}", ex.getMessage());
+
+    ErrorResponse response =
+        ErrorResponse.builder()
+            .code(ErrorCode.FORBIDDEN.getCode())
+            .message(ErrorCode.FORBIDDEN.getMessage())
+            .timestamp(LocalDateTime.now())
+            .build();
+
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
   }
 
   /**
