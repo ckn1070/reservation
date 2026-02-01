@@ -1,5 +1,6 @@
 package com.drlom.reservation.common.security;
 
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -8,12 +9,18 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * Spring Security 설정
  *
- * <p>- JWT 기반 Stateless 인증 - CSRF 비활성화 (REST API) - 회원가입/로그인 엔드포인트 public 허용
+ * <p>- JWT 기반 Stateless 인증 (API)
+ *
+ * <p>- Basic Auth (Swagger UI)
+ *
+ * <p>- CSRF 비활성화 (REST API)
  */
 @Configuration
 @EnableWebSecurity
@@ -22,12 +29,24 @@ public class SecurityConfig {
 
   // Swagger UI 경로
   private static final String[] SWAGGER_WHITELIST = {
-    "/swagger-ui.html",
-    "/swagger-ui/**",
-    "/v3/api-docs/**",
-    "/swagger-resources/**",
-    "/webjars/**"
+    "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**"
   };
+
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
+
+  // Swagger Basic Auth 필터를 Spring Security보다 먼저 실행
+  @Bean
+  public FilterRegistrationBean<SwaggerBasicAuthFilter> swaggerBasicAuthFilterRegistration(
+      SwaggerBasicAuthFilter filter) {
+    FilterRegistrationBean<SwaggerBasicAuthFilter> registration = new FilterRegistrationBean<>();
+    registration.setFilter(filter);
+    registration.addUrlPatterns("/swagger-ui.html", "/swagger-ui/*", "/v3/api-docs/*");
+    registration.setOrder(-200); // Spring Security(-100)보다 먼저 실행
+    return registration;
+  }
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) {
@@ -45,10 +64,10 @@ public class SecurityConfig {
         // URL 별 권한 설정
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/api/auth/**")
+                auth.requestMatchers(SWAGGER_WHITELIST)
+                    .permitAll() // Swagger는 커스텀 필터에서 처리
+                    .requestMatchers("/api/auth/**")
                     .permitAll() // 회원가입, 로그인은 public
-                    .requestMatchers(SWAGGER_WHITELIST)
-                    .hasRole("ADMIN") // Swagger UI는 ADMIN만 접근 가능
                     .anyRequest()
                     .authenticated() // 나머지는 인증 필요
             );
