@@ -63,24 +63,24 @@ class RefreshTokenUseCaseTest {
     userRole = Role.reconstitute(1L, "ROLE_USER");
 
     activeUser =
-        User.reconstituteBuilder()
-            .id(USER_ID)
-            .email(Email.of("user@example.com"))
-            .password(Password.fromRawPassword("password123!"))
-            .profile(Profile.reconstitute("홍길동", "010-1234-5678"))
-            .status(UserStatus.ACTIVE)
-            .roles(Set.of(userRole))
-            .build();
+        User.reconstitute(
+            USER_ID,
+            Email.of("user@example.com"),
+            Password.fromRawPassword("password123!"),
+            Profile.reconstitute("홍길동", "010-1234-5678"),
+            UserStatus.ACTIVE,
+            null,
+            Set.of(userRole),
+            false);
 
     validRefreshToken =
-        RefreshToken.reconstituteBuilder()
-            .id(1L)
-            .userId(USER_ID)
-            .tokenHash(RefreshToken.hash(RAW_REFRESH_TOKEN))
-            .issuedAt(LocalDateTime.now().minusHours(1))
-            .expiresAt(LocalDateTime.now().plusDays(6))
-            .revokedAt(null)
-            .build();
+        RefreshToken.reconstitute(
+            1L,
+            USER_ID,
+            RefreshToken.hash(RAW_REFRESH_TOKEN),
+            LocalDateTime.now().minusHours(1),
+            LocalDateTime.now().plusDays(6),
+            null);
 
     newTokenResult =
         TokenResult.builder()
@@ -143,14 +143,15 @@ class RefreshTokenUseCaseTest {
       // given
       Role adminRole = Role.reconstitute(2L, "ROLE_ADMIN");
       User multiRoleUser =
-          User.reconstituteBuilder()
-              .id(USER_ID)
-              .email(Email.of("admin@example.com"))
-              .password(Password.fromRawPassword("password123!"))
-              .profile(Profile.reconstitute("관리자", "010-1234-5678"))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of(userRole, adminRole))
-              .build();
+          User.reconstitute(
+              USER_ID,
+              Email.of("admin@example.com"),
+              Password.fromRawPassword("password123!"),
+              Profile.reconstitute("관리자", "010-1234-5678"),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(userRole, adminRole),
+              false);
 
       when(refreshTokenRepository.findByTokenHash(any(byte[].class)))
           .thenReturn(Optional.of(validRefreshToken));
@@ -192,14 +193,13 @@ class RefreshTokenUseCaseTest {
     void refreshWithRevokedToken() {
       // given: 이미 폐기된 토큰
       RefreshToken revokedToken =
-          RefreshToken.reconstituteBuilder()
-              .id(2L)
-              .userId(USER_ID)
-              .tokenHash(RefreshToken.hash(RAW_REFRESH_TOKEN))
-              .issuedAt(LocalDateTime.now().minusHours(2))
-              .expiresAt(LocalDateTime.now().plusDays(6))
-              .revokedAt(LocalDateTime.now().minusHours(1))
-              .build();
+          RefreshToken.reconstitute(
+              2L,
+              USER_ID,
+              RefreshToken.hash(RAW_REFRESH_TOKEN),
+              LocalDateTime.now().minusHours(2),
+              LocalDateTime.now().plusDays(6),
+              LocalDateTime.now().minusHours(1));
 
       when(refreshTokenRepository.findByTokenHash(any(byte[].class)))
           .thenReturn(Optional.of(revokedToken));
@@ -219,14 +219,13 @@ class RefreshTokenUseCaseTest {
     void refreshWithExpiredToken() {
       // given: 만료된 토큰
       RefreshToken expiredToken =
-          RefreshToken.reconstituteBuilder()
-              .id(3L)
-              .userId(USER_ID)
-              .tokenHash(RefreshToken.hash(RAW_REFRESH_TOKEN))
-              .issuedAt(LocalDateTime.now().minusDays(8))
-              .expiresAt(LocalDateTime.now().minusDays(1))
-              .revokedAt(null)
-              .build();
+          RefreshToken.reconstitute(
+              3L,
+              USER_ID,
+              RefreshToken.hash(RAW_REFRESH_TOKEN),
+              LocalDateTime.now().minusDays(8),
+              LocalDateTime.now().minusDays(1),
+              null);
 
       when(refreshTokenRepository.findByTokenHash(any(byte[].class)))
           .thenReturn(Optional.of(expiredToken));
@@ -264,14 +263,15 @@ class RefreshTokenUseCaseTest {
     void refreshWithSuspendedUser() {
       // given
       User suspendedUser =
-          User.reconstituteBuilder()
-              .id(USER_ID)
-              .email(Email.of("suspended@example.com"))
-              .password(Password.fromRawPassword("password123!"))
-              .profile(Profile.reconstitute("정지된유저", "010-0000-0000"))
-              .status(UserStatus.SUSPENDED)
-              .roles(Set.of(userRole))
-              .build();
+          User.reconstitute(
+              USER_ID,
+              Email.of("suspended@example.com"),
+              Password.fromRawPassword("password123!"),
+              Profile.reconstitute("정지된유저", "010-0000-0000"),
+              UserStatus.SUSPENDED,
+              null,
+              Set.of(userRole),
+              false);
 
       when(refreshTokenRepository.findByTokenHash(any(byte[].class)))
           .thenReturn(Optional.of(validRefreshToken));
@@ -292,14 +292,15 @@ class RefreshTokenUseCaseTest {
     void refreshWithDeletedUser() {
       // given
       User deletedUser =
-          User.reconstituteBuilder()
-              .id(USER_ID)
-              .email(Email.of("deleted@example.com"))
-              .password(Password.fromRawPassword("password123!"))
-              .profile(Profile.reconstitute("삭제된유저", "010-0000-0000"))
-              .status(UserStatus.DELETED)
-              .roles(Set.of(userRole))
-              .build();
+          User.reconstitute(
+              USER_ID,
+              Email.of("deleted@example.com"),
+              Password.fromRawPassword("password123!"),
+              Profile.reconstitute("삭제된유저", "010-0000-0000"),
+              UserStatus.DELETED,
+              null,
+              Set.of(userRole),
+              false);
 
       when(refreshTokenRepository.findByTokenHash(any(byte[].class)))
           .thenReturn(Optional.of(validRefreshToken));
@@ -353,14 +354,13 @@ class RefreshTokenUseCaseTest {
     void refreshWithAlmostExpiredToken() {
       // given: 1초 후 만료되는 토큰
       RefreshToken almostExpiredToken =
-          RefreshToken.reconstituteBuilder()
-              .id(4L)
-              .userId(USER_ID)
-              .tokenHash(RefreshToken.hash(RAW_REFRESH_TOKEN))
-              .issuedAt(LocalDateTime.now().minusDays(7))
-              .expiresAt(LocalDateTime.now().plusSeconds(1))
-              .revokedAt(null)
-              .build();
+          RefreshToken.reconstitute(
+              4L,
+              USER_ID,
+              RefreshToken.hash(RAW_REFRESH_TOKEN),
+              LocalDateTime.now().minusDays(7),
+              LocalDateTime.now().plusSeconds(1),
+              null);
 
       when(refreshTokenRepository.findByTokenHash(any(byte[].class)))
           .thenReturn(Optional.of(almostExpiredToken));
@@ -380,14 +380,13 @@ class RefreshTokenUseCaseTest {
     void revokeAlreadyRevokedToken() {
       // given: 폐기된 토큰
       RefreshToken alreadyRevokedToken =
-          RefreshToken.reconstituteBuilder()
-              .id(5L)
-              .userId(USER_ID)
-              .tokenHash(RefreshToken.hash(RAW_REFRESH_TOKEN))
-              .issuedAt(LocalDateTime.now().minusHours(2))
-              .expiresAt(LocalDateTime.now().plusDays(6))
-              .revokedAt(LocalDateTime.now().minusHours(1))
-              .build();
+          RefreshToken.reconstitute(
+              5L,
+              USER_ID,
+              RefreshToken.hash(RAW_REFRESH_TOKEN),
+              LocalDateTime.now().minusHours(2),
+              LocalDateTime.now().plusDays(6),
+              LocalDateTime.now().minusHours(1));
 
       when(refreshTokenRepository.findByTokenHash(any(byte[].class)))
           .thenReturn(Optional.of(alreadyRevokedToken));
@@ -404,14 +403,13 @@ class RefreshTokenUseCaseTest {
     void refreshWithJustIssuedToken() {
       // given: 방금 발급된 토큰
       RefreshToken justIssuedToken =
-          RefreshToken.reconstituteBuilder()
-              .id(6L)
-              .userId(USER_ID)
-              .tokenHash(RefreshToken.hash(RAW_REFRESH_TOKEN))
-              .issuedAt(LocalDateTime.now())
-              .expiresAt(LocalDateTime.now().plusDays(7))
-              .revokedAt(null)
-              .build();
+          RefreshToken.reconstitute(
+              6L,
+              USER_ID,
+              RefreshToken.hash(RAW_REFRESH_TOKEN),
+              LocalDateTime.now(),
+              LocalDateTime.now().plusDays(7),
+              null);
 
       when(refreshTokenRepository.findByTokenHash(any(byte[].class)))
           .thenReturn(Optional.of(justIssuedToken));

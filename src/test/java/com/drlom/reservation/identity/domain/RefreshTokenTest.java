@@ -102,14 +102,13 @@ class RefreshTokenTest {
     void isValid_expiredToken_returnsFalse() {
       // given: 이미 만료된 토큰
       RefreshToken token =
-          RefreshToken.reconstituteBuilder()
-              .id(1L)
-              .userId(USER_ID)
-              .tokenHash(RefreshToken.hash(RAW_TOKEN))
-              .issuedAt(LocalDateTime.now().minusDays(8))
-              .expiresAt(LocalDateTime.now().minusDays(1))
-              .revokedAt(null)
-              .build();
+          RefreshToken.reconstitute(
+              1L,
+              USER_ID,
+              RefreshToken.hash(RAW_TOKEN),
+              LocalDateTime.now().minusDays(8),
+              LocalDateTime.now().minusDays(1),
+              null);
 
       // when & then
       assertThat(token.isValid()).isFalse();
@@ -287,14 +286,7 @@ class RefreshTokenTest {
 
       // when
       RefreshToken token =
-          RefreshToken.reconstituteBuilder()
-              .id(id)
-              .userId(USER_ID)
-              .tokenHash(tokenHash)
-              .issuedAt(issuedAt)
-              .expiresAt(expiresAt)
-              .revokedAt(revokedAt)
-              .build();
+          RefreshToken.reconstitute(id, USER_ID, tokenHash, issuedAt, expiresAt, revokedAt);
 
       // then
       assertThat(token.getId()).isEqualTo(id);
@@ -315,22 +307,22 @@ class RefreshTokenTest {
     void equalityWithSameId() {
       // given
       RefreshToken token1 =
-          RefreshToken.reconstituteBuilder()
-              .id(1L)
-              .userId(USER_ID)
-              .tokenHash(RefreshToken.hash("token1"))
-              .issuedAt(LocalDateTime.now())
-              .expiresAt(LocalDateTime.now().plusDays(7))
-              .build();
+          RefreshToken.reconstitute(
+              1L,
+              USER_ID,
+              RefreshToken.hash("token1"),
+              LocalDateTime.now(),
+              LocalDateTime.now().plusDays(7),
+              null);
 
       RefreshToken token2 =
-          RefreshToken.reconstituteBuilder()
-              .id(1L)
-              .userId(2L)
-              .tokenHash(RefreshToken.hash("token2"))
-              .issuedAt(LocalDateTime.now())
-              .expiresAt(LocalDateTime.now().plusDays(7))
-              .build();
+          RefreshToken.reconstitute(
+              1L,
+              2L,
+              RefreshToken.hash("token2"),
+              LocalDateTime.now(),
+              LocalDateTime.now().plusDays(7),
+              null);
 
       // when & then
       assertThat(token1).isEqualTo(token2).hasSameHashCodeAs(token2);
@@ -341,22 +333,22 @@ class RefreshTokenTest {
     void inequalityWithDifferentId() {
       // given
       RefreshToken token1 =
-          RefreshToken.reconstituteBuilder()
-              .id(1L)
-              .userId(USER_ID)
-              .tokenHash(RefreshToken.hash(RAW_TOKEN))
-              .issuedAt(LocalDateTime.now())
-              .expiresAt(LocalDateTime.now().plusDays(7))
-              .build();
+          RefreshToken.reconstitute(
+              1L,
+              USER_ID,
+              RefreshToken.hash(RAW_TOKEN),
+              LocalDateTime.now(),
+              LocalDateTime.now().plusDays(7),
+              null);
 
       RefreshToken token2 =
-          RefreshToken.reconstituteBuilder()
-              .id(2L)
-              .userId(USER_ID)
-              .tokenHash(RefreshToken.hash(RAW_TOKEN))
-              .issuedAt(LocalDateTime.now())
-              .expiresAt(LocalDateTime.now().plusDays(7))
-              .build();
+          RefreshToken.reconstitute(
+              2L,
+              USER_ID,
+              RefreshToken.hash(RAW_TOKEN),
+              LocalDateTime.now(),
+              LocalDateTime.now().plusDays(7),
+              null);
 
       // when & then
       assertThat(token1).isNotEqualTo(token2);
@@ -391,13 +383,13 @@ class RefreshTokenTest {
     void inequalityWithNull() {
       // given
       RefreshToken token =
-          RefreshToken.reconstituteBuilder()
-              .id(1L)
-              .userId(USER_ID)
-              .tokenHash(RefreshToken.hash(RAW_TOKEN))
-              .issuedAt(LocalDateTime.now())
-              .expiresAt(LocalDateTime.now().plusDays(7))
-              .build();
+          RefreshToken.reconstitute(
+              1L,
+              USER_ID,
+              RefreshToken.hash(RAW_TOKEN),
+              LocalDateTime.now(),
+              LocalDateTime.now().plusDays(7),
+              null);
 
       // when & then
       assertThat(token).isNotEqualTo(null);

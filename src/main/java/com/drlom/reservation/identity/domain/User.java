@@ -104,69 +104,30 @@ public class User {
   }
 
   /**
-   * DB에서 조회한 User 재구성용 Builder 반환 (인프라 계층 전용)
+   * DB에서 조회한 User 재구성 (인프라 계층 전용)
    *
-   * @return ReconstituteBuilder
+   * @param id 식별자
+   * @param email 이메일
+   * @param password 비밀번호
+   * @param profile 프로필
+   * @param status 상태
+   * @param lastLoginAt 마지막 로그인 시간
+   * @param roles 역할 집합
+   * @param passwordChangeRequired 비밀번호 변경 필요 여부
+   * @return User Aggregate Root
    */
-  public static ReconstituteBuilder reconstituteBuilder() {
-    return new ReconstituteBuilder();
-  }
-
-  // DB에서 조회한 User 재구성용 Builder (인프라 계층 전용)
-  public static class ReconstituteBuilder {
-    private Long id;
-    private Email email;
-    private Password password;
-    private Profile profile;
-    private UserStatus status;
-    private LocalDateTime lastLoginAt;
-    private Set<Role> roles;
-    private boolean passwordChangeRequired;
-
-    public ReconstituteBuilder id(Long id) {
-      this.id = id;
-      return this;
-    }
-
-    public ReconstituteBuilder email(Email email) {
-      this.email = email;
-      return this;
-    }
-
-    public ReconstituteBuilder password(Password password) {
-      this.password = password;
-      return this;
-    }
-
-    public ReconstituteBuilder profile(Profile profile) {
-      this.profile = profile;
-      return this;
-    }
-
-    public ReconstituteBuilder status(UserStatus status) {
-      this.status = status;
-      return this;
-    }
-
-    public ReconstituteBuilder lastLoginAt(LocalDateTime lastLoginAt) {
-      this.lastLoginAt = lastLoginAt;
-      return this;
-    }
-
-    public ReconstituteBuilder roles(Set<Role> roles) {
-      this.roles = roles;
-      return this;
-    }
-
-    public ReconstituteBuilder passwordChangeRequired(boolean passwordChangeRequired) {
-      this.passwordChangeRequired = passwordChangeRequired;
-      return this;
-    }
-
-    public User build() {
-      return new User(
-          id, email, password, profile, status, lastLoginAt, new HashSet<>(roles), passwordChangeRequired);
-    }
+  @SuppressWarnings("java:S107") // DB 재구성용으로 모든 필드가 필요
+  public static User reconstitute(
+      Long id,
+      Email email,
+      Password password,
+      Profile profile,
+      UserStatus status,
+      LocalDateTime lastLoginAt,
+      Set<Role> roles,
+      boolean passwordChangeRequired) {
+    return new User(
+        id, email, password, profile, status, lastLoginAt, new HashSet<>(roles), passwordChangeRequired);
   }
 
   /**

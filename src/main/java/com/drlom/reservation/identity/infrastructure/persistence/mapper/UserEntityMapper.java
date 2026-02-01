@@ -42,16 +42,15 @@ public class UserEntityMapper {
             .map(userRole -> roleEntityMapper.toDomain(userRole.getRole()))
             .collect(Collectors.toSet());
 
-    return User.reconstituteBuilder()
-        .id(jpaEntity.getId())
-        .email(Email.of(jpaEntity.getEmail()))
-        .password(Password.fromHash(jpaEntity.getPasswordHash()))
-        .profile(Profile.reconstitute(jpaEntity.getName(), jpaEntity.getPhone()))
-        .status(jpaEntity.getStatus())
-        .lastLoginAt(jpaEntity.getLastLoginAt())
-        .passwordChangeRequired(jpaEntity.isPasswordChangeRequired())
-        .roles(roles)
-        .build();
+    return User.reconstitute(
+        jpaEntity.getId(),
+        Email.of(jpaEntity.getEmail()),
+        Password.fromHash(jpaEntity.getPasswordHash()),
+        Profile.reconstitute(jpaEntity.getName(), jpaEntity.getPhone()),
+        jpaEntity.getStatus(),
+        jpaEntity.getLastLoginAt(),
+        roles,
+        jpaEntity.isPasswordChangeRequired());
   }
 
   /**

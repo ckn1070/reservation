@@ -377,15 +377,7 @@ class UserTest {
 
       // when: 재구성
       User user =
-          User.reconstituteBuilder()
-              .id(id)
-              .email(email)
-              .password(password)
-              .profile(profile)
-              .status(status)
-              .lastLoginAt(lastLoginAt)
-              .roles(roles)
-              .build();
+          User.reconstitute(id, email, password, profile, status, lastLoginAt, roles, false);
 
       // then
       assertThat(user.getId()).isEqualTo(id);
@@ -408,24 +400,26 @@ class UserTest {
     void equalityWithSameId() {
       // given: ID가 같은 두 User
       User user1 =
-          User.reconstituteBuilder()
-              .id(1L)
-              .email(Email.of("user1@example.com"))
-              .password(Password.fromHash("hash1"))
-              .profile(Profile.reconstitute("사용자1", "010-1111-1111"))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of())
-              .build();
+          User.reconstitute(
+              1L,
+              Email.of("user1@example.com"),
+              Password.fromHash("hash1"),
+              Profile.reconstitute("사용자1", "010-1111-1111"),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(),
+              false);
 
       User user2 =
-          User.reconstituteBuilder()
-              .id(1L)
-              .email(Email.of("user2@example.com"))
-              .password(Password.fromHash("hash2"))
-              .profile(Profile.reconstitute("사용자2", "010-2222-2222"))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of())
-              .build();
+          User.reconstitute(
+              1L,
+              Email.of("user2@example.com"),
+              Password.fromHash("hash2"),
+              Profile.reconstitute("사용자2", "010-2222-2222"),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(),
+              false);
 
       // when & then
       assertThat(user1).isEqualTo(user2).hasSameHashCodeAs(user2);
@@ -436,24 +430,26 @@ class UserTest {
     void inequalityWithDifferentId() {
       // given
       User user1 =
-          User.reconstituteBuilder()
-              .id(1L)
-              .email(Email.of("user@example.com"))
-              .password(Password.fromHash("hash"))
-              .profile(Profile.reconstitute("사용자", "010-1111-1111"))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of())
-              .build();
+          User.reconstitute(
+              1L,
+              Email.of("user@example.com"),
+              Password.fromHash("hash"),
+              Profile.reconstitute("사용자", "010-1111-1111"),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(),
+              false);
 
       User user2 =
-          User.reconstituteBuilder()
-              .id(2L)
-              .email(Email.of("user@example.com"))
-              .password(Password.fromHash("hash"))
-              .profile(Profile.reconstitute("사용자", "010-1111-1111"))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of())
-              .build();
+          User.reconstitute(
+              2L,
+              Email.of("user@example.com"),
+              Password.fromHash("hash"),
+              Profile.reconstitute("사용자", "010-1111-1111"),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(),
+              false);
 
       // when & then
       assertThat(user1).isNotEqualTo(user2);
@@ -490,14 +486,15 @@ class UserTest {
     void inequalityWithNull() {
       // given
       User user =
-          User.reconstituteBuilder()
-              .id(1L)
-              .email(Email.of("user@example.com"))
-              .password(Password.fromHash("hash"))
-              .profile(Profile.reconstitute("사용자", "010-1111-1111"))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of())
-              .build();
+          User.reconstitute(
+              1L,
+              Email.of("user@example.com"),
+              Password.fromHash("hash"),
+              Profile.reconstitute("사용자", "010-1111-1111"),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(),
+              false);
 
       // when & then
       assertThat(user).isNotEqualTo(null);
@@ -508,14 +505,15 @@ class UserTest {
     void inequalityWithDifferentType() {
       // given
       User user =
-          User.reconstituteBuilder()
-              .id(1L)
-              .email(Email.of("user@example.com"))
-              .password(Password.fromHash("hash"))
-              .profile(Profile.reconstitute("사용자", "010-1111-1111"))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of())
-              .build();
+          User.reconstitute(
+              1L,
+              Email.of("user@example.com"),
+              Password.fromHash("hash"),
+              Profile.reconstitute("사용자", "010-1111-1111"),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(),
+              false);
 
       // when & then
       assertThat(user).isNotEqualTo("user");
@@ -529,14 +527,15 @@ class UserTest {
       User userWithNullId = User.signUp(Email.of("user@example.com"), "password", profile, Set.of(Role.create("ROLE_USER")));
 
       User userWithId =
-          User.reconstituteBuilder()
-              .id(1L)
-              .email(Email.of("user@example.com"))
-              .password(Password.fromHash("hash"))
-              .profile(Profile.reconstitute("홍길동", "010-1234-5678"))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of())
-              .build();
+          User.reconstitute(
+              1L,
+              Email.of("user@example.com"),
+              Password.fromHash("hash"),
+              Profile.reconstitute("홍길동", "010-1234-5678"),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(),
+              false);
 
       // when & then
       assertThat(userWithNullId).isNotEqualTo(userWithId);
@@ -690,15 +689,15 @@ class UserTest {
 
       // when
       User user =
-          User.reconstituteBuilder()
-              .id(id)
-              .email(email)
-              .password(password)
-              .profile(profile)
-              .status(UserStatus.ACTIVE)
-              .passwordChangeRequired(true)
-              .roles(Set.of(Role.reconstitute(2L, "ROLE_ADMIN")))
-              .build();
+          User.reconstitute(
+              id,
+              email,
+              password,
+              profile,
+              UserStatus.ACTIVE,
+              null,
+              Set.of(Role.reconstitute(2L, "ROLE_ADMIN")),
+              true);
 
       // then
       assertThat(user.isPasswordChangeRequired()).isTrue();
@@ -715,15 +714,15 @@ class UserTest {
 
       // when
       User user =
-          User.reconstituteBuilder()
-              .id(id)
-              .email(email)
-              .password(password)
-              .profile(profile)
-              .status(UserStatus.ACTIVE)
-              .passwordChangeRequired(false)
-              .roles(Set.of(Role.reconstitute(1L, "ROLE_USER")))
-              .build();
+          User.reconstitute(
+              id,
+              email,
+              password,
+              profile,
+              UserStatus.ACTIVE,
+              null,
+              Set.of(Role.reconstitute(1L, "ROLE_USER")),
+              false);
 
       // then
       assertThat(user.isPasswordChangeRequired()).isFalse();

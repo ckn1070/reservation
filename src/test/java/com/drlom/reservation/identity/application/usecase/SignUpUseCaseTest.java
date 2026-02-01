@@ -71,14 +71,15 @@ class SignUpUseCaseTest {
       when(roleRepository.findByName("ROLE_USER")).thenReturn(Optional.of(userRole));
 
       User savedUser =
-          User.reconstituteBuilder()
-              .id(1L)
-              .email(Email.of(validCommand.getEmail()))
-              .password(Password.fromHash("hashedPassword"))
-              .profile(Profile.reconstitute(validCommand.getName(), validCommand.getPhone()))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of(userRole))
-              .build();
+          User.reconstitute(
+              1L,
+              Email.of(validCommand.getEmail()),
+              Password.fromHash("hashedPassword"),
+              Profile.reconstitute(validCommand.getName(), validCommand.getPhone()),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(userRole),
+              false);
 
       when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
@@ -114,14 +115,15 @@ class SignUpUseCaseTest {
       when(roleRepository.findByName("ROLE_USER")).thenReturn(Optional.of(userRole));
 
       User savedUser =
-          User.reconstituteBuilder()
-              .id(1L)
-              .email(Email.of(validCommand.getEmail()))
-              .password(Password.fromHash("hashedPassword"))
-              .profile(Profile.reconstitute(validCommand.getName(), validCommand.getPhone()))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of(userRole))
-              .build();
+          User.reconstitute(
+              1L,
+              Email.of(validCommand.getEmail()),
+              Password.fromHash("hashedPassword"),
+              Profile.reconstitute(validCommand.getName(), validCommand.getPhone()),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(userRole),
+              false);
 
       when(userRepository.save(any(User.class))).thenReturn(savedUser);
       when(jwtTokenProvider.generateTokens(any(User.class)))
@@ -400,14 +402,15 @@ class SignUpUseCaseTest {
       when(roleRepository.findByName("ROLE_USER")).thenReturn(Optional.of(userRole));
 
       User savedUser =
-          User.reconstituteBuilder()
-              .id(1L)
-              .email(Email.of("user@example.com"))
-              .password(Password.fromHash("hashedPassword"))
-              .profile(Profile.reconstitute("홍길동", "010-1234-5678"))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of(userRole))
-              .build();
+          User.reconstitute(
+              1L,
+              Email.of("user@example.com"),
+              Password.fromHash("hashedPassword"),
+              Profile.reconstitute("홍길동", "010-1234-5678"),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(userRole),
+              false);
 
       when(userRepository.save(any(User.class))).thenReturn(savedUser);
       when(jwtTokenProvider.generateTokens(any(User.class)))
@@ -438,14 +441,15 @@ class SignUpUseCaseTest {
       when(roleRepository.findByName("ROLE_USER")).thenReturn(Optional.of(userRole));
 
       User savedUser =
-          User.reconstituteBuilder()
-              .id(1L)
-              .email(Email.of("user@example.com"))
-              .password(Password.fromHash("hashedPassword"))
-              .profile(Profile.reconstitute("홍길동", "010-1234-5678"))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of(userRole))
-              .build();
+          User.reconstitute(
+              1L,
+              Email.of("user@example.com"),
+              Password.fromHash("hashedPassword"),
+              Profile.reconstitute("홍길동", "010-1234-5678"),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(userRole),
+              false);
 
       when(userRepository.save(any(User.class))).thenReturn(savedUser);
       when(jwtTokenProvider.generateTokens(any(User.class)))
@@ -477,14 +481,15 @@ class SignUpUseCaseTest {
       when(roleRepository.findByName("ROLE_USER")).thenReturn(Optional.of(userRole));
 
       User savedUser =
-          User.reconstituteBuilder()
-              .id(1L)
-              .email(Email.of("user@example.com"))
-              .password(Password.fromHash("hashedPassword"))
-              .profile(Profile.reconstitute(maxLengthName, "010-1234-5678"))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of(userRole))
-              .build();
+          User.reconstitute(
+              1L,
+              Email.of("user@example.com"),
+              Password.fromHash("hashedPassword"),
+              Profile.reconstitute(maxLengthName, "010-1234-5678"),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(userRole),
+              false);
 
       when(userRepository.save(any(User.class))).thenReturn(savedUser);
       when(jwtTokenProvider.generateTokens(any(User.class)))

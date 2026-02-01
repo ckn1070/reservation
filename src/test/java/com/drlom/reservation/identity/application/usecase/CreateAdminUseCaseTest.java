@@ -78,15 +78,15 @@ class CreateAdminUseCaseTest {
       when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
         User user = invocation.getArgument(0);
         // ID 설정을 위해 reconstitute로 반환
-        return User.reconstituteBuilder()
-            .id(1L)
-            .email(user.getEmail())
-            .password(user.getPassword())
-            .profile(user.getProfile())
-            .status(user.getStatus())
-            .passwordChangeRequired(user.isPasswordChangeRequired())
-            .roles(user.getRoles())
-            .build();
+        return User.reconstitute(
+            1L,
+            user.getEmail(),
+            user.getPassword(),
+            user.getProfile(),
+            user.getStatus(),
+            user.getLastLoginAt(),
+            user.getRoles(),
+            user.isPasswordChangeRequired());
       });
 
       // when
@@ -113,15 +113,15 @@ class CreateAdminUseCaseTest {
       when(roleRepository.findByName("ROLE_SUPER_ADMIN")).thenReturn(Optional.of(superAdminRole));
       when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
         User user = invocation.getArgument(0);
-        return User.reconstituteBuilder()
-            .id(2L)
-            .email(user.getEmail())
-            .password(user.getPassword())
-            .profile(user.getProfile())
-            .status(user.getStatus())
-            .passwordChangeRequired(user.isPasswordChangeRequired())
-            .roles(user.getRoles())
-            .build();
+        return User.reconstitute(
+            2L,
+            user.getEmail(),
+            user.getPassword(),
+            user.getProfile(),
+            user.getStatus(),
+            user.getLastLoginAt(),
+            user.getRoles(),
+            user.isPasswordChangeRequired());
       });
 
       // when
@@ -143,15 +143,15 @@ class CreateAdminUseCaseTest {
       ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
       when(userRepository.save(userCaptor.capture())).thenAnswer(invocation -> {
         User user = invocation.getArgument(0);
-        return User.reconstituteBuilder()
-            .id(1L)
-            .email(user.getEmail())
-            .password(user.getPassword())
-            .profile(user.getProfile())
-            .status(user.getStatus())
-            .passwordChangeRequired(user.isPasswordChangeRequired())
-            .roles(user.getRoles())
-            .build();
+        return User.reconstitute(
+            1L,
+            user.getEmail(),
+            user.getPassword(),
+            user.getProfile(),
+            user.getStatus(),
+            user.getLastLoginAt(),
+            user.getRoles(),
+            user.isPasswordChangeRequired());
       });
 
       // when
@@ -325,15 +325,15 @@ class CreateAdminUseCaseTest {
       when(roleRepository.findByName("ROLE_SUPER_ADMIN")).thenReturn(Optional.of(superAdminRole));
       when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
         User user = invocation.getArgument(0);
-        return User.reconstituteBuilder()
-            .id(2L)
-            .email(user.getEmail())
-            .password(user.getPassword())
-            .profile(user.getProfile())
-            .status(user.getStatus())
-            .passwordChangeRequired(user.isPasswordChangeRequired())
-            .roles(user.getRoles())
-            .build();
+        return User.reconstitute(
+            2L,
+            user.getEmail(),
+            user.getPassword(),
+            user.getProfile(),
+            user.getStatus(),
+            user.getLastLoginAt(),
+            user.getRoles(),
+            user.isPasswordChangeRequired());
       });
 
       // when
@@ -362,15 +362,15 @@ class CreateAdminUseCaseTest {
       when(roleRepository.findByName("ROLE_ADMIN")).thenReturn(Optional.of(adminRole));
       when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
         User user = invocation.getArgument(0);
-        return User.reconstituteBuilder()
-            .id(1L)
-            .email(user.getEmail())
-            .password(user.getPassword())
-            .profile(user.getProfile())
-            .status(user.getStatus())
-            .passwordChangeRequired(user.isPasswordChangeRequired())
-            .roles(user.getRoles())
-            .build();
+        return User.reconstitute(
+            1L,
+            user.getEmail(),
+            user.getPassword(),
+            user.getProfile(),
+            user.getStatus(),
+            user.getLastLoginAt(),
+            user.getRoles(),
+            user.isPasswordChangeRequired());
       });
 
       // when

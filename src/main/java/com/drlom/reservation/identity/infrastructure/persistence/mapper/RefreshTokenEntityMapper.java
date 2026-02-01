@@ -23,14 +23,13 @@ public class RefreshTokenEntityMapper {
       return null;
     }
 
-    return RefreshToken.reconstituteBuilder()
-        .id(jpaEntity.getId())
-        .userId(jpaEntity.getUserId())
-        .tokenHash(jpaEntity.getTokenHash())
-        .issuedAt(jpaEntity.getIssuedAt())
-        .expiresAt(jpaEntity.getExpiresAt())
-        .revokedAt(jpaEntity.getRevokedAt())
-        .build();
+    return RefreshToken.reconstitute(
+        jpaEntity.getId(),
+        jpaEntity.getUserId(),
+        jpaEntity.getTokenHash(),
+        jpaEntity.getIssuedAt(),
+        jpaEntity.getExpiresAt(),
+        jpaEntity.getRevokedAt());
   }
 
   /**

@@ -55,26 +55,26 @@ class ChangePasswordUseCaseTest {
     userRole = Role.reconstitute(1L, "ROLE_USER");
 
     activeUser =
-        User.reconstituteBuilder()
-            .id(1L)
-            .email(Email.of("user@example.com"))
-            .password(Password.fromRawPassword(CURRENT_PASSWORD))
-            .profile(Profile.reconstitute("홍길동", "010-1234-5678"))
-            .status(UserStatus.ACTIVE)
-            .passwordChangeRequired(false)
-            .roles(Set.of(userRole))
-            .build();
+        User.reconstitute(
+            1L,
+            Email.of("user@example.com"),
+            Password.fromRawPassword(CURRENT_PASSWORD),
+            Profile.reconstitute("홍길동", "010-1234-5678"),
+            UserStatus.ACTIVE,
+            null,
+            Set.of(userRole),
+            false);
 
     userWithPasswordChangeRequired =
-        User.reconstituteBuilder()
-            .id(2L)
-            .email(Email.of("admin@example.com"))
-            .password(Password.fromRawPassword(CURRENT_PASSWORD))
-            .profile(Profile.reconstitute("관리자", "010-0000-0000"))
-            .status(UserStatus.ACTIVE)
-            .passwordChangeRequired(true)
-            .roles(Set.of(Role.reconstitute(2L, "ROLE_ADMIN")))
-            .build();
+        User.reconstitute(
+            2L,
+            Email.of("admin@example.com"),
+            Password.fromRawPassword(CURRENT_PASSWORD),
+            Profile.reconstitute("관리자", "010-0000-0000"),
+            UserStatus.ACTIVE,
+            null,
+            Set.of(Role.reconstitute(2L, "ROLE_ADMIN")),
+            true);
   }
 
   @Nested
@@ -169,14 +169,15 @@ class ChangePasswordUseCaseTest {
     void changePasswordWithSuspendedUser() {
       // given
       User suspendedUser =
-          User.reconstituteBuilder()
-              .id(3L)
-              .email(Email.of("suspended@example.com"))
-              .password(Password.fromRawPassword(CURRENT_PASSWORD))
-              .profile(Profile.reconstitute("정지된유저", "010-0000-0000"))
-              .status(UserStatus.SUSPENDED)
-              .roles(Set.of(userRole))
-              .build();
+          User.reconstitute(
+              3L,
+              Email.of("suspended@example.com"),
+              Password.fromRawPassword(CURRENT_PASSWORD),
+              Profile.reconstitute("정지된유저", "010-0000-0000"),
+              UserStatus.SUSPENDED,
+              null,
+              Set.of(userRole),
+              false);
 
       ChangePasswordCommand suspendedCommand =
           ChangePasswordCommand.builder()
@@ -203,14 +204,15 @@ class ChangePasswordUseCaseTest {
     void changePasswordWithDeletedUser() {
       // given
       User deletedUser =
-          User.reconstituteBuilder()
-              .id(4L)
-              .email(Email.of("deleted@example.com"))
-              .password(Password.fromRawPassword(CURRENT_PASSWORD))
-              .profile(Profile.reconstitute("삭제된유저", "010-0000-0000"))
-              .status(UserStatus.DELETED)
-              .roles(Set.of(userRole))
-              .build();
+          User.reconstitute(
+              4L,
+              Email.of("deleted@example.com"),
+              Password.fromRawPassword(CURRENT_PASSWORD),
+              Profile.reconstitute("삭제된유저", "010-0000-0000"),
+              UserStatus.DELETED,
+              null,
+              Set.of(userRole),
+              false);
 
       ChangePasswordCommand deletedCommand =
           ChangePasswordCommand.builder()

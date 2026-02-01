@@ -59,14 +59,15 @@ class LoginUseCaseTest {
     userRole = Role.reconstitute(1L, "ROLE_USER");
 
     activeUser =
-        User.reconstituteBuilder()
-            .id(1L)
-            .email(Email.of("user@example.com"))
-            .password(Password.fromRawPassword(RAW_PASSWORD))
-            .profile(Profile.reconstitute("홍길동", "010-1234-5678"))
-            .status(UserStatus.ACTIVE)
-            .roles(Set.of(userRole))
-            .build();
+        User.reconstitute(
+            1L,
+            Email.of("user@example.com"),
+            Password.fromRawPassword(RAW_PASSWORD),
+            Profile.reconstitute("홍길동", "010-1234-5678"),
+            UserStatus.ACTIVE,
+            null,
+            Set.of(userRole),
+            false);
 
     tokenResult =
         TokenResult.builder()
@@ -172,14 +173,15 @@ class LoginUseCaseTest {
     void loginWithSuspendedUser() {
       // given
       User suspendedUser =
-          User.reconstituteBuilder()
-              .id(2L)
-              .email(Email.of("suspended@example.com"))
-              .password(Password.fromRawPassword(RAW_PASSWORD))
-              .profile(Profile.reconstitute("정지된유저", "010-0000-0000"))
-              .status(UserStatus.SUSPENDED)
-              .roles(Set.of(userRole))
-              .build();
+          User.reconstitute(
+              2L,
+              Email.of("suspended@example.com"),
+              Password.fromRawPassword(RAW_PASSWORD),
+              Profile.reconstitute("정지된유저", "010-0000-0000"),
+              UserStatus.SUSPENDED,
+              null,
+              Set.of(userRole),
+              false);
 
       LoginCommand suspendedCommand =
           LoginCommand.builder().email("suspended@example.com").password(RAW_PASSWORD).build();
@@ -202,14 +204,15 @@ class LoginUseCaseTest {
     void loginWithDeletedUser() {
       // given
       User deletedUser =
-          User.reconstituteBuilder()
-              .id(3L)
-              .email(Email.of("deleted@example.com"))
-              .password(Password.fromRawPassword(RAW_PASSWORD))
-              .profile(Profile.reconstitute("삭제된유저", "010-0000-0000"))
-              .status(UserStatus.DELETED)
-              .roles(Set.of(userRole))
-              .build();
+          User.reconstitute(
+              3L,
+              Email.of("deleted@example.com"),
+              Password.fromRawPassword(RAW_PASSWORD),
+              Profile.reconstitute("삭제된유저", "010-0000-0000"),
+              UserStatus.DELETED,
+              null,
+              Set.of(userRole),
+              false);
 
       LoginCommand deletedCommand =
           LoginCommand.builder().email("deleted@example.com").password(RAW_PASSWORD).build();
@@ -232,15 +235,15 @@ class LoginUseCaseTest {
     void loginWithPasswordChangeRequired() {
       // given
       User userWithPasswordChangeRequired =
-          User.reconstituteBuilder()
-              .id(4L)
-              .email(Email.of("admin@example.com"))
-              .password(Password.fromRawPassword(RAW_PASSWORD))
-              .profile(Profile.reconstitute("관리자", "010-0000-0000"))
-              .status(UserStatus.ACTIVE)
-              .passwordChangeRequired(true)
-              .roles(Set.of(userRole))
-              .build();
+          User.reconstitute(
+              4L,
+              Email.of("admin@example.com"),
+              Password.fromRawPassword(RAW_PASSWORD),
+              Profile.reconstitute("관리자", "010-0000-0000"),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(userRole),
+              true);
 
       LoginCommand command =
           LoginCommand.builder().email("admin@example.com").password(RAW_PASSWORD).build();
@@ -364,14 +367,15 @@ class LoginUseCaseTest {
       // given
       Role adminRole = Role.reconstitute(2L, "ROLE_ADMIN");
       User multiRoleUser =
-          User.reconstituteBuilder()
-              .id(1L)
-              .email(Email.of("admin@example.com"))
-              .password(Password.fromRawPassword(RAW_PASSWORD))
-              .profile(Profile.reconstitute("관리자", "010-1234-5678"))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of(userRole, adminRole))
-              .build();
+          User.reconstitute(
+              1L,
+              Email.of("admin@example.com"),
+              Password.fromRawPassword(RAW_PASSWORD),
+              Profile.reconstitute("관리자", "010-1234-5678"),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(userRole, adminRole),
+              false);
 
       LoginCommand command =
           LoginCommand.builder().email("admin@example.com").password(RAW_PASSWORD).build();
@@ -408,14 +412,15 @@ class LoginUseCaseTest {
       // given: 공백이 포함된 비밀번호로 생성된 사용자
       String passwordWithSpaces = "pass word 123";
       User userWithSpacePassword =
-          User.reconstituteBuilder()
-              .id(1L)
-              .email(Email.of("user@example.com"))
-              .password(Password.fromRawPassword(passwordWithSpaces))
-              .profile(Profile.reconstitute("홍길동", "010-1234-5678"))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of(userRole))
-              .build();
+          User.reconstitute(
+              1L,
+              Email.of("user@example.com"),
+              Password.fromRawPassword(passwordWithSpaces),
+              Profile.reconstitute("홍길동", "010-1234-5678"),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(userRole),
+              false);
 
       LoginCommand command =
           LoginCommand.builder().email("user@example.com").password(passwordWithSpaces).build();
@@ -437,14 +442,15 @@ class LoginUseCaseTest {
       // given: 최대 길이(72자 - BCrypt 제한) 비밀번호
       String maxLengthPassword = "a".repeat(72);
       User userWithMaxPassword =
-          User.reconstituteBuilder()
-              .id(1L)
-              .email(Email.of("user@example.com"))
-              .password(Password.fromRawPassword(maxLengthPassword))
-              .profile(Profile.reconstitute("홍길동", "010-1234-5678"))
-              .status(UserStatus.ACTIVE)
-              .roles(Set.of(userRole))
-              .build();
+          User.reconstitute(
+              1L,
+              Email.of("user@example.com"),
+              Password.fromRawPassword(maxLengthPassword),
+              Profile.reconstitute("홍길동", "010-1234-5678"),
+              UserStatus.ACTIVE,
+              null,
+              Set.of(userRole),
+              false);
 
       LoginCommand command =
           LoginCommand.builder().email("user@example.com").password(maxLengthPassword).build();

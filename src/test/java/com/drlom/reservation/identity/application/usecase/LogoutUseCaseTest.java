@@ -44,14 +44,13 @@ class LogoutUseCaseTest {
     validCommand = LogoutCommand.builder().refreshToken(RAW_REFRESH_TOKEN).build();
 
     validToken =
-        RefreshToken.reconstituteBuilder()
-            .id(TOKEN_ID)
-            .userId(USER_ID)
-            .tokenHash(RefreshToken.hash(RAW_REFRESH_TOKEN))
-            .issuedAt(LocalDateTime.now().minusHours(1))
-            .expiresAt(LocalDateTime.now().plusDays(7))
-            .revokedAt(null)
-            .build();
+        RefreshToken.reconstitute(
+            TOKEN_ID,
+            USER_ID,
+            RefreshToken.hash(RAW_REFRESH_TOKEN),
+            LocalDateTime.now().minusHours(1),
+            LocalDateTime.now().plusDays(7),
+            null);
   }
 
   @Nested
@@ -119,14 +118,13 @@ class LogoutUseCaseTest {
     void logout_alreadyRevokedToken_throwsException() {
       // given: 이미 폐기된 토큰
       RefreshToken revokedToken =
-          RefreshToken.reconstituteBuilder()
-              .id(TOKEN_ID)
-              .userId(USER_ID)
-              .tokenHash(RefreshToken.hash(RAW_REFRESH_TOKEN))
-              .issuedAt(LocalDateTime.now().minusHours(1))
-              .expiresAt(LocalDateTime.now().plusDays(7))
-              .revokedAt(LocalDateTime.now().minusMinutes(30))
-              .build();
+          RefreshToken.reconstitute(
+              TOKEN_ID,
+              USER_ID,
+              RefreshToken.hash(RAW_REFRESH_TOKEN),
+              LocalDateTime.now().minusHours(1),
+              LocalDateTime.now().plusDays(7),
+              LocalDateTime.now().minusMinutes(30));
 
       when(refreshTokenRepository.findByTokenHash(any(byte[].class)))
           .thenReturn(Optional.of(revokedToken));
@@ -146,14 +144,13 @@ class LogoutUseCaseTest {
     void logout_expiredToken_throwsException() {
       // given: 만료된 토큰
       RefreshToken expiredToken =
-          RefreshToken.reconstituteBuilder()
-              .id(TOKEN_ID)
-              .userId(USER_ID)
-              .tokenHash(RefreshToken.hash(RAW_REFRESH_TOKEN))
-              .issuedAt(LocalDateTime.now().minusDays(8))
-              .expiresAt(LocalDateTime.now().minusDays(1))
-              .revokedAt(null)
-              .build();
+          RefreshToken.reconstitute(
+              TOKEN_ID,
+              USER_ID,
+              RefreshToken.hash(RAW_REFRESH_TOKEN),
+              LocalDateTime.now().minusDays(8),
+              LocalDateTime.now().minusDays(1),
+              null);
 
       when(refreshTokenRepository.findByTokenHash(any(byte[].class)))
           .thenReturn(Optional.of(expiredToken));
@@ -233,14 +230,13 @@ class LogoutUseCaseTest {
 
       // given: 두 번째 로그아웃 - 이미 폐기된 토큰 반환
       RefreshToken revokedToken =
-          RefreshToken.reconstituteBuilder()
-              .id(TOKEN_ID)
-              .userId(USER_ID)
-              .tokenHash(RefreshToken.hash(RAW_REFRESH_TOKEN))
-              .issuedAt(LocalDateTime.now().minusHours(1))
-              .expiresAt(LocalDateTime.now().plusDays(7))
-              .revokedAt(LocalDateTime.now())
-              .build();
+          RefreshToken.reconstitute(
+              TOKEN_ID,
+              USER_ID,
+              RefreshToken.hash(RAW_REFRESH_TOKEN),
+              LocalDateTime.now().minusHours(1),
+              LocalDateTime.now().plusDays(7),
+              LocalDateTime.now());
 
       when(refreshTokenRepository.findByTokenHash(any(byte[].class)))
           .thenReturn(Optional.of(revokedToken));

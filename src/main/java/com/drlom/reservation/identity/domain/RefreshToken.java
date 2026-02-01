@@ -59,56 +59,24 @@ public class RefreshToken {
   }
 
   /**
-   * DB에서 조회한 RefreshToken 재구성용 Builder 반환 (인프라 계층 전용)
+   * DB에서 조회한 RefreshToken 재구성 (인프라 계층 전용)
    *
-   * @return ReconstituteBuilder
+   * @param id 식별자
+   * @param userId 사용자 ID
+   * @param tokenHash 토큰 해시
+   * @param issuedAt 발급 시간
+   * @param expiresAt 만료 시간
+   * @param revokedAt 폐기 시간
+   * @return RefreshToken
    */
-  public static ReconstituteBuilder reconstituteBuilder() {
-    return new ReconstituteBuilder();
-  }
-
-  // DB에서 조회한 RefreshToken 재구성용 Builder (인프라 계층 전용)
-  public static class ReconstituteBuilder {
-    private Long id;
-    private Long userId;
-    private byte[] tokenHash;
-    private LocalDateTime issuedAt;
-    private LocalDateTime expiresAt;
-    private LocalDateTime revokedAt;
-
-    public ReconstituteBuilder id(Long id) {
-      this.id = id;
-      return this;
-    }
-
-    public ReconstituteBuilder userId(Long userId) {
-      this.userId = userId;
-      return this;
-    }
-
-    public ReconstituteBuilder tokenHash(byte[] tokenHash) {
-      this.tokenHash = tokenHash;
-      return this;
-    }
-
-    public ReconstituteBuilder issuedAt(LocalDateTime issuedAt) {
-      this.issuedAt = issuedAt;
-      return this;
-    }
-
-    public ReconstituteBuilder expiresAt(LocalDateTime expiresAt) {
-      this.expiresAt = expiresAt;
-      return this;
-    }
-
-    public ReconstituteBuilder revokedAt(LocalDateTime revokedAt) {
-      this.revokedAt = revokedAt;
-      return this;
-    }
-
-    public RefreshToken build() {
-      return new RefreshToken(id, userId, tokenHash, issuedAt, expiresAt, revokedAt);
-    }
+  public static RefreshToken reconstitute(
+      Long id,
+      Long userId,
+      byte[] tokenHash,
+      LocalDateTime issuedAt,
+      LocalDateTime expiresAt,
+      LocalDateTime revokedAt) {
+    return new RefreshToken(id, userId, tokenHash, issuedAt, expiresAt, revokedAt);
   }
 
   /**

@@ -100,15 +100,15 @@ class UserEntityMapperTest {
 
     // given: 수정된 Domain User
     User modifiedUser =
-        User.reconstituteBuilder()
-            .id(1L)
-            .email(Email.of("user@example.com"))
-            .password(Password.fromHash("$2a$10$newPassword"))
-            .profile(Profile.reconstitute("홍길동", "010-1234-5678"))
-            .status(UserStatus.SUSPENDED)
-            .lastLoginAt(LocalDateTime.now())
-            .roles(Set.of(Role.reconstitute(1L, "ROLE_USER")))
-            .build();
+        User.reconstitute(
+            1L,
+            Email.of("user@example.com"),
+            Password.fromHash("$2a$10$newPassword"),
+            Profile.reconstitute("홍길동", "010-1234-5678"),
+            UserStatus.SUSPENDED,
+            LocalDateTime.now(),
+            Set.of(Role.reconstitute(1L, "ROLE_USER")),
+            false);
 
     // when
     userEntityMapper.updateJpaEntity(existingEntity, modifiedUser);
@@ -162,15 +162,15 @@ class UserEntityMapperTest {
 
     // given: 비밀번호 변경 후 passwordChangeRequired = false인 Domain User
     User modifiedUser =
-        User.reconstituteBuilder()
-            .id(1L)
-            .email(Email.of("admin@example.com"))
-            .password(Password.fromHash("$2a$10$newPassword"))
-            .profile(Profile.reconstitute("관리자", "010-0000-0000"))
-            .status(UserStatus.ACTIVE)
-            .passwordChangeRequired(false)
-            .roles(Set.of(Role.reconstitute(1L, "ROLE_ADMIN")))
-            .build();
+        User.reconstitute(
+            1L,
+            Email.of("admin@example.com"),
+            Password.fromHash("$2a$10$newPassword"),
+            Profile.reconstitute("관리자", "010-0000-0000"),
+            UserStatus.ACTIVE,
+            null,
+            Set.of(Role.reconstitute(1L, "ROLE_ADMIN")),
+            false);
 
     // when
     userEntityMapper.updateJpaEntity(existingEntity, modifiedUser);
