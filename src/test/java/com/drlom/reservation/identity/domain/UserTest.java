@@ -543,4 +543,190 @@ class UserTest {
       assertThat(userWithId).isNotEqualTo(userWithNullId);
     }
   }
+
+  @Nested
+  @DisplayName("임시 비밀번호로 사용자 생성 테스트 (createWithTemporaryPassword)")
+  class CreateWithTemporaryPasswordTest {
+
+    @Test
+    @DisplayName("임시 비밀번호로 관리자 생성 성공")
+    void createWithTemporaryPasswordSuccess() {
+      // given
+      Email email = Email.of("admin@example.com");
+      Profile profile = Profile.of("관리자", "010-1234-5678");
+      Role adminRole = Role.create("ROLE_ADMIN");
+      String temporaryPassword = "TempPass123!@#abcde";
+
+      // when
+      User user = User.createWithTemporaryPassword(email, temporaryPassword, profile, Set.of(adminRole));
+
+      // then
+      assertThat(user.getEmail()).isEqualTo(email);
+      assertThat(user.getName()).isEqualTo("관리자");
+      assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
+      assertThat(user.isPasswordChangeRequired()).isTrue();
+      assertThat(user.verifyPassword(temporaryPassword)).isTrue();
+    }
+
+    @Test
+    @DisplayName("일반 회원가입은 passwordChangeRequired가 false이다")
+    void signUpHasPasswordChangeRequiredFalse() {
+      // given
+      Email email = Email.of("user@example.com");
+      Profile profile = Profile.of("홍길동", "010-1234-5678");
+      Role userRole = Role.create("ROLE_USER");
+
+      // when
+      User user = User.signUp(email, "password123!", profile, Set.of(userRole));
+
+      // then
+      assertThat(user.isPasswordChangeRequired()).isFalse();
+    }
+
+    @Test
+    @DisplayName("역할이 없으면 예외 발생")
+    void createWithTemporaryPasswordWithoutRole() {
+      // given
+      Email email = Email.of("admin@example.com");
+      Profile profile = Profile.of("관리자", "010-1234-5678");
+      String temporaryPassword = "TempPass123!@#abcde";
+      Set<Role> emptyRoles = Set.of();
+
+      // when & then
+      assertThatThrownBy(() -> User.createWithTemporaryPassword(email, temporaryPassword, profile, emptyRoles))
+          .isInstanceOf(BusinessException.class)
+          .extracting("errorCode")
+          .isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
+    }
+  }
+
+  @Nested
+  @DisplayName("비밀번호 변경 테스트 (changePassword)")
+  class ChangePasswordTest {
+
+    @Test
+    @DisplayName("비밀번호 변경 성공 - passwordChangeRequired가 false로 변경된다")
+    void changePasswordSuccess() {
+      // given
+      Email email = Email.of("admin@example.com");
+      Profile profile = Profile.of("관리자", "010-1234-5678");
+      Role adminRole = Role.create("ROLE_ADMIN");
+      String temporaryPassword = "TempPass123!@#abcde";
+      String newPassword = "NewPassword123!";
+
+      User user = User.createWithTemporaryPassword(email, temporaryPassword, profile, Set.of(adminRole));
+      assertThat(user.isPasswordChangeRequired()).isTrue();
+
+      // when
+      user.changePassword(newPassword);
+
+      // then
+      assertThat(user.isPasswordChangeRequired()).isFalse();
+      assertThat(user.verifyPassword(newPassword)).isTrue();
+      assertThat(user.verifyPassword(temporaryPassword)).isFalse();
+    }
+
+    @Test
+    @DisplayName("빈 비밀번호로 변경 시 예외 발생")
+    void changePasswordWithEmptyPassword() {
+      // given
+      Email email = Email.of("admin@example.com");
+      Profile profile = Profile.of("관리자", "010-1234-5678");
+      String temporaryPassword = "TempPass123!@#abcde";
+      User user = User.createWithTemporaryPassword(email, temporaryPassword, profile, Set.of(Role.create("ROLE_ADMIN")));
+
+      // when & then
+      assertThatThrownBy(() -> user.changePassword(""))
+          .isInstanceOf(BusinessException.class)
+          .extracting("errorCode")
+          .isEqualTo(ErrorCode.INVALID_PASSWORD);
+    }
+
+    @Test
+    @DisplayName("null 비밀번호로 변경 시 예외 발생")
+    void changePasswordWithNullPassword() {
+      // given
+      Email email = Email.of("admin@example.com");
+      Profile profile = Profile.of("관리자", "010-1234-5678");
+      String temporaryPassword = "TempPass123!@#abcde";
+      User user = User.createWithTemporaryPassword(email, temporaryPassword, profile, Set.of(Role.create("ROLE_ADMIN")));
+
+      // when & then
+      assertThatThrownBy(() -> user.changePassword(null))
+          .isInstanceOf(BusinessException.class)
+          .extracting("errorCode")
+          .isEqualTo(ErrorCode.INVALID_PASSWORD);
+    }
+
+    @Test
+    @DisplayName("일반 사용자도 비밀번호 변경 가능")
+    void normalUserCanChangePassword() {
+      // given
+      Profile profile = Profile.of("홍길동", "010-1234-5678");
+      User user = User.signUp(Email.of("user@example.com"), "oldPassword", profile, Set.of(Role.create("ROLE_USER")));
+      String newPassword = "newPassword123!";
+
+      // when
+      user.changePassword(newPassword);
+
+      // then
+      assertThat(user.verifyPassword(newPassword)).isTrue();
+      assertThat(user.isPasswordChangeRequired()).isFalse();
+    }
+  }
+
+  @Nested
+  @DisplayName("재구성 테스트 - passwordChangeRequired 포함")
+  class ReconstituteWithPasswordChangeRequiredTest {
+
+    @Test
+    @DisplayName("passwordChangeRequired가 true인 User 재구성")
+    void reconstituteWithPasswordChangeRequiredTrue() {
+      // given
+      Long id = 1L;
+      Email email = Email.of("admin@example.com");
+      Password password = Password.fromHash("$2a$10$hashedPassword");
+      Profile profile = Profile.reconstitute("관리자", "010-1234-5678");
+
+      // when
+      User user =
+          User.reconstituteBuilder()
+              .id(id)
+              .email(email)
+              .password(password)
+              .profile(profile)
+              .status(UserStatus.ACTIVE)
+              .passwordChangeRequired(true)
+              .roles(Set.of(Role.reconstitute(2L, "ROLE_ADMIN")))
+              .build();
+
+      // then
+      assertThat(user.isPasswordChangeRequired()).isTrue();
+    }
+
+    @Test
+    @DisplayName("passwordChangeRequired가 false인 User 재구성")
+    void reconstituteWithPasswordChangeRequiredFalse() {
+      // given
+      Long id = 1L;
+      Email email = Email.of("user@example.com");
+      Password password = Password.fromHash("$2a$10$hashedPassword");
+      Profile profile = Profile.reconstitute("홍길동", "010-1234-5678");
+
+      // when
+      User user =
+          User.reconstituteBuilder()
+              .id(id)
+              .email(email)
+              .password(password)
+              .profile(profile)
+              .status(UserStatus.ACTIVE)
+              .passwordChangeRequired(false)
+              .roles(Set.of(Role.reconstitute(1L, "ROLE_USER")))
+              .build();
+
+      // then
+      assertThat(user.isPasswordChangeRequired()).isFalse();
+    }
+  }
 }
