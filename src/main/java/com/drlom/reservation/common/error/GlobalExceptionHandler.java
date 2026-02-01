@@ -150,6 +150,25 @@ public class GlobalExceptionHandler {
   }
 
   /**
+   * IllegalArgumentException 처리
+   *
+   * <p>Command 유효성 검증 실패 등 잘못된 입력값에 대한 처리
+   */
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+    log.warn("IllegalArgumentException: {}", ex.getMessage());
+
+    ErrorResponse response =
+        ErrorResponse.builder()
+            .code(ErrorCode.INVALID_INPUT_VALUE.getCode())
+            .message(ex.getMessage())
+            .timestamp(LocalDateTime.now())
+            .build();
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+  }
+
+  /**
    * 예상치 못한 예외 처리
    *
    * <p>모든 예외의 최종 처리
