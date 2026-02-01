@@ -21,11 +21,10 @@ import org.junit.jupiter.api.Test;
 class UserEntityMapperTest {
 
   private UserEntityMapper userEntityMapper;
-  private RoleEntityMapper roleEntityMapper;
 
   @BeforeEach
   void setUp() {
-    roleEntityMapper = new RoleEntityMapper();
+    RoleEntityMapper roleEntityMapper = new RoleEntityMapper();
     userEntityMapper = new UserEntityMapper(roleEntityMapper);
   }
 
