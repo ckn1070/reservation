@@ -226,6 +226,38 @@ class LoginUseCaseTest {
       // TokenProvider는 호출되지 않아야 함
       verify(jwtTokenProvider, never()).generateTokens(any());
     }
+
+    @Test
+    @DisplayName("비밀번호 변경이 필요한 사용자로 로그인 시 예외 발생")
+    void loginWithPasswordChangeRequired() {
+      // given
+      User userWithPasswordChangeRequired =
+          User.reconstituteBuilder()
+              .id(4L)
+              .email(Email.of("admin@example.com"))
+              .password(Password.fromRawPassword(RAW_PASSWORD))
+              .profile(Profile.reconstitute("관리자", "010-0000-0000"))
+              .status(UserStatus.ACTIVE)
+              .passwordChangeRequired(true)
+              .roles(Set.of(userRole))
+              .build();
+
+      LoginCommand command =
+          LoginCommand.builder().email("admin@example.com").password(RAW_PASSWORD).build();
+
+      when(userRepository.findByEmail(any(Email.class)))
+          .thenReturn(Optional.of(userWithPasswordChangeRequired));
+
+      // when & then
+      assertThatThrownBy(() -> loginUseCase.execute(command))
+          .isInstanceOf(BusinessException.class)
+          .hasMessage(ErrorCode.PASSWORD_CHANGE_REQUIRED.getMessage())
+          .extracting("errorCode")
+          .isEqualTo(ErrorCode.PASSWORD_CHANGE_REQUIRED);
+
+      // TokenProvider는 호출되지 않아야 함
+      verify(jwtTokenProvider, never()).generateTokens(any());
+    }
   }
 
   @Nested
