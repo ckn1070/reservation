@@ -1,8 +1,11 @@
 package com.drlom.reservation.common.security;
 
+import com.drlom.reservation.identity.infrastructure.security.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -12,6 +15,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * Spring Security 설정
@@ -25,7 +29,10 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
   // Swagger UI 경로
   private static final String[] SWAGGER_WHITELIST = {
@@ -48,6 +55,17 @@ public class SecurityConfig {
     return registration;
   }
 
+  // JwtAuthenticationFilter가 Spring Bean으로 자동 등록되는 것을 방지
+  // (SecurityFilterChain에서 직접 추가하므로 중복 방지)
+  @Bean
+  public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterRegistration(
+      JwtAuthenticationFilter filter) {
+    FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>();
+    registration.setFilter(filter);
+    registration.setEnabled(false); // 자동 등록 비활성화
+    return registration;
+  }
+
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) {
     http
@@ -61,6 +79,35 @@ public class SecurityConfig {
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
+        // 예외 처리 설정
+        .exceptionHandling(
+            exceptions ->
+                exceptions
+                    // 인증 실패 시 (401)
+                    .authenticationEntryPoint(
+                        (request, response, authException) -> {
+                          response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                          response.setContentType("application/json;charset=UTF-8");
+                          response
+                              .getWriter()
+                              .write(
+                                  "{\"code\":\"UNAUTHORIZED\",\"message\":\"인증이 필요합니다\",\"timestamp\":\""
+                                      + java.time.LocalDateTime.now()
+                                      + "\"}");
+                        })
+                    // 권한 부족 시 (403) - @PreAuthorize 실패 등
+                    .accessDeniedHandler(
+                        (request, response, accessDeniedException) -> {
+                          response.setStatus(HttpStatus.FORBIDDEN.value());
+                          response.setContentType("application/json;charset=UTF-8");
+                          response
+                              .getWriter()
+                              .write(
+                                  "{\"code\":\"FORBIDDEN\",\"message\":\"접근 권한이 없습니다\",\"timestamp\":\""
+                                      + java.time.LocalDateTime.now()
+                                      + "\"}");
+                        }))
+
         // URL 별 권한 설정
         .authorizeHttpRequests(
             auth ->
@@ -70,7 +117,10 @@ public class SecurityConfig {
                     .permitAll() // 회원가입, 로그인은 public
                     .anyRequest()
                     .authenticated() // 나머지는 인증 필요
-            );
+            )
+
+        // JWT 인증 필터 추가 (UsernamePasswordAuthenticationFilter 이전에 실행)
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
   }

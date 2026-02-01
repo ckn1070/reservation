@@ -11,7 +11,9 @@ import io.jsonwebtoken.security.Keys;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import javax.crypto.SecretKey;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -107,6 +109,24 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
       return Long.parseLong(claims.getSubject());
     } catch (JwtException e) {
       log.error("토큰에서 사용자 ID 추출 실패: {}", e.getMessage());
+      throw new BusinessException(ErrorCode.INVALID_TOKEN);
+    }
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public List<String> getRolesFromToken(String token) {
+    try {
+      Claims claims =
+          Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
+
+      Object roles = claims.get("roles");
+      if (roles instanceof List<?>) {
+        return (List<String>) roles;
+      }
+      return Collections.emptyList();
+    } catch (JwtException e) {
+      log.error("토큰에서 역할 추출 실패: {}", e.getMessage());
       throw new BusinessException(ErrorCode.INVALID_TOKEN);
     }
   }

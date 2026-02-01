@@ -35,4 +35,12 @@ public interface JwtTokenProvider {
    * @return 사용자 ID
    */
   Long getUserIdFromToken(String token);
+
+  /**
+   * 토큰에서 역할 목록 추출
+   *
+   * @param token JWT 토큰
+   * @return 역할 이름 목록
+   */
+  java.util.List<String> getRolesFromToken(String token);
 }
