@@ -218,4 +218,57 @@ class PasswordTest {
       assertThat(toString).doesNotContain("$2a$").contains("[PROTECTED]");
     }
   }
+
+  @Nested
+  @DisplayName("임시 비밀번호 생성 테스트")
+  class TemporaryPasswordTest {
+
+    @Test
+    @DisplayName("임시 비밀번호가 20글자로 생성된다")
+    void generateTemporaryPasswordWith20Characters() {
+      // when
+      String temporaryPassword = Password.generateTemporaryPassword();
+
+      // then
+      assertThat(temporaryPassword).hasSize(20);
+    }
+
+    @Test
+    @DisplayName("임시 비밀번호가 영문 대소문자, 숫자, 특수문자를 포함한다")
+    void temporaryPasswordContainsRequiredCharacters() {
+      // when
+      String temporaryPassword = Password.generateTemporaryPassword();
+
+      // then: 소문자, 대문자, 숫자, 특수문자 포함 확인
+      assertThat(temporaryPassword)
+          .matches(".*[a-z].*")
+          .matches(".*[A-Z].*")
+          .matches(".*[0-9].*")
+          .matches(".*[!@#$%^&*].*");
+    }
+
+    @Test
+    @DisplayName("임시 비밀번호가 매번 다르게 생성된다")
+    void temporaryPasswordIsUnique() {
+      // when
+      String password1 = Password.generateTemporaryPassword();
+      String password2 = Password.generateTemporaryPassword();
+
+      // then
+      assertThat(password1).isNotEqualTo(password2);
+    }
+
+    @Test
+    @DisplayName("임시 비밀번호로 Password 객체를 생성할 수 있다")
+    void createPasswordFromTemporaryPassword() {
+      // given
+      String temporaryPassword = Password.generateTemporaryPassword();
+
+      // when
+      Password password = Password.fromRawPassword(temporaryPassword);
+
+      // then
+      assertThat(password.matches(temporaryPassword)).isTrue();
+    }
+  }
 }
