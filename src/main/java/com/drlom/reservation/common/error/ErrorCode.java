@@ -34,6 +34,7 @@ public enum ErrorCode {
   TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "IDT-2101", "토큰이 만료되었습니다"),
   INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "IDT-2102", "유효하지 않은 토큰입니다"),
   REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "IDT-2103", "리프레시 토큰을 찾을 수 없습니다"),
+  PASSWORD_CHANGE_REQUIRED(HttpStatus.FORBIDDEN, "IDT-2104", "비밀번호 변경이 필요합니다"),
 
   // Catalog BC - Resource Domain (CAT-3xxx)
   RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "CAT-3000", "리소스를 찾을 수 없습니다"),
