@@ -40,6 +40,26 @@ public enum ErrorCode {
   RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "CAT-3000", "리소스를 찾을 수 없습니다"),
   INVALID_RESOURCE_TYPE(HttpStatus.BAD_REQUEST, "CAT-3001", "유효하지 않은 리소스 타입입니다"),
   RESOURCE_ALREADY_EXISTS(HttpStatus.CONFLICT, "CAT-3002", "이미 존재하는 리소스입니다"),
+  INVALID_RESOURCE_HIERARCHY(HttpStatus.BAD_REQUEST, "CAT-3003", "유효하지 않은 리소스 계층 구조입니다"),
+  RESOURCE_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "CAT-3004", "이미 삭제된 리소스입니다"),
+
+  // Catalog BC - SeatGrade Domain (CAT-31xx)
+  SEAT_GRADE_NOT_FOUND(HttpStatus.NOT_FOUND, "CAT-3100", "좌석 등급을 찾을 수 없습니다"),
+  SEAT_GRADE_ALREADY_EXISTS(HttpStatus.CONFLICT, "CAT-3101", "이미 존재하는 좌석 등급입니다"),
+
+  // Catalog BC - Policy/Rate Domain (CAT-32xx)
+  POLICY_NOT_FOUND(HttpStatus.NOT_FOUND, "CAT-3200", "정책을 찾을 수 없습니다"),
+  POLICY_ALREADY_EXISTS(HttpStatus.CONFLICT, "CAT-3201", "이미 존재하는 정책입니다"),
+  RATE_NOT_FOUND(HttpStatus.NOT_FOUND, "CAT-3202", "요금을 찾을 수 없습니다"),
+  INVALID_RATE_PERIOD(HttpStatus.BAD_REQUEST, "CAT-3203", "유효하지 않은 요금 적용 기간입니다"),
+
+  // Booking BC - ShowInstance Domain (BKG-40xx)
+  SHOW_INSTANCE_NOT_FOUND(HttpStatus.NOT_FOUND, "BKG-4000", "공연 회차를 찾을 수 없습니다"),
+  SHOW_INSTANCE_ALREADY_EXISTS(HttpStatus.CONFLICT, "BKG-4001", "동일 시간대에 이미 공연이 존재합니다"),
+  INVALID_SHOW_TIME(HttpStatus.BAD_REQUEST, "BKG-4002", "공연 시간이 올바르지 않습니다"),
+  INVALID_SALES_TIME(HttpStatus.BAD_REQUEST, "BKG-4003", "판매 시간이 올바르지 않습니다"),
+  INVALID_VENUE_TYPE(HttpStatus.BAD_REQUEST, "BKG-4004", "공연장(VENUE) 타입의 리소스만 지정할 수 있습니다"),
+  INVALID_SHOW_STATUS(HttpStatus.BAD_REQUEST, "BKG-4005", "공연 상태가 올바르지 않습니다"),
 
   // Booking BC - Reservation Domain (BKG-4xxx)
   RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "BKG-4000", "예약을 찾을 수 없습니다"),
