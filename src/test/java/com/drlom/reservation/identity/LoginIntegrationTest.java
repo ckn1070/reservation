@@ -247,6 +247,26 @@ class LoginIntegrationTest {
           .extracting("errorCode")
           .isEqualTo(ErrorCode.USER_DELETED);
     }
+
+    @Test
+    @DisplayName("비밀번호 변경 필요 사용자로 로그인 실패")
+    void login_withPasswordChangeRequired() {
+      // given: 회원가입 후 passwordChangeRequired를 true로 설정
+      signUpTestUser();
+
+      UserJpaEntity user = userJpaRepository.findByEmail(TEST_EMAIL).orElseThrow();
+      user.updatePasswordChangeRequired(true);
+      userJpaRepository.save(user);
+
+      LoginCommand command =
+          LoginCommand.builder().email(TEST_EMAIL).password(TEST_PASSWORD).build();
+
+      // when & then
+      assertThatThrownBy(() -> loginUseCase.execute(command))
+          .isInstanceOf(BusinessException.class)
+          .extracting("errorCode")
+          .isEqualTo(ErrorCode.PASSWORD_CHANGE_REQUIRED);
+    }
   }
 
   @Nested

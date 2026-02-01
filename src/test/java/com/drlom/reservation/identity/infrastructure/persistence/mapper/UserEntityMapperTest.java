@@ -64,7 +64,8 @@ class UserEntityMapperTest {
             "홍길동",
             "010-1234-5678",
             UserStatus.ACTIVE,
-            LocalDateTime.now());
+            LocalDateTime.now(),
+            false);
 
     RoleJpaEntity roleJpaEntity = RoleJpaEntity.reconstitute(1L, "ROLE_USER");
     jpaEntity.addRole(roleJpaEntity);
@@ -95,7 +96,8 @@ class UserEntityMapperTest {
             "홍길동",
             "010-1234-5678",
             UserStatus.ACTIVE,
-            null);
+            null,
+            false);
 
     // given: 수정된 Domain User
     User modifiedUser =
@@ -115,5 +117,67 @@ class UserEntityMapperTest {
     // then: 상태 변경 확인
     assertThat(existingEntity.getStatus()).isEqualTo(UserStatus.SUSPENDED);
     assertThat(existingEntity.getLastLoginAt()).isNotNull();
+    assertThat(existingEntity.getPasswordHash()).isEqualTo("$2a$10$newPassword");
+    assertThat(existingEntity.isPasswordChangeRequired()).isFalse();
+  }
+
+  @Test
+  @DisplayName("passwordChangeRequired가 true인 경우 JPA Entity로 변환")
+  void toDomain_withPasswordChangeRequired() {
+    // given: passwordChangeRequired = true인 JPA Entity
+    UserJpaEntity jpaEntity =
+        UserJpaEntity.reconstitute(
+            1L,
+            "admin@example.com",
+            "$2a$10$hashedPassword",
+            "관리자",
+            "010-0000-0000",
+            UserStatus.ACTIVE,
+            null,
+            true);
+
+    RoleJpaEntity roleJpaEntity = RoleJpaEntity.reconstitute(1L, "ROLE_ADMIN");
+    jpaEntity.addRole(roleJpaEntity);
+
+    // when
+    User domainUser = userEntityMapper.toDomain(jpaEntity);
+
+    // then
+    assertThat(domainUser.isPasswordChangeRequired()).isTrue();
+  }
+
+  @Test
+  @DisplayName("passwordChangeRequired 업데이트")
+  void updateJpaEntity_passwordChangeRequired() {
+    // given: passwordChangeRequired = true인 기존 Entity
+    UserJpaEntity existingEntity =
+        UserJpaEntity.reconstitute(
+            1L,
+            "admin@example.com",
+            "$2a$10$tempPassword",
+            "관리자",
+            "010-0000-0000",
+            UserStatus.ACTIVE,
+            null,
+            true);
+
+    // given: 비밀번호 변경 후 passwordChangeRequired = false인 Domain User
+    User modifiedUser =
+        User.reconstituteBuilder()
+            .id(1L)
+            .email(Email.of("admin@example.com"))
+            .password(Password.fromHash("$2a$10$newPassword"))
+            .profile(Profile.reconstitute("관리자", "010-0000-0000"))
+            .status(UserStatus.ACTIVE)
+            .passwordChangeRequired(false)
+            .roles(Set.of(Role.reconstitute(1L, "ROLE_ADMIN")))
+            .build();
+
+    // when
+    userEntityMapper.updateJpaEntity(existingEntity, modifiedUser);
+
+    // then
+    assertThat(existingEntity.isPasswordChangeRequired()).isFalse();
+    assertThat(existingEntity.getPasswordHash()).isEqualTo("$2a$10$newPassword");
   }
 }
