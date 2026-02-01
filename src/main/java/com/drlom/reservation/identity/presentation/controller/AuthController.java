@@ -19,6 +19,7 @@ import com.drlom.reservation.identity.presentation.dto.SignUpWebResponse;
 import com.drlom.reservation.identity.presentation.dto.TokenWebResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -66,11 +67,29 @@ public class AuthController {
   @ApiResponse(
       responseCode = "400",
       description = "입력값 검증 실패 (이메일 형식, 비밀번호 길이 등)",
-      content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples = {
+                @ExampleObject(
+                    name = "이메일 형식 오류",
+                    value =
+                        "{\"code\": \"INVALID_EMAIL_FORMAT\", \"message\": \"이메일 형식이 올바르지 않습니다\", \"timestamp\": \"2026-02-01T12:00:00\"}"),
+                @ExampleObject(
+                    name = "필수값 누락",
+                    value =
+                        "{\"code\": \"INVALID_INPUT_VALUE\", \"message\": \"입력값이 올바르지 않습니다\", \"fieldErrors\": [{\"field\": \"email\", \"message\": \"이메일은 필수입니다\"}], \"timestamp\": \"2026-02-01T12:00:00\"}")
+              }))
   @ApiResponse(
       responseCode = "409",
       description = "이미 존재하는 이메일",
-      content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"USER_ALREADY_EXISTS\", \"message\": \"이미 존재하는 이메일입니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")))
   @PostMapping("/signup")
   @ResponseStatus(HttpStatus.CREATED)
   public SignUpWebResponse signUp(@RequestBody @Valid SignUpWebRequest request) {
@@ -95,12 +114,34 @@ public class AuthController {
   @ApiResponse(
       responseCode = "401",
       description = "이메일 또는 비밀번호 불일치",
-      content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"INVALID_CREDENTIALS\", \"message\": \"이메일 또는 비밀번호가 일치하지 않습니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")))
   @ApiResponse(
       responseCode = "403",
       description =
           "정지/삭제된 사용자 또는 비밀번호 변경 필요 (임시 비밀번호 사용자는 먼저 POST /api/auth/password로 비밀번호 변경 필요)",
-      content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples = {
+                @ExampleObject(
+                    name = "정지된 사용자",
+                    value =
+                        "{\"code\": \"USER_SUSPENDED\", \"message\": \"정지된 사용자입니다\", \"timestamp\": \"2026-02-01T12:00:00\"}"),
+                @ExampleObject(
+                    name = "삭제된 사용자",
+                    value =
+                        "{\"code\": \"USER_DELETED\", \"message\": \"삭제된 사용자입니다\", \"timestamp\": \"2026-02-01T12:00:00\"}"),
+                @ExampleObject(
+                    name = "비밀번호 변경 필요",
+                    value =
+                        "{\"code\": \"PASSWORD_CHANGE_REQUIRED\", \"message\": \"비밀번호 변경이 필요합니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")
+              }))
   @PostMapping("/login")
   @ResponseStatus(HttpStatus.OK)
   public LoginWebResponse login(@RequestBody @Valid LoginWebRequest request) {
@@ -122,7 +163,23 @@ public class AuthController {
   @ApiResponse(
       responseCode = "401",
       description = "유효하지 않거나 만료된 Refresh Token",
-      content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples = {
+                @ExampleObject(
+                    name = "유효하지 않은 토큰",
+                    value =
+                        "{\"code\": \"INVALID_TOKEN\", \"message\": \"유효하지 않은 토큰입니다\", \"timestamp\": \"2026-02-01T12:00:00\"}"),
+                @ExampleObject(
+                    name = "만료된 토큰",
+                    value =
+                        "{\"code\": \"TOKEN_EXPIRED\", \"message\": \"토큰이 만료되었습니다\", \"timestamp\": \"2026-02-01T12:00:00\"}"),
+                @ExampleObject(
+                    name = "토큰 없음",
+                    value =
+                        "{\"code\": \"REFRESH_TOKEN_NOT_FOUND\", \"message\": \"리프레시 토큰을 찾을 수 없습니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")
+              }))
   @PostMapping("/logout")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void logout(@RequestBody @Valid LogoutWebRequest request) {
@@ -144,11 +201,39 @@ public class AuthController {
   @ApiResponse(
       responseCode = "401",
       description = "유효하지 않거나 만료된 Refresh Token",
-      content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples = {
+                @ExampleObject(
+                    name = "유효하지 않은 토큰",
+                    value =
+                        "{\"code\": \"INVALID_TOKEN\", \"message\": \"유효하지 않은 토큰입니다\", \"timestamp\": \"2026-02-01T12:00:00\"}"),
+                @ExampleObject(
+                    name = "만료된 토큰",
+                    value =
+                        "{\"code\": \"TOKEN_EXPIRED\", \"message\": \"토큰이 만료되었습니다\", \"timestamp\": \"2026-02-01T12:00:00\"}"),
+                @ExampleObject(
+                    name = "토큰 없음",
+                    value =
+                        "{\"code\": \"REFRESH_TOKEN_NOT_FOUND\", \"message\": \"리프레시 토큰을 찾을 수 없습니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")
+              }))
   @ApiResponse(
       responseCode = "403",
       description = "정지되었거나 삭제된 사용자",
-      content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples = {
+                @ExampleObject(
+                    name = "정지된 사용자",
+                    value =
+                        "{\"code\": \"USER_SUSPENDED\", \"message\": \"정지된 사용자입니다\", \"timestamp\": \"2026-02-01T12:00:00\"}"),
+                @ExampleObject(
+                    name = "삭제된 사용자",
+                    value =
+                        "{\"code\": \"USER_DELETED\", \"message\": \"삭제된 사용자입니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")
+              }))
   @PostMapping("/refresh")
   @ResponseStatus(HttpStatus.OK)
   public TokenWebResponse refresh(@RequestBody @Valid RefreshTokenWebRequest request) {
@@ -172,15 +257,45 @@ public class AuthController {
   @ApiResponse(
       responseCode = "400",
       description = "입력값 검증 실패 (비밀번호 형식, 비밀번호 확인 불일치 등)",
-      content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples = {
+                @ExampleObject(
+                    name = "비밀번호 형식 오류",
+                    value =
+                        "{\"code\": \"INVALID_PASSWORD\", \"message\": \"비밀번호가 올바르지 않습니다\", \"timestamp\": \"2026-02-01T12:00:00\"}"),
+                @ExampleObject(
+                    name = "필수값 누락",
+                    value =
+                        "{\"code\": \"INVALID_INPUT_VALUE\", \"message\": \"입력값이 올바르지 않습니다\", \"fieldErrors\": [{\"field\": \"newPassword\", \"message\": \"새 비밀번호는 필수입니다\"}], \"timestamp\": \"2026-02-01T12:00:00\"}")
+              }))
   @ApiResponse(
       responseCode = "401",
       description = "이메일 또는 현재 비밀번호 불일치",
-      content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"INVALID_CREDENTIALS\", \"message\": \"이메일 또는 비밀번호가 일치하지 않습니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")))
   @ApiResponse(
       responseCode = "403",
       description = "정지되었거나 삭제된 사용자",
-      content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples = {
+                @ExampleObject(
+                    name = "정지된 사용자",
+                    value =
+                        "{\"code\": \"USER_SUSPENDED\", \"message\": \"정지된 사용자입니다\", \"timestamp\": \"2026-02-01T12:00:00\"}"),
+                @ExampleObject(
+                    name = "삭제된 사용자",
+                    value =
+                        "{\"code\": \"USER_DELETED\", \"message\": \"삭제된 사용자입니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")
+              }))
   @PostMapping("/password")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void changePassword(@RequestBody @Valid ChangePasswordWebRequest request) {
