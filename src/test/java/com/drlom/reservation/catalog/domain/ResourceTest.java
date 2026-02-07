@@ -219,9 +219,9 @@ class ResourceTest {
       // then
       List<ResourceClosure> closures = venue.generateClosures();
       assertThat(closures).hasSize(1);
-      assertThat(closures.get(0).getAncestor()).isEqualTo(venue);
-      assertThat(closures.get(0).getDescendant()).isEqualTo(venue);
-      assertThat(closures.get(0).getDepth()).isZero();
+      assertThat(closures.getFirst().getAncestor()).isEqualTo(venue);
+      assertThat(closures.getFirst().getDescendant()).isEqualTo(venue);
+      assertThat(closures.getFirst().getDepth()).isZero();
     }
 
     @Test
