@@ -18,7 +18,7 @@ public class CreateRowWebRequest {
   @NotNull(message = "FLOOR ID는 필수입니다")
   private Long floorId;
 
-  @Schema(description = "열 고유 코드", example = "ROW-A", requiredMode = Schema.RequiredMode.REQUIRED)
+  @Schema(description = "열 고유 코드", example = "RA", requiredMode = Schema.RequiredMode.REQUIRED)
   @NotBlank(message = "코드는 필수입니다")
   @Size(max = 50)
   private String code;

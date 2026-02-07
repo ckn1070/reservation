@@ -38,8 +38,8 @@ public class CreateVenueUseCase {
     // 1. Command 검증
     command.validate();
 
-    // 2. 코드 중복 체크
-    if (resourceRepository.existsByCode(command.getCode())) {
+    // 2. 코드 중복 체크 (VENUE는 parent_id=null)
+    if (resourceRepository.existsByParentIdAndCode(null, command.getCode())) {
       log.warn("이미 존재하는 리소스 코드: {}", command.getCode());
       throw new BusinessException(ErrorCode.RESOURCE_ALREADY_EXISTS);
     }

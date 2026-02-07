@@ -18,7 +18,7 @@ public class CreateFloorWebRequest {
   @NotNull(message = "VENUE ID는 필수입니다")
   private Long venueId;
 
-  @Schema(description = "층 고유 코드", example = "FLOOR-1F", requiredMode = Schema.RequiredMode.REQUIRED)
+  @Schema(description = "층 고유 코드", example = "1F", requiredMode = Schema.RequiredMode.REQUIRED)
   @NotBlank(message = "코드는 필수입니다")
   @Size(max = 50)
   private String code;

@@ -50,8 +50,8 @@ public class CreateSeatUseCase {
       throw new BusinessException(ErrorCode.INVALID_RESOURCE_HIERARCHY, "SEAT의 부모는 ROW여야 합니다");
     }
 
-    // 4. 코드 중복 체크
-    if (resourceRepository.existsByCode(command.getCode())) {
+    // 4. 코드 중복 체크 (같은 ROW 내에서 유일)
+    if (resourceRepository.existsByParentIdAndCode(row.getId(), command.getCode())) {
       throw new BusinessException(ErrorCode.RESOURCE_ALREADY_EXISTS);
     }
 

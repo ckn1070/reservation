@@ -39,12 +39,13 @@ public interface ResourceRepository {
   Optional<Resource> findByCode(String code);
 
   /**
-   * 코드 존재 여부 확인
+   * 부모 컨텍스트 내 코드 존재 여부 확인
    *
+   * @param parentId 부모 리소스 ID (VENUE인 경우 null)
    * @param code Resource 코드
    * @return 존재 여부
    */
-  boolean existsByCode(String code);
+  boolean existsByParentIdAndCode(Long parentId, String code);
 
   /**
    * 부모 리소스로 자식 리소스 조회

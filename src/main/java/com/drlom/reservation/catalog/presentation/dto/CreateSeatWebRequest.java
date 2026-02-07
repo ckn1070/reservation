@@ -17,7 +17,7 @@ public class CreateSeatWebRequest {
   @NotNull(message = "ROW ID는 필수입니다")
   private Long rowId;
 
-  @Schema(description = "좌석 고유 코드", example = "SEAT-A1", requiredMode = Schema.RequiredMode.REQUIRED)
+  @Schema(description = "좌석 고유 코드", example = "S1", requiredMode = Schema.RequiredMode.REQUIRED)
   @NotBlank(message = "코드는 필수입니다")
   @Size(max = 50)
   private String code;

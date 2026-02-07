@@ -4,6 +4,8 @@ import com.drlom.reservation.catalog.infrastructure.persistence.entity.ResourceJ
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * Resource JPA Repository
@@ -25,12 +27,17 @@ public interface ResourceJpaRepository extends JpaRepository<ResourceJpaEntity, 
   Optional<ResourceJpaEntity> findByCode(String code);
 
   /**
-   * 코드 존재 여부 확인
+   * 부모 컨텍스트 내 코드 존재 여부 확인
    *
+   * @param parentId 부모 리소스 ID (VENUE인 경우 null)
    * @param code Resource 코드
    * @return 존재 여부
    */
-  boolean existsByCode(String code);
+  @Query(
+      "SELECT COUNT(r) > 0 FROM ResourceJpaEntity r "
+          + "WHERE (:parentId IS NULL AND r.parent IS NULL "
+          + "OR r.parent.id = :parentId) AND r.code = :code")
+  boolean existsByParentIdAndCode(@Param("parentId") Long parentId, @Param("code") String code);
 
   /**
    * 부모 리소스로 자식 리소스 조회

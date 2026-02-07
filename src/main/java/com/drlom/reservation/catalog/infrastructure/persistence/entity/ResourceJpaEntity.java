@@ -18,7 +18,10 @@ import lombok.NoArgsConstructor;
  * <p>- Aggregate Root
  */
 @Entity
-@Table(name = "resources")
+@Table(
+    name = "resources",
+    uniqueConstraints =
+        @UniqueConstraint(name = "uk_resources_parent_code", columnNames = {"parent_id", "code"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ResourceJpaEntity extends JpaBaseEntity {
@@ -34,7 +37,7 @@ public class ResourceJpaEntity extends JpaBaseEntity {
   @Column(name = "type", nullable = false, length = 20)
   private String type;
 
-  @Column(name = "code", nullable = false, unique = true, length = 20)
+  @Column(name = "code", nullable = false, length = 20)
   private String code;
 
   @Column(name = "name", nullable = false, length = 120)

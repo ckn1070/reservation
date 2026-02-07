@@ -21,7 +21,7 @@ public class ResourceWebResponse {
   @Schema(description = "리소스 타입", example = "VENUE")
   private ResourceType type;
 
-  @Schema(description = "고유 코드", example = "VENUE-001")
+  @Schema(description = "부모 컨텍스트 내 고유 코드", example = "VN001")
   private String code;
 
   @Schema(description = "이름", example = "세종문화회관")

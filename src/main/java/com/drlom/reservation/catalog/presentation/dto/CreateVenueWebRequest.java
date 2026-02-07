@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Schema(description = "공연장 생성 요청")
 public class CreateVenueWebRequest {
 
-  @Schema(description = "공연장 고유 코드", example = "VENUE-001", requiredMode = Schema.RequiredMode.REQUIRED)
+  @Schema(description = "공연장 고유 코드", example = "VN001", requiredMode = Schema.RequiredMode.REQUIRED)
   @NotBlank(message = "코드는 필수입니다")
   @Size(max = 50, message = "코드는 50자 이하여야 합니다")
   private String code;

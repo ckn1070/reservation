@@ -61,10 +61,10 @@ public class ResourceRepositoryImpl implements ResourceRepository {
   }
 
   @Override
-  public boolean existsByCode(String code) {
-    log.debug("Resource 존재 확인: code={}", code);
+  public boolean existsByParentIdAndCode(Long parentId, String code) {
+    log.debug("Resource 존재 확인: parentId={}, code={}", parentId, code);
 
-    return jpaRepository.existsByCode(code);
+    return jpaRepository.existsByParentIdAndCode(parentId, code);
   }
 
   @Override
