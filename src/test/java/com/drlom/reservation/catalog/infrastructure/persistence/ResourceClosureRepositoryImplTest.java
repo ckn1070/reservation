@@ -147,8 +147,8 @@ class ResourceClosureRepositoryImplTest {
 
       // then
       assertThat(depth0).hasSize(1);
-      assertThat(depth0.get(0).getAncestor().getId()).isEqualTo(savedVenue.getId());
-      assertThat(depth0.get(0).getDescendant().getId()).isEqualTo(savedVenue.getId());
+      assertThat(depth0.getFirst().getAncestor().getId()).isEqualTo(savedVenue.getId());
+      assertThat(depth0.getFirst().getDescendant().getId()).isEqualTo(savedVenue.getId());
     }
 
     @Test
@@ -159,7 +159,7 @@ class ResourceClosureRepositoryImplTest {
 
       // then
       assertThat(depth1).hasSize(1);
-      assertThat(depth1.get(0).getDescendant().getId()).isEqualTo(savedFloor.getId());
+      assertThat(depth1.getFirst().getDescendant().getId()).isEqualTo(savedFloor.getId());
     }
 
     @Test

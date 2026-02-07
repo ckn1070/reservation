@@ -203,7 +203,7 @@ class ResourceRepositoryImplTest {
 
       // then
       assertThat(children).hasSize(1);
-      assertThat(children.get(0).getCode()).isEqualTo("1F");
+      assertThat(children.getFirst().getCode()).isEqualTo("1F");
     }
 
     @Test
@@ -229,7 +229,7 @@ class ResourceRepositoryImplTest {
 
       // then
       assertThat(venues).hasSize(1);
-      assertThat(venues.get(0).getType()).isEqualTo(ResourceType.VENUE);
+      assertThat(venues.getFirst().getType()).isEqualTo(ResourceType.VENUE);
     }
 
     @Test

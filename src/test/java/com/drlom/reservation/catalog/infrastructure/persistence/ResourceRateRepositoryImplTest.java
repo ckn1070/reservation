@@ -201,7 +201,7 @@ class ResourceRateRepositoryImplTest {
 
       // then
       assertThat(baseRates).hasSize(1);
-      assertThat(baseRates.get(0).getAmount()).isEqualTo(50000L);
+      assertThat(baseRates.getFirst().getAmount()).isEqualTo(50000L);
     }
 
     @Test
@@ -244,7 +244,7 @@ class ResourceRateRepositoryImplTest {
 
       // then
       assertThat(rates).hasSize(1);
-      assertThat(rates.get(0).getRateType()).isEqualTo(RateType.BASE);
+      assertThat(rates.getFirst().getRateType()).isEqualTo(RateType.BASE);
     }
   }
 
