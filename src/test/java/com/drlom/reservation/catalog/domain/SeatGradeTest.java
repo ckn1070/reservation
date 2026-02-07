@@ -149,7 +149,7 @@ class SeatGradeTest {
     @DisplayName("재구성 시 ID는 null일 수 없다")
     void reconstituteWithNullId() {
       // when & then
-      //noinspection Contract
+      //noinspection DataFlowIssue
       assertThatThrownBy(() -> SeatGrade.reconstitute(null, "VIP", "VIP석", 1))
           .isInstanceOf(BusinessException.class)
           .extracting("errorCode")
