@@ -1,15 +1,15 @@
 CREATE TABLE resource_slot_lock_history
 (
-    id             BIGINT       NOT NULL AUTO_INCREMENT,
-    slot_id        BIGINT       NOT NULL,
-    reservation_id BIGINT       NOT NULL,
+    id             BIGINT       NOT NULL AUTO_INCREMENT COMMENT 'PK',
+    slot_id        BIGINT       NOT NULL COMMENT 'FK → resource_slots.id',
+    reservation_id BIGINT       NOT NULL COMMENT 'FK → reservations.id',
 
-    action         VARCHAR(20)  NOT NULL, -- HELD / CONFIRMED / RELEASED / EXPIRED / CANCELLED
-    reason         VARCHAR(255) NULL,     -- 만료/취소 사유 등
+    action         VARCHAR(20)  NOT NULL COMMENT '액션: HELD/CONFIRMED/RELEASED/EXPIRED/CANCELLED',
+    reason         VARCHAR(255) NULL COMMENT '사유 (만료/취소 등)',
 
-    held_at        TIMESTAMP(6) NULL,     -- 최초 HELD 시각
-    expires_at     TIMESTAMP(6) NULL,     -- HELD 당시 TTL
-    action_at      TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    held_at        TIMESTAMP(6) NULL COMMENT '최초 HELD 시각',
+    expires_at     TIMESTAMP(6) NULL COMMENT 'HELD 당시 TTL',
+    action_at      TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '액션 수행 시각',
 
     PRIMARY KEY (id),
 
@@ -27,4 +27,5 @@ CREATE TABLE resource_slot_lock_history
             ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_0900_ai_ci;
+  COLLATE = utf8mb4_0900_ai_ci
+  COMMENT = '잠금 이력 (감사 추적)';

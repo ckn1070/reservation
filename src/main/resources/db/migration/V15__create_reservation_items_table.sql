@@ -1,17 +1,16 @@
 CREATE TABLE reservation_items
 (
-    id             BIGINT       NOT NULL AUTO_INCREMENT,
-    reservation_id BIGINT       NOT NULL,
-    slot_id        BIGINT       NOT NULL,
+    id             BIGINT       NOT NULL AUTO_INCREMENT COMMENT 'PK',
+    reservation_id BIGINT       NOT NULL COMMENT 'FK → reservations.id',
+    slot_id        BIGINT       NOT NULL COMMENT 'FK → resource_slots.id',
 
-    price_amount   BIGINT       NOT NULL,
-    currency       CHAR(3)      NOT NULL DEFAULT 'KRW',
+    price_amount   BIGINT       NOT NULL COMMENT '예약 시점 가격 스냅샷 (원 단위)',
+    currency       CHAR(3)      NOT NULL DEFAULT 'KRW' COMMENT '통화 코드 (ISO 4217)',
 
-    created_at     TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    created_at     TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '생성 시각',
 
     PRIMARY KEY (id),
 
-    -- 동일 예약, 같은 슬롯+리소스 중복 방지
     UNIQUE KEY uk_reservation_items_unique (reservation_id, slot_id),
 
     KEY idx_reservation_items_reservation (reservation_id),
@@ -27,4 +26,5 @@ CREATE TABLE reservation_items
             ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_0900_ai_ci;
+  COLLATE = utf8mb4_0900_ai_ci
+  COMMENT = '예약 항목 (불변)';

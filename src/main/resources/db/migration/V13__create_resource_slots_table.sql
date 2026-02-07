@@ -1,21 +1,21 @@
 CREATE TABLE resource_slots
 (
-    id               BIGINT       NOT NULL AUTO_INCREMENT,
-    show_instance_id BIGINT       NOT NULL,
-    seat_id          BIGINT       NOT NULL,                        -- resources.type = SEAT
-    applied_rate_id  BIGINT       NULL,
+    id               BIGINT       NOT NULL AUTO_INCREMENT COMMENT 'PK',
+    show_instance_id BIGINT       NOT NULL COMMENT 'FK → show_instances.id',
+    seat_id          BIGINT       NOT NULL COMMENT 'FK → resources.id (type=SEAT)',
+    applied_rate_id  BIGINT       NULL COMMENT 'FK → resource_rates.id',
 
-    currency         CHAR(3)      NOT NULL DEFAULT 'KRW',
-    price_amount     BIGINT       NOT NULL,
+    currency         CHAR(3)      NOT NULL DEFAULT 'KRW' COMMENT '통화 코드 (ISO 4217)',
+    price_amount     BIGINT       NOT NULL COMMENT '적용 가격 (원 단위)',
 
-    status           VARCHAR(20)  NOT NULL DEFAULT 'OPEN',         -- OPEN/CLOSED
+    status           VARCHAR(20)  NOT NULL DEFAULT 'OPEN' COMMENT '슬롯 상태: OPEN/CLOSED',
 
-    created_at       TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-    updated_at       TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    created_at       TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '생성 시각',
+    updated_at       TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '수정 시각',
 
     PRIMARY KEY (id),
 
-    UNIQUE KEY uk_resource_slots_show (show_instance_id, seat_id), -- 회차+좌석 1개 슬롯 고정
+    UNIQUE KEY uk_resource_slots_show (show_instance_id, seat_id),
     KEY idx_resource_slots_show (show_instance_id, status),
     KEY idx_resource_slots_seat (seat_id, status),
 
@@ -33,4 +33,5 @@ CREATE TABLE resource_slots
             ON DELETE SET NULL ON UPDATE RESTRICT
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_0900_ai_ci;
+  COLLATE = utf8mb4_0900_ai_ci
+  COMMENT = '예약 가능 슬롯 (회차 + 좌석)';

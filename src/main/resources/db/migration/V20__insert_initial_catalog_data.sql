@@ -20,155 +20,155 @@ VALUES ('VIP', 'VIP석', 1),
 
 -- 2.1 공연장 (VENUE)
 INSERT INTO resources (id, parent_id, type, code, name, status, capacity, is_reservable, location_text, description)
-VALUES (1, NULL, 'VENUE', 'VENUE-001', '소극장', 'ACTIVE', 100, FALSE, '서울시 중구 예술로 777', 'Default VENUE 소극장');
+VALUES (1, NULL, 'VENUE', 'VN001', '소극장', 'ACTIVE', 100, FALSE, '서울시 중구 예술로 777', 'Default VENUE 소극장');
 
 -- 2.2 층 (FLOOR)
 INSERT INTO resources (id, parent_id, type, code, name, status, capacity, is_reservable)
-VALUES (2, 1, 'FLOOR', 'FLOOR-1F', '1층', 'ACTIVE', 100, FALSE);
+VALUES (2, 1, 'FLOOR', '1F', '1층', 'ACTIVE', 100, FALSE);
 
 -- 2.3 열 (ROW) - A~J열
 INSERT INTO resources (id, parent_id, type, code, name, status, capacity, is_reservable)
-VALUES (3, 2, 'ROW', 'ROW-A', 'A열', 'ACTIVE', 10, FALSE),
-       (4, 2, 'ROW', 'ROW-B', 'B열', 'ACTIVE', 10, FALSE),
-       (5, 2, 'ROW', 'ROW-C', 'C열', 'ACTIVE', 10, FALSE),
-       (6, 2, 'ROW', 'ROW-D', 'D열', 'ACTIVE', 10, FALSE),
-       (7, 2, 'ROW', 'ROW-E', 'E열', 'ACTIVE', 10, FALSE),
-       (8, 2, 'ROW', 'ROW-F', 'F열', 'ACTIVE', 10, FALSE),
-       (9, 2, 'ROW', 'ROW-G', 'G열', 'ACTIVE', 10, FALSE),
-       (10, 2, 'ROW', 'ROW-H', 'H열', 'ACTIVE', 10, FALSE),
-       (11, 2, 'ROW', 'ROW-I', 'I열', 'ACTIVE', 10, FALSE),
-       (12, 2, 'ROW', 'ROW-J', 'J열', 'ACTIVE', 10, FALSE);
+VALUES (3, 2, 'ROW', 'RA', 'A열', 'ACTIVE', 10, FALSE),
+       (4, 2, 'ROW', 'RB', 'B열', 'ACTIVE', 10, FALSE),
+       (5, 2, 'ROW', 'RC', 'C열', 'ACTIVE', 10, FALSE),
+       (6, 2, 'ROW', 'RD', 'D열', 'ACTIVE', 10, FALSE),
+       (7, 2, 'ROW', 'RE', 'E열', 'ACTIVE', 10, FALSE),
+       (8, 2, 'ROW', 'RF', 'F열', 'ACTIVE', 10, FALSE),
+       (9, 2, 'ROW', 'RG', 'G열', 'ACTIVE', 10, FALSE),
+       (10, 2, 'ROW', 'RH', 'H열', 'ACTIVE', 10, FALSE),
+       (11, 2, 'ROW', 'RI', 'I열', 'ACTIVE', 10, FALSE),
+       (12, 2, 'ROW', 'RJ', 'J열', 'ACTIVE', 10, FALSE);
 
 -- 2.4 좌석 (SEAT) - 각 열당 10개
 -- A열 (id: 13~22) - VIP
 INSERT INTO resources (id, parent_id, type, code, name, status, capacity, is_reservable)
-VALUES (13, 3, 'SEAT', 'SEAT-A1', 'A1', 'ACTIVE', 1, TRUE),
-       (14, 3, 'SEAT', 'SEAT-A2', 'A2', 'ACTIVE', 1, TRUE),
-       (15, 3, 'SEAT', 'SEAT-A3', 'A3', 'ACTIVE', 1, TRUE),
-       (16, 3, 'SEAT', 'SEAT-A4', 'A4', 'ACTIVE', 1, TRUE),
-       (17, 3, 'SEAT', 'SEAT-A5', 'A5', 'ACTIVE', 1, TRUE),
-       (18, 3, 'SEAT', 'SEAT-A6', 'A6', 'ACTIVE', 1, TRUE),
-       (19, 3, 'SEAT', 'SEAT-A7', 'A7', 'ACTIVE', 1, TRUE),
-       (20, 3, 'SEAT', 'SEAT-A8', 'A8', 'ACTIVE', 1, TRUE),
-       (21, 3, 'SEAT', 'SEAT-A9', 'A9', 'ACTIVE', 1, TRUE),
-       (22, 3, 'SEAT', 'SEAT-A10', 'A10', 'ACTIVE', 1, TRUE);
+VALUES (13, 3, 'SEAT', 'S1', 'A1', 'ACTIVE', 1, TRUE),
+       (14, 3, 'SEAT', 'S2', 'A2', 'ACTIVE', 1, TRUE),
+       (15, 3, 'SEAT', 'S3', 'A3', 'ACTIVE', 1, TRUE),
+       (16, 3, 'SEAT', 'S4', 'A4', 'ACTIVE', 1, TRUE),
+       (17, 3, 'SEAT', 'S5', 'A5', 'ACTIVE', 1, TRUE),
+       (18, 3, 'SEAT', 'S6', 'A6', 'ACTIVE', 1, TRUE),
+       (19, 3, 'SEAT', 'S7', 'A7', 'ACTIVE', 1, TRUE),
+       (20, 3, 'SEAT', 'S8', 'A8', 'ACTIVE', 1, TRUE),
+       (21, 3, 'SEAT', 'S9', 'A9', 'ACTIVE', 1, TRUE),
+       (22, 3, 'SEAT', 'S10', 'A10', 'ACTIVE', 1, TRUE);
 
 -- B열 (id: 23~32) - VIP
 INSERT INTO resources (id, parent_id, type, code, name, status, capacity, is_reservable)
-VALUES (23, 4, 'SEAT', 'SEAT-B1', 'B1', 'ACTIVE', 1, TRUE),
-       (24, 4, 'SEAT', 'SEAT-B2', 'B2', 'ACTIVE', 1, TRUE),
-       (25, 4, 'SEAT', 'SEAT-B3', 'B3', 'ACTIVE', 1, TRUE),
-       (26, 4, 'SEAT', 'SEAT-B4', 'B4', 'ACTIVE', 1, TRUE),
-       (27, 4, 'SEAT', 'SEAT-B5', 'B5', 'ACTIVE', 1, TRUE),
-       (28, 4, 'SEAT', 'SEAT-B6', 'B6', 'ACTIVE', 1, TRUE),
-       (29, 4, 'SEAT', 'SEAT-B7', 'B7', 'ACTIVE', 1, TRUE),
-       (30, 4, 'SEAT', 'SEAT-B8', 'B8', 'ACTIVE', 1, TRUE),
-       (31, 4, 'SEAT', 'SEAT-B9', 'B9', 'ACTIVE', 1, TRUE),
-       (32, 4, 'SEAT', 'SEAT-B10', 'B10', 'ACTIVE', 1, TRUE);
+VALUES (23, 4, 'SEAT', 'S1', 'B1', 'ACTIVE', 1, TRUE),
+       (24, 4, 'SEAT', 'S2', 'B2', 'ACTIVE', 1, TRUE),
+       (25, 4, 'SEAT', 'S3', 'B3', 'ACTIVE', 1, TRUE),
+       (26, 4, 'SEAT', 'S4', 'B4', 'ACTIVE', 1, TRUE),
+       (27, 4, 'SEAT', 'S5', 'B5', 'ACTIVE', 1, TRUE),
+       (28, 4, 'SEAT', 'S6', 'B6', 'ACTIVE', 1, TRUE),
+       (29, 4, 'SEAT', 'S7', 'B7', 'ACTIVE', 1, TRUE),
+       (30, 4, 'SEAT', 'S8', 'B8', 'ACTIVE', 1, TRUE),
+       (31, 4, 'SEAT', 'S9', 'B9', 'ACTIVE', 1, TRUE),
+       (32, 4, 'SEAT', 'S10', 'B10', 'ACTIVE', 1, TRUE);
 
 -- C열 (id: 33~42) - R
 INSERT INTO resources (id, parent_id, type, code, name, status, capacity, is_reservable)
-VALUES (33, 5, 'SEAT', 'SEAT-C1', 'C1', 'ACTIVE', 1, TRUE),
-       (34, 5, 'SEAT', 'SEAT-C2', 'C2', 'ACTIVE', 1, TRUE),
-       (35, 5, 'SEAT', 'SEAT-C3', 'C3', 'ACTIVE', 1, TRUE),
-       (36, 5, 'SEAT', 'SEAT-C4', 'C4', 'ACTIVE', 1, TRUE),
-       (37, 5, 'SEAT', 'SEAT-C5', 'C5', 'ACTIVE', 1, TRUE),
-       (38, 5, 'SEAT', 'SEAT-C6', 'C6', 'ACTIVE', 1, TRUE),
-       (39, 5, 'SEAT', 'SEAT-C7', 'C7', 'ACTIVE', 1, TRUE),
-       (40, 5, 'SEAT', 'SEAT-C8', 'C8', 'ACTIVE', 1, TRUE),
-       (41, 5, 'SEAT', 'SEAT-C9', 'C9', 'ACTIVE', 1, TRUE),
-       (42, 5, 'SEAT', 'SEAT-C10', 'C10', 'ACTIVE', 1, TRUE);
+VALUES (33, 5, 'SEAT', 'S1', 'C1', 'ACTIVE', 1, TRUE),
+       (34, 5, 'SEAT', 'S2', 'C2', 'ACTIVE', 1, TRUE),
+       (35, 5, 'SEAT', 'S3', 'C3', 'ACTIVE', 1, TRUE),
+       (36, 5, 'SEAT', 'S4', 'C4', 'ACTIVE', 1, TRUE),
+       (37, 5, 'SEAT', 'S5', 'C5', 'ACTIVE', 1, TRUE),
+       (38, 5, 'SEAT', 'S6', 'C6', 'ACTIVE', 1, TRUE),
+       (39, 5, 'SEAT', 'S7', 'C7', 'ACTIVE', 1, TRUE),
+       (40, 5, 'SEAT', 'S8', 'C8', 'ACTIVE', 1, TRUE),
+       (41, 5, 'SEAT', 'S9', 'C9', 'ACTIVE', 1, TRUE),
+       (42, 5, 'SEAT', 'S10', 'C10', 'ACTIVE', 1, TRUE);
 
 -- D열 (id: 43~52) - R
 INSERT INTO resources (id, parent_id, type, code, name, status, capacity, is_reservable)
-VALUES (43, 6, 'SEAT', 'SEAT-D1', 'D1', 'ACTIVE', 1, TRUE),
-       (44, 6, 'SEAT', 'SEAT-D2', 'D2', 'ACTIVE', 1, TRUE),
-       (45, 6, 'SEAT', 'SEAT-D3', 'D3', 'ACTIVE', 1, TRUE),
-       (46, 6, 'SEAT', 'SEAT-D4', 'D4', 'ACTIVE', 1, TRUE),
-       (47, 6, 'SEAT', 'SEAT-D5', 'D5', 'ACTIVE', 1, TRUE),
-       (48, 6, 'SEAT', 'SEAT-D6', 'D6', 'ACTIVE', 1, TRUE),
-       (49, 6, 'SEAT', 'SEAT-D7', 'D7', 'ACTIVE', 1, TRUE),
-       (50, 6, 'SEAT', 'SEAT-D8', 'D8', 'ACTIVE', 1, TRUE),
-       (51, 6, 'SEAT', 'SEAT-D9', 'D9', 'ACTIVE', 1, TRUE),
-       (52, 6, 'SEAT', 'SEAT-D10', 'D10', 'ACTIVE', 1, TRUE);
+VALUES (43, 6, 'SEAT', 'S1', 'D1', 'ACTIVE', 1, TRUE),
+       (44, 6, 'SEAT', 'S2', 'D2', 'ACTIVE', 1, TRUE),
+       (45, 6, 'SEAT', 'S3', 'D3', 'ACTIVE', 1, TRUE),
+       (46, 6, 'SEAT', 'S4', 'D4', 'ACTIVE', 1, TRUE),
+       (47, 6, 'SEAT', 'S5', 'D5', 'ACTIVE', 1, TRUE),
+       (48, 6, 'SEAT', 'S6', 'D6', 'ACTIVE', 1, TRUE),
+       (49, 6, 'SEAT', 'S7', 'D7', 'ACTIVE', 1, TRUE),
+       (50, 6, 'SEAT', 'S8', 'D8', 'ACTIVE', 1, TRUE),
+       (51, 6, 'SEAT', 'S9', 'D9', 'ACTIVE', 1, TRUE),
+       (52, 6, 'SEAT', 'S10', 'D10', 'ACTIVE', 1, TRUE);
 
 -- E열 (id: 53~62) - S
 INSERT INTO resources (id, parent_id, type, code, name, status, capacity, is_reservable)
-VALUES (53, 7, 'SEAT', 'SEAT-E1', 'E1', 'ACTIVE', 1, TRUE),
-       (54, 7, 'SEAT', 'SEAT-E2', 'E2', 'ACTIVE', 1, TRUE),
-       (55, 7, 'SEAT', 'SEAT-E3', 'E3', 'ACTIVE', 1, TRUE),
-       (56, 7, 'SEAT', 'SEAT-E4', 'E4', 'ACTIVE', 1, TRUE),
-       (57, 7, 'SEAT', 'SEAT-E5', 'E5', 'ACTIVE', 1, TRUE),
-       (58, 7, 'SEAT', 'SEAT-E6', 'E6', 'ACTIVE', 1, TRUE),
-       (59, 7, 'SEAT', 'SEAT-E7', 'E7', 'ACTIVE', 1, TRUE),
-       (60, 7, 'SEAT', 'SEAT-E8', 'E8', 'ACTIVE', 1, TRUE),
-       (61, 7, 'SEAT', 'SEAT-E9', 'E9', 'ACTIVE', 1, TRUE),
-       (62, 7, 'SEAT', 'SEAT-E10', 'E10', 'ACTIVE', 1, TRUE);
+VALUES (53, 7, 'SEAT', 'S1', 'E1', 'ACTIVE', 1, TRUE),
+       (54, 7, 'SEAT', 'S2', 'E2', 'ACTIVE', 1, TRUE),
+       (55, 7, 'SEAT', 'S3', 'E3', 'ACTIVE', 1, TRUE),
+       (56, 7, 'SEAT', 'S4', 'E4', 'ACTIVE', 1, TRUE),
+       (57, 7, 'SEAT', 'S5', 'E5', 'ACTIVE', 1, TRUE),
+       (58, 7, 'SEAT', 'S6', 'E6', 'ACTIVE', 1, TRUE),
+       (59, 7, 'SEAT', 'S7', 'E7', 'ACTIVE', 1, TRUE),
+       (60, 7, 'SEAT', 'S8', 'E8', 'ACTIVE', 1, TRUE),
+       (61, 7, 'SEAT', 'S9', 'E9', 'ACTIVE', 1, TRUE),
+       (62, 7, 'SEAT', 'S10', 'E10', 'ACTIVE', 1, TRUE);
 
 -- F열 (id: 63~72) - S
 INSERT INTO resources (id, parent_id, type, code, name, status, capacity, is_reservable)
-VALUES (63, 8, 'SEAT', 'SEAT-F1', 'F1', 'ACTIVE', 1, TRUE),
-       (64, 8, 'SEAT', 'SEAT-F2', 'F2', 'ACTIVE', 1, TRUE),
-       (65, 8, 'SEAT', 'SEAT-F3', 'F3', 'ACTIVE', 1, TRUE),
-       (66, 8, 'SEAT', 'SEAT-F4', 'F4', 'ACTIVE', 1, TRUE),
-       (67, 8, 'SEAT', 'SEAT-F5', 'F5', 'ACTIVE', 1, TRUE),
-       (68, 8, 'SEAT', 'SEAT-F6', 'F6', 'ACTIVE', 1, TRUE),
-       (69, 8, 'SEAT', 'SEAT-F7', 'F7', 'ACTIVE', 1, TRUE),
-       (70, 8, 'SEAT', 'SEAT-F8', 'F8', 'ACTIVE', 1, TRUE),
-       (71, 8, 'SEAT', 'SEAT-F9', 'F9', 'ACTIVE', 1, TRUE),
-       (72, 8, 'SEAT', 'SEAT-F10', 'F10', 'ACTIVE', 1, TRUE);
+VALUES (63, 8, 'SEAT', 'S1', 'F1', 'ACTIVE', 1, TRUE),
+       (64, 8, 'SEAT', 'S2', 'F2', 'ACTIVE', 1, TRUE),
+       (65, 8, 'SEAT', 'S3', 'F3', 'ACTIVE', 1, TRUE),
+       (66, 8, 'SEAT', 'S4', 'F4', 'ACTIVE', 1, TRUE),
+       (67, 8, 'SEAT', 'S5', 'F5', 'ACTIVE', 1, TRUE),
+       (68, 8, 'SEAT', 'S6', 'F6', 'ACTIVE', 1, TRUE),
+       (69, 8, 'SEAT', 'S7', 'F7', 'ACTIVE', 1, TRUE),
+       (70, 8, 'SEAT', 'S8', 'F8', 'ACTIVE', 1, TRUE),
+       (71, 8, 'SEAT', 'S9', 'F9', 'ACTIVE', 1, TRUE),
+       (72, 8, 'SEAT', 'S10', 'F10', 'ACTIVE', 1, TRUE);
 
 -- G열 (id: 73~82) - S
 INSERT INTO resources (id, parent_id, type, code, name, status, capacity, is_reservable)
-VALUES (73, 9, 'SEAT', 'SEAT-G1', 'G1', 'ACTIVE', 1, TRUE),
-       (74, 9, 'SEAT', 'SEAT-G2', 'G2', 'ACTIVE', 1, TRUE),
-       (75, 9, 'SEAT', 'SEAT-G3', 'G3', 'ACTIVE', 1, TRUE),
-       (76, 9, 'SEAT', 'SEAT-G4', 'G4', 'ACTIVE', 1, TRUE),
-       (77, 9, 'SEAT', 'SEAT-G5', 'G5', 'ACTIVE', 1, TRUE),
-       (78, 9, 'SEAT', 'SEAT-G6', 'G6', 'ACTIVE', 1, TRUE),
-       (79, 9, 'SEAT', 'SEAT-G7', 'G7', 'ACTIVE', 1, TRUE),
-       (80, 9, 'SEAT', 'SEAT-G8', 'G8', 'ACTIVE', 1, TRUE),
-       (81, 9, 'SEAT', 'SEAT-G9', 'G9', 'ACTIVE', 1, TRUE),
-       (82, 9, 'SEAT', 'SEAT-G10', 'G10', 'ACTIVE', 1, TRUE);
+VALUES (73, 9, 'SEAT', 'S1', 'G1', 'ACTIVE', 1, TRUE),
+       (74, 9, 'SEAT', 'S2', 'G2', 'ACTIVE', 1, TRUE),
+       (75, 9, 'SEAT', 'S3', 'G3', 'ACTIVE', 1, TRUE),
+       (76, 9, 'SEAT', 'S4', 'G4', 'ACTIVE', 1, TRUE),
+       (77, 9, 'SEAT', 'S5', 'G5', 'ACTIVE', 1, TRUE),
+       (78, 9, 'SEAT', 'S6', 'G6', 'ACTIVE', 1, TRUE),
+       (79, 9, 'SEAT', 'S7', 'G7', 'ACTIVE', 1, TRUE),
+       (80, 9, 'SEAT', 'S8', 'G8', 'ACTIVE', 1, TRUE),
+       (81, 9, 'SEAT', 'S9', 'G9', 'ACTIVE', 1, TRUE),
+       (82, 9, 'SEAT', 'S10', 'G10', 'ACTIVE', 1, TRUE);
 
 -- H열 (id: 83~92) - A
 INSERT INTO resources (id, parent_id, type, code, name, status, capacity, is_reservable)
-VALUES (83, 10, 'SEAT', 'SEAT-H1', 'H1', 'ACTIVE', 1, TRUE),
-       (84, 10, 'SEAT', 'SEAT-H2', 'H2', 'ACTIVE', 1, TRUE),
-       (85, 10, 'SEAT', 'SEAT-H3', 'H3', 'ACTIVE', 1, TRUE),
-       (86, 10, 'SEAT', 'SEAT-H4', 'H4', 'ACTIVE', 1, TRUE),
-       (87, 10, 'SEAT', 'SEAT-H5', 'H5', 'ACTIVE', 1, TRUE),
-       (88, 10, 'SEAT', 'SEAT-H6', 'H6', 'ACTIVE', 1, TRUE),
-       (89, 10, 'SEAT', 'SEAT-H7', 'H7', 'ACTIVE', 1, TRUE),
-       (90, 10, 'SEAT', 'SEAT-H8', 'H8', 'ACTIVE', 1, TRUE),
-       (91, 10, 'SEAT', 'SEAT-H9', 'H9', 'ACTIVE', 1, TRUE),
-       (92, 10, 'SEAT', 'SEAT-H10', 'H10', 'ACTIVE', 1, TRUE);
+VALUES (83, 10, 'SEAT', 'S1', 'H1', 'ACTIVE', 1, TRUE),
+       (84, 10, 'SEAT', 'S2', 'H2', 'ACTIVE', 1, TRUE),
+       (85, 10, 'SEAT', 'S3', 'H3', 'ACTIVE', 1, TRUE),
+       (86, 10, 'SEAT', 'S4', 'H4', 'ACTIVE', 1, TRUE),
+       (87, 10, 'SEAT', 'S5', 'H5', 'ACTIVE', 1, TRUE),
+       (88, 10, 'SEAT', 'S6', 'H6', 'ACTIVE', 1, TRUE),
+       (89, 10, 'SEAT', 'S7', 'H7', 'ACTIVE', 1, TRUE),
+       (90, 10, 'SEAT', 'S8', 'H8', 'ACTIVE', 1, TRUE),
+       (91, 10, 'SEAT', 'S9', 'H9', 'ACTIVE', 1, TRUE),
+       (92, 10, 'SEAT', 'S10', 'H10', 'ACTIVE', 1, TRUE);
 
 -- I열 (id: 93~102) - A
 INSERT INTO resources (id, parent_id, type, code, name, status, capacity, is_reservable)
-VALUES (93, 11, 'SEAT', 'SEAT-I1', 'I1', 'ACTIVE', 1, TRUE),
-       (94, 11, 'SEAT', 'SEAT-I2', 'I2', 'ACTIVE', 1, TRUE),
-       (95, 11, 'SEAT', 'SEAT-I3', 'I3', 'ACTIVE', 1, TRUE),
-       (96, 11, 'SEAT', 'SEAT-I4', 'I4', 'ACTIVE', 1, TRUE),
-       (97, 11, 'SEAT', 'SEAT-I5', 'I5', 'ACTIVE', 1, TRUE),
-       (98, 11, 'SEAT', 'SEAT-I6', 'I6', 'ACTIVE', 1, TRUE),
-       (99, 11, 'SEAT', 'SEAT-I7', 'I7', 'ACTIVE', 1, TRUE),
-       (100, 11, 'SEAT', 'SEAT-I8', 'I8', 'ACTIVE', 1, TRUE),
-       (101, 11, 'SEAT', 'SEAT-I9', 'I9', 'ACTIVE', 1, TRUE),
-       (102, 11, 'SEAT', 'SEAT-I10', 'I10', 'ACTIVE', 1, TRUE);
+VALUES (93, 11, 'SEAT', 'S1', 'I1', 'ACTIVE', 1, TRUE),
+       (94, 11, 'SEAT', 'S2', 'I2', 'ACTIVE', 1, TRUE),
+       (95, 11, 'SEAT', 'S3', 'I3', 'ACTIVE', 1, TRUE),
+       (96, 11, 'SEAT', 'S4', 'I4', 'ACTIVE', 1, TRUE),
+       (97, 11, 'SEAT', 'S5', 'I5', 'ACTIVE', 1, TRUE),
+       (98, 11, 'SEAT', 'S6', 'I6', 'ACTIVE', 1, TRUE),
+       (99, 11, 'SEAT', 'S7', 'I7', 'ACTIVE', 1, TRUE),
+       (100, 11, 'SEAT', 'S8', 'I8', 'ACTIVE', 1, TRUE),
+       (101, 11, 'SEAT', 'S9', 'I9', 'ACTIVE', 1, TRUE),
+       (102, 11, 'SEAT', 'S10', 'I10', 'ACTIVE', 1, TRUE);
 
 -- J열 (id: 103~112) - A
 INSERT INTO resources (id, parent_id, type, code, name, status, capacity, is_reservable)
-VALUES (103, 12, 'SEAT', 'SEAT-J1', 'J1', 'ACTIVE', 1, TRUE),
-       (104, 12, 'SEAT', 'SEAT-J2', 'J2', 'ACTIVE', 1, TRUE),
-       (105, 12, 'SEAT', 'SEAT-J3', 'J3', 'ACTIVE', 1, TRUE),
-       (106, 12, 'SEAT', 'SEAT-J4', 'J4', 'ACTIVE', 1, TRUE),
-       (107, 12, 'SEAT', 'SEAT-J5', 'J5', 'ACTIVE', 1, TRUE),
-       (108, 12, 'SEAT', 'SEAT-J6', 'J6', 'ACTIVE', 1, TRUE),
-       (109, 12, 'SEAT', 'SEAT-J7', 'J7', 'ACTIVE', 1, TRUE),
-       (110, 12, 'SEAT', 'SEAT-J8', 'J8', 'ACTIVE', 1, TRUE),
-       (111, 12, 'SEAT', 'SEAT-J9', 'J9', 'ACTIVE', 1, TRUE),
-       (112, 12, 'SEAT', 'SEAT-J10', 'J10', 'ACTIVE', 1, TRUE);
+VALUES (103, 12, 'SEAT', 'S1', 'J1', 'ACTIVE', 1, TRUE),
+       (104, 12, 'SEAT', 'S2', 'J2', 'ACTIVE', 1, TRUE),
+       (105, 12, 'SEAT', 'S3', 'J3', 'ACTIVE', 1, TRUE),
+       (106, 12, 'SEAT', 'S4', 'J4', 'ACTIVE', 1, TRUE),
+       (107, 12, 'SEAT', 'S5', 'J5', 'ACTIVE', 1, TRUE),
+       (108, 12, 'SEAT', 'S6', 'J6', 'ACTIVE', 1, TRUE),
+       (109, 12, 'SEAT', 'S7', 'J7', 'ACTIVE', 1, TRUE),
+       (110, 12, 'SEAT', 'S8', 'J8', 'ACTIVE', 1, TRUE),
+       (111, 12, 'SEAT', 'S9', 'J9', 'ACTIVE', 1, TRUE),
+       (112, 12, 'SEAT', 'S10', 'J10', 'ACTIVE', 1, TRUE);
 
 -- ------------------------------------------------------------
 -- 3. Closure Table (resource_closure) - 계층 관계

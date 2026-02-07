@@ -1,17 +1,16 @@
 CREATE TABLE reservations
 (
-    id               BIGINT       NOT NULL AUTO_INCREMENT,
-    user_id          BIGINT       NOT NULL,
-    show_instance_id BIGINT       NOT NULL,
+    id               BIGINT       NOT NULL AUTO_INCREMENT COMMENT 'PK',
+    user_id          BIGINT       NOT NULL COMMENT 'FK → users.id',
+    show_instance_id BIGINT       NOT NULL COMMENT 'FK → show_instances.id',
 
-    status           VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
-    -- 대표 시간
-    cancel_reason    VARCHAR(200) NULL,
+    status           VARCHAR(20)  NOT NULL DEFAULT 'PENDING' COMMENT '예약 상태: PENDING/CONFIRMED/CANCELLED/NO_SHOW/COMPLETED',
+    cancel_reason    VARCHAR(200) NULL COMMENT '취소 사유 (status=CANCELLED일 때만)',
 
-    confirmed_at     TIMESTAMP(6) NULL,
-    cancelled_at     TIMESTAMP(6) NULL,
-    created_at       TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-    updated_at       TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    confirmed_at     TIMESTAMP(6) NULL COMMENT '확정 시각',
+    cancelled_at     TIMESTAMP(6) NULL COMMENT '취소 시각',
+    created_at       TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '생성 시각',
+    updated_at       TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '수정 시각',
 
     PRIMARY KEY (id),
 
@@ -32,4 +31,5 @@ CREATE TABLE reservations
             ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_0900_ai_ci;
+  COLLATE = utf8mb4_0900_ai_ci
+  COMMENT = '예약';
