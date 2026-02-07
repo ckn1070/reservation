@@ -5,6 +5,7 @@ import com.drlom.reservation.catalog.domain.Resource;
 import com.drlom.reservation.catalog.domain.ResourceRate;
 import com.drlom.reservation.catalog.domain.ResourceRateRepository;
 import com.drlom.reservation.catalog.infrastructure.persistence.entity.ResourceJpaEntity;
+import com.drlom.reservation.catalog.infrastructure.persistence.entity.ResourceRateJpaEntity;
 import com.drlom.reservation.catalog.infrastructure.persistence.mapper.ResourceRateEntityMapper;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -36,8 +37,8 @@ public class ResourceRateRepositoryImpl implements ResourceRateRepository {
         rate.getAmount());
 
     ResourceJpaEntity resourceJpa = findResourceJpaEntity(rate.getResource());
-    var jpaEntity = entityMapper.toJpaEntity(rate, resourceJpa);
-    var savedEntity = jpaRepository.save(jpaEntity);
+    ResourceRateJpaEntity jpaEntity = entityMapper.toJpaEntity(rate, resourceJpa);
+    ResourceRateJpaEntity savedEntity = jpaRepository.save(jpaEntity);
 
     return entityMapper.toDomain(savedEntity);
   }

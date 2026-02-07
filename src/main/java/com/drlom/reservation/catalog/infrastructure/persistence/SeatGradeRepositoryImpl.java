@@ -2,6 +2,7 @@ package com.drlom.reservation.catalog.infrastructure.persistence;
 
 import com.drlom.reservation.catalog.domain.SeatGrade;
 import com.drlom.reservation.catalog.domain.SeatGradeRepository;
+import com.drlom.reservation.catalog.infrastructure.persistence.entity.SeatGradeJpaEntity;
 import com.drlom.reservation.catalog.infrastructure.persistence.mapper.SeatGradeEntityMapper;
 import java.util.List;
 import java.util.Optional;
@@ -26,8 +27,8 @@ public class SeatGradeRepositoryImpl implements SeatGradeRepository {
   public SeatGrade save(SeatGrade seatGrade) {
     log.debug("SeatGrade 저장: gradeCode={}", seatGrade.getGradeCode());
 
-    var jpaEntity = entityMapper.toJpaEntity(seatGrade);
-    var savedEntity = jpaRepository.save(jpaEntity);
+    SeatGradeJpaEntity jpaEntity = entityMapper.toJpaEntity(seatGrade);
+    SeatGradeJpaEntity savedEntity = jpaRepository.save(jpaEntity);
 
     return entityMapper.toDomain(savedEntity);
   }

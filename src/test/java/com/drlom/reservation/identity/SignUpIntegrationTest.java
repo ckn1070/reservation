@@ -9,6 +9,8 @@ import com.drlom.reservation.identity.application.usecase.SignUpUseCase;
 import com.drlom.reservation.identity.infrastructure.persistence.RoleJpaRepository;
 import com.drlom.reservation.identity.infrastructure.persistence.UserJpaRepository;
 import com.drlom.reservation.identity.infrastructure.persistence.entity.RoleJpaEntity;
+import com.drlom.reservation.identity.infrastructure.persistence.entity.UserJpaEntity;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -84,7 +86,7 @@ class SignUpIntegrationTest {
       assertThat(result.getRoles()).contains("ROLE_USER");
 
       // DB 확인
-      var savedUser = userJpaRepository.findByEmail("user@example.com");
+      Optional<UserJpaEntity> savedUser = userJpaRepository.findByEmail("user@example.com");
       assertThat(savedUser).isPresent();
       assertThat(savedUser.get().getName()).isEqualTo("홍길동");
       assertThat(savedUser.get().getUserRoles()).hasSize(1);
@@ -109,7 +111,7 @@ class SignUpIntegrationTest {
       assertThat(result.getEmail()).isEqualTo("user@example.com");
 
       // DB 확인
-      var savedUser = userJpaRepository.findByEmail("user@example.com");
+      Optional<UserJpaEntity> savedUser = userJpaRepository.findByEmail("user@example.com");
       assertThat(savedUser).isPresent();
     }
   }
@@ -169,7 +171,7 @@ class SignUpIntegrationTest {
       signUpUseCase.execute(command);
 
       // then: 비밀번호가 해싱되어 저장되었는지 확인
-      var savedUser = userJpaRepository.findByEmail("test@example.com");
+      Optional<UserJpaEntity> savedUser = userJpaRepository.findByEmail("test@example.com");
       assertThat(savedUser).isPresent();
       assertThat(savedUser.get().getPasswordHash()).isNotEqualTo(rawPassword);
       assertThat(savedUser.get().getPasswordHash()).startsWith("$2a$"); // BCrypt 형식

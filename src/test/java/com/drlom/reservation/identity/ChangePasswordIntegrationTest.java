@@ -7,6 +7,8 @@ import com.drlom.reservation.common.error.ErrorCode;
 import com.drlom.reservation.identity.application.dto.command.ChangePasswordCommand;
 import com.drlom.reservation.identity.application.dto.command.SignUpCommand;
 import com.drlom.reservation.identity.application.usecase.ChangePasswordUseCase;
+import com.drlom.reservation.identity.application.dto.command.LoginCommand;
+import com.drlom.reservation.identity.application.dto.result.LoginResult;
 import com.drlom.reservation.identity.application.usecase.LoginUseCase;
 import com.drlom.reservation.identity.application.usecase.SignUpUseCase;
 import com.drlom.reservation.identity.domain.UserStatus;
@@ -104,13 +106,13 @@ class ChangePasswordIntegrationTest {
       changePasswordUseCase.execute(command);
 
       // then: 새 비밀번호로 로그인 성공
-      var loginCommand =
-          com.drlom.reservation.identity.application.dto.command.LoginCommand.builder()
+      LoginCommand loginCommand =
+          LoginCommand.builder()
               .email(TEST_EMAIL)
               .password(NEW_PASSWORD)
               .build();
 
-      var loginResult = loginUseCase.execute(loginCommand);
+      LoginResult loginResult = loginUseCase.execute(loginCommand);
       assertThat(loginResult).isNotNull();
       assertThat(loginResult.getAccessToken()).isNotBlank();
     }
@@ -133,8 +135,8 @@ class ChangePasswordIntegrationTest {
       changePasswordUseCase.execute(command);
 
       // then: 기존 비밀번호로 로그인 실패
-      var loginCommand =
-          com.drlom.reservation.identity.application.dto.command.LoginCommand.builder()
+      LoginCommand loginCommand =
+          LoginCommand.builder()
               .email(TEST_EMAIL)
               .password(TEST_PASSWORD)
               .build();

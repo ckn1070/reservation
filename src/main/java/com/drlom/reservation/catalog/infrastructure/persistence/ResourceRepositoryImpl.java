@@ -40,8 +40,8 @@ public class ResourceRepositoryImpl implements ResourceRepository {
                           "부모 리소스를 찾을 수 없습니다: " + resource.getParent().getId()));
     }
 
-    var jpaEntity = entityMapper.toJpaEntity(resource, parentJpaEntity);
-    var savedEntity = jpaRepository.save(jpaEntity);
+    ResourceJpaEntity jpaEntity = entityMapper.toJpaEntity(resource, parentJpaEntity);
+    ResourceJpaEntity savedEntity = jpaRepository.save(jpaEntity);
 
     return entityMapper.toDomain(savedEntity);
   }
@@ -71,7 +71,7 @@ public class ResourceRepositoryImpl implements ResourceRepository {
   public List<Resource> findByParent(Resource parent) {
     log.debug("Resource 조회 by parent: parentCode={}", parent.getCode());
 
-    var parentJpaEntity =
+    ResourceJpaEntity parentJpaEntity =
         jpaRepository
             .findById(parent.getId())
             .orElseThrow(

@@ -4,6 +4,7 @@ import com.drlom.reservation.catalog.domain.Resource;
 import com.drlom.reservation.catalog.domain.ResourcePolicy;
 import com.drlom.reservation.catalog.domain.ResourcePolicyRepository;
 import com.drlom.reservation.catalog.infrastructure.persistence.entity.ResourceJpaEntity;
+import com.drlom.reservation.catalog.infrastructure.persistence.entity.ResourcePolicyJpaEntity;
 import com.drlom.reservation.catalog.infrastructure.persistence.mapper.ResourcePolicyEntityMapper;
 import java.util.List;
 import java.util.Optional;
@@ -33,8 +34,8 @@ public class ResourcePolicyRepositoryImpl implements ResourcePolicyRepository {
         policy.getPolicyType());
 
     ResourceJpaEntity resourceJpa = findResourceJpaEntity(policy.getResource());
-    var jpaEntity = entityMapper.toJpaEntity(policy, resourceJpa);
-    var savedEntity = jpaRepository.save(jpaEntity);
+    ResourcePolicyJpaEntity jpaEntity = entityMapper.toJpaEntity(policy, resourceJpa);
+    ResourcePolicyJpaEntity savedEntity = jpaRepository.save(jpaEntity);
 
     return entityMapper.toDomain(savedEntity);
   }

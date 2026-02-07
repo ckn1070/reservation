@@ -13,6 +13,8 @@ import com.drlom.reservation.identity.domain.UserStatus;
 import com.drlom.reservation.identity.infrastructure.persistence.RoleJpaRepository;
 import com.drlom.reservation.identity.infrastructure.persistence.UserJpaRepository;
 import com.drlom.reservation.identity.infrastructure.persistence.entity.RoleJpaEntity;
+import com.drlom.reservation.identity.infrastructure.persistence.entity.UserJpaEntity;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -106,7 +108,7 @@ class CreateAdminIntegrationTest {
       assertThat(result.getTemporaryPassword()).hasSize(20); // Password.TEMP_PASSWORD_LENGTH
 
       // DB 확인
-      var savedAdmin = userJpaRepository.findByEmail(ADMIN_EMAIL);
+      Optional<UserJpaEntity> savedAdmin = userJpaRepository.findByEmail(ADMIN_EMAIL);
       assertThat(savedAdmin).isPresent();
       assertThat(savedAdmin.get().isPasswordChangeRequired()).isTrue();
     }
@@ -180,7 +182,7 @@ class CreateAdminIntegrationTest {
       assertThat(result.getEmail()).isEqualTo("admin@example.com");
 
       // DB 확인
-      var savedAdmin = userJpaRepository.findByEmail("admin@example.com");
+      Optional<UserJpaEntity> savedAdmin = userJpaRepository.findByEmail("admin@example.com");
       assertThat(savedAdmin).isPresent();
     }
   }

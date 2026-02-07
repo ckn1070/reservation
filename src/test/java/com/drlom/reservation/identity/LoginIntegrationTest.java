@@ -15,6 +15,7 @@ import com.drlom.reservation.identity.infrastructure.persistence.RoleJpaReposito
 import com.drlom.reservation.identity.infrastructure.persistence.UserJpaRepository;
 import com.drlom.reservation.identity.infrastructure.persistence.entity.RoleJpaEntity;
 import com.drlom.reservation.identity.infrastructure.persistence.entity.UserJpaEntity;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -140,7 +141,7 @@ class LoginIntegrationTest {
       signUpTestUser();
 
       // 회원가입 직후 lastLoginAt은 null
-      var userBeforeLogin = userJpaRepository.findByEmail(TEST_EMAIL);
+      Optional<UserJpaEntity> userBeforeLogin = userJpaRepository.findByEmail(TEST_EMAIL);
       assertThat(userBeforeLogin).isPresent();
       assertThat(userBeforeLogin.get().getLastLoginAt()).isNull();
 
@@ -151,7 +152,7 @@ class LoginIntegrationTest {
       loginUseCase.execute(command);
 
       // then: lastLoginAt이 업데이트되었는지 확인
-      var userAfterLogin = userJpaRepository.findByEmail(TEST_EMAIL);
+      Optional<UserJpaEntity> userAfterLogin = userJpaRepository.findByEmail(TEST_EMAIL);
       assertThat(userAfterLogin).isPresent();
       assertThat(userAfterLogin.get().getLastLoginAt()).isNotNull();
     }
@@ -289,7 +290,7 @@ class LoginIntegrationTest {
       signUpUseCase.execute(signUpCommand);
 
       // DB에 저장된 비밀번호가 해싱되었는지 확인
-      var savedUser = userJpaRepository.findByEmail("hash@example.com");
+      Optional<UserJpaEntity> savedUser = userJpaRepository.findByEmail("hash@example.com");
       assertThat(savedUser).isPresent();
       assertThat(savedUser.get().getPasswordHash()).isNotEqualTo(rawPassword);
       assertThat(savedUser.get().getPasswordHash()).startsWith("$2a$"); // BCrypt 형식

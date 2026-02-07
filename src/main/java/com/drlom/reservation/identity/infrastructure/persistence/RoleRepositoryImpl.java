@@ -2,6 +2,7 @@ package com.drlom.reservation.identity.infrastructure.persistence;
 
 import com.drlom.reservation.identity.domain.Role;
 import com.drlom.reservation.identity.domain.RoleRepository;
+import com.drlom.reservation.identity.infrastructure.persistence.entity.RoleJpaEntity;
 import com.drlom.reservation.identity.infrastructure.persistence.mapper.RoleEntityMapper;
 import java.util.Optional;
 import java.util.Set;
@@ -29,8 +30,8 @@ public class RoleRepositoryImpl implements RoleRepository {
   public Role save(Role role) {
     log.debug("Role 저장: name={}", role.getName());
 
-    var jpaEntity = entityMapper.toJpaEntity(role);
-    var savedEntity = jpaRepository.save(jpaEntity);
+    RoleJpaEntity jpaEntity = entityMapper.toJpaEntity(role);
+    RoleJpaEntity savedEntity = jpaRepository.save(jpaEntity);
 
     return entityMapper.toDomain(savedEntity);
   }
