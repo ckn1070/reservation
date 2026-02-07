@@ -14,10 +14,6 @@ import lombok.NoArgsConstructor;
 @Schema(description = "리소스 요금 생성 요청")
 public class CreateResourceRateWebRequest {
 
-  @Schema(description = "리소스 ID", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
-  @NotNull(message = "리소스 ID는 필수입니다")
-  private Long resourceId;
-
   @Schema(
       description = "요금 타입 (BASE, PROMOTION, DISCOUNT)",
       example = "BASE",
@@ -42,7 +38,7 @@ public class CreateResourceRateWebRequest {
   @Schema(description = "요금 사유", example = "설날 프로모션")
   private String reason;
 
-  public CreateResourceRateCommand toCommand() {
+  public CreateResourceRateCommand toCommand(Long resourceId) {
     return CreateResourceRateCommand.builder()
         .resourceId(resourceId)
         .rateType(rateType)

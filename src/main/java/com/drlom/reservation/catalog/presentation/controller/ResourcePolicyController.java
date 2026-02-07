@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/policies")
+@RequestMapping("/api/resources/{resourceId}/policies")
 @RequiredArgsConstructor
 @Tag(name = "정책 관리", description = "리소스별 정책(최대 예약 수, 할인율 등) CRUD API (ADMIN 전용)")
 @SecurityRequirement(name = "bearerAuth")
@@ -98,12 +99,11 @@ public class ResourcePolicyController {
   @PostMapping
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ResourcePolicyWebResponse> createResourcePolicy(
+      @PathVariable Long resourceId,
       @Valid @RequestBody CreateResourcePolicyWebRequest request) {
     log.info(
-        "ResourcePolicy 생성 요청: resourceId={}, policyType={}",
-        request.getResourceId(),
-        request.getPolicyType());
-    ResourcePolicyResult result = createResourcePolicyUseCase.execute(request.toCommand());
+        "ResourcePolicy 생성 요청: resourceId={}, policyType={}", resourceId, request.getPolicyType());
+    ResourcePolicyResult result = createResourcePolicyUseCase.execute(request.toCommand(resourceId));
     return ResponseEntity.status(HttpStatus.CREATED).body(ResourcePolicyWebResponse.from(result));
   }
 }

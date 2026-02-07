@@ -3,7 +3,6 @@ package com.drlom.reservation.catalog.presentation.dto;
 import com.drlom.reservation.catalog.application.dto.command.CreateResourcePolicyCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,10 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Schema(description = "리소스 정책 생성 요청 (EAV 패턴)")
 public class CreateResourcePolicyWebRequest {
-
-  @Schema(description = "리소스 ID", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
-  @NotNull(message = "리소스 ID는 필수입니다")
-  private Long resourceId;
 
   @Schema(description = "정책 타입", example = "MAX_BOOKING", requiredMode = Schema.RequiredMode.REQUIRED)
   @NotBlank(message = "정책 타입은 필수입니다")
@@ -30,7 +25,7 @@ public class CreateResourcePolicyWebRequest {
   @Schema(description = "불리언 값 (EAV)", example = "true")
   private Boolean valueBool;
 
-  public CreateResourcePolicyCommand toCommand() {
+  public CreateResourcePolicyCommand toCommand(Long resourceId) {
     return CreateResourcePolicyCommand.builder()
         .resourceId(resourceId)
         .policyType(policyType)

@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/rates")
+@RequestMapping("/api/resources/{resourceId}/rates")
 @RequiredArgsConstructor
 @Tag(name = "요금 관리", description = "리소스별 요금(기본가, 프로모션 등) CRUD API (ADMIN 전용)")
 @SecurityRequirement(name = "bearerAuth")
@@ -95,13 +96,14 @@ public class ResourceRateController {
   @PostMapping
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<ResourceRateWebResponse> createResourceRate(
+      @PathVariable Long resourceId,
       @Valid @RequestBody CreateResourceRateWebRequest request) {
     log.info(
         "ResourceRate 생성 요청: resourceId={}, rateType={}, amount={}",
-        request.getResourceId(),
+        resourceId,
         request.getRateType(),
         request.getAmount());
-    ResourceRateResult result = createResourceRateUseCase.execute(request.toCommand());
+    ResourceRateResult result = createResourceRateUseCase.execute(request.toCommand(resourceId));
     return ResponseEntity.status(HttpStatus.CREATED).body(ResourceRateWebResponse.from(result));
   }
 }
