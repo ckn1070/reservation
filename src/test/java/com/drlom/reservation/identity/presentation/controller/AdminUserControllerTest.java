@@ -45,13 +45,13 @@ class AdminUserControllerTest {
     @DisplayName("SUPER_ADMIN 권한으로 관리자 생성 성공 - 201 Created")
     @WithMockUser(roles = "SUPER_ADMIN")
     void createAdmin_asSuperAdmin_success() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "newadmin@example.com",
               "name", "새관리자",
               "phone", "010-1234-5678",
               "roleName", "ROLE_ADMIN");
-      var result =
+      CreateAdminResult result =
           CreateAdminResult.builder()
               .id(10L)
               .email("newadmin@example.com")
@@ -81,13 +81,13 @@ class AdminUserControllerTest {
     @DisplayName("ADMIN 권한으로 관리자 생성 성공 - 201 Created")
     @WithMockUser(roles = "ADMIN")
     void createAdmin_asAdmin_success() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "newadmin@example.com",
               "name", "새관리자",
               "phone", "010-1234-5678",
               "roleName", "ROLE_ADMIN");
-      var result =
+      CreateAdminResult result =
           CreateAdminResult.builder()
               .id(11L)
               .email("newadmin@example.com")
@@ -114,7 +114,7 @@ class AdminUserControllerTest {
     @DisplayName("USER 권한으로 관리자 생성 시 403 에러")
     @WithMockUser(roles = "USER")
     void createAdmin_asUser_forbidden() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "newadmin@example.com",
               "name", "새관리자",
@@ -143,7 +143,7 @@ class AdminUserControllerTest {
     @DisplayName("필수 필드 누락 시 400 에러")
     @WithMockUser(roles = "ADMIN")
     void createAdmin_validationError() throws Exception {
-      var request = Map.of("email", "newadmin@example.com", "name", "새관리자");
+      Map<String, String> request = Map.of("email", "newadmin@example.com", "name", "새관리자");
 
       mockMvc
           .perform(
@@ -158,7 +158,7 @@ class AdminUserControllerTest {
     @DisplayName("잘못된 이메일 형식 시 400 에러")
     @WithMockUser(roles = "ADMIN")
     void createAdmin_invalidEmailFormat() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "invalid-email",
               "name", "새관리자",
@@ -178,7 +178,7 @@ class AdminUserControllerTest {
     @DisplayName("유효하지 않은 역할로 생성 시 400 에러")
     @WithMockUser(roles = "ADMIN")
     void createAdmin_invalidRole() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "newadmin@example.com",
               "name", "새관리자",
@@ -198,7 +198,7 @@ class AdminUserControllerTest {
     @DisplayName("이미 존재하는 이메일로 생성 시 409 에러")
     @WithMockUser(roles = "ADMIN")
     void createAdmin_duplicateEmail() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "existing@example.com",
               "name", "새관리자",
@@ -220,7 +220,7 @@ class AdminUserControllerTest {
     @DisplayName("존재하지 않는 역할로 생성 시 404 에러")
     @WithMockUser(roles = "ADMIN")
     void createAdmin_roleNotFound() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "newadmin@example.com",
               "name", "새관리자",
@@ -242,7 +242,7 @@ class AdminUserControllerTest {
     @DisplayName("ADMIN 권한으로 SUPER_ADMIN 생성 시 403 에러")
     @WithMockUser(roles = "ADMIN")
     void createAdmin_adminCannotCreateSuperAdmin() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "newadmin@example.com",
               "name", "새관리자",
@@ -265,13 +265,13 @@ class AdminUserControllerTest {
     @DisplayName("SUPER_ADMIN 권한으로 SUPER_ADMIN 생성 성공")
     @WithMockUser(roles = "SUPER_ADMIN")
     void createAdmin_superAdminCanCreateSuperAdmin() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "newadmin@example.com",
               "name", "새관리자",
               "phone", "010-1234-5678",
               "roleName", "ROLE_SUPER_ADMIN");
-      var result =
+      CreateAdminResult result =
           CreateAdminResult.builder()
               .id(12L)
               .email("newadmin@example.com")

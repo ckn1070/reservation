@@ -58,13 +58,13 @@ class AuthControllerTest {
     @Test
     @DisplayName("회원가입 성공 - 201 Created")
     void signUp_success() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "user@example.com",
               "password", "password123!",
               "name", "홍길동",
               "phone", "010-1234-5678");
-      var result =
+      UserResult result =
           UserResult.builder()
               .id(1L)
               .email("user@example.com")
@@ -90,7 +90,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("필수 필드 누락 시 400 에러")
     void signUp_validationError() throws Exception {
-      var request = Map.of("email", "user@example.com", "password", "password123!");
+      Map<String, String> request = Map.of("email", "user@example.com", "password", "password123!");
 
       mockMvc
           .perform(
@@ -104,7 +104,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("잘못된 이메일 형식 시 400 에러")
     void signUp_invalidEmailFormat() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "invalid-email",
               "password", "password123!",
@@ -123,7 +123,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("이미 존재하는 이메일로 가입 시 409 에러")
     void signUp_duplicateEmail() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "existing@example.com",
               "password", "password123!",
@@ -149,8 +149,8 @@ class AuthControllerTest {
     @Test
     @DisplayName("로그인 성공 - 200 OK")
     void login_success() throws Exception {
-      var request = Map.of("email", "user@example.com", "password", "password123!");
-      var result =
+      Map<String, String> request = Map.of("email", "user@example.com", "password", "password123!");
+      LoginResult result =
           LoginResult.builder()
               .accessToken("access-token")
               .refreshToken("refresh-token")
@@ -179,7 +179,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("잘못된 자격증명 시 401 에러")
     void login_invalidCredentials() throws Exception {
-      var request = Map.of("email", "user@example.com", "password", "wrongPassword");
+      Map<String, String> request = Map.of("email", "user@example.com", "password", "wrongPassword");
       given(loginUseCase.execute(any(LoginCommand.class)))
           .willThrow(new BusinessException(ErrorCode.INVALID_CREDENTIALS));
 
@@ -195,7 +195,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("정지된 사용자 로그인 시 403 에러")
     void login_suspendedUser() throws Exception {
-      var request = Map.of("email", "suspended@example.com", "password", "password123!");
+      Map<String, String> request = Map.of("email", "suspended@example.com", "password", "password123!");
       given(loginUseCase.execute(any(LoginCommand.class)))
           .willThrow(new BusinessException(ErrorCode.USER_SUSPENDED));
 
@@ -211,7 +211,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("삭제된 사용자 로그인 시 403 에러")
     void login_deletedUser() throws Exception {
-      var request = Map.of("email", "deleted@example.com", "password", "password123!");
+      Map<String, String> request = Map.of("email", "deleted@example.com", "password", "password123!");
       given(loginUseCase.execute(any(LoginCommand.class)))
           .willThrow(new BusinessException(ErrorCode.USER_DELETED));
 
@@ -227,7 +227,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("비밀번호 변경 필요 시 403 에러")
     void login_passwordChangeRequired() throws Exception {
-      var request = Map.of("email", "admin@example.com", "password", "tempPassword123");
+      Map<String, String> request = Map.of("email", "admin@example.com", "password", "tempPassword123");
       given(loginUseCase.execute(any(LoginCommand.class)))
           .willThrow(new BusinessException(ErrorCode.PASSWORD_CHANGE_REQUIRED));
 
@@ -248,7 +248,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("로그아웃 성공 - 204 No Content")
     void logout_success() throws Exception {
-      var request = Map.of("refreshToken", "valid-refresh-token");
+      Map<String, String> request = Map.of("refreshToken", "valid-refresh-token");
       willDoNothing().given(logoutUseCase).execute(any(LogoutCommand.class));
 
       mockMvc
@@ -263,7 +263,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("유효하지 않은 토큰으로 로그아웃 시 401 에러")
     void logout_invalidToken() throws Exception {
-      var request = Map.of("refreshToken", "invalid-token");
+      Map<String, String> request = Map.of("refreshToken", "invalid-token");
       willThrow(new BusinessException(ErrorCode.INVALID_TOKEN))
           .given(logoutUseCase)
           .execute(any(LogoutCommand.class));
@@ -280,7 +280,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("존재하지 않는 토큰으로 로그아웃 시 401 에러")
     void logout_tokenNotFound() throws Exception {
-      var request = Map.of("refreshToken", "not-found-token");
+      Map<String, String> request = Map.of("refreshToken", "not-found-token");
       willThrow(new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND))
           .given(logoutUseCase)
           .execute(any(LogoutCommand.class));
@@ -302,8 +302,8 @@ class AuthControllerTest {
     @Test
     @DisplayName("토큰 재발급 성공 - 200 OK")
     void refresh_success() throws Exception {
-      var request = Map.of("refreshToken", "valid-refresh-token");
-      var result =
+      Map<String, String> request = Map.of("refreshToken", "valid-refresh-token");
+      TokenResult result =
           TokenResult.builder()
               .accessToken("new-access-token")
               .refreshToken("new-refresh-token")
@@ -326,7 +326,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("만료된 토큰으로 재발급 시 401 에러")
     void refresh_expiredToken() throws Exception {
-      var request = Map.of("refreshToken", "expired-token");
+      Map<String, String> request = Map.of("refreshToken", "expired-token");
       given(refreshTokenUseCase.execute(any(RefreshTokenCommand.class)))
           .willThrow(new BusinessException(ErrorCode.TOKEN_EXPIRED));
 
@@ -342,7 +342,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("유효하지 않은 토큰으로 재발급 시 401 에러")
     void refresh_invalidToken() throws Exception {
-      var request = Map.of("refreshToken", "invalid-token");
+      Map<String, String> request = Map.of("refreshToken", "invalid-token");
       given(refreshTokenUseCase.execute(any(RefreshTokenCommand.class)))
           .willThrow(new BusinessException(ErrorCode.INVALID_TOKEN));
 
@@ -358,7 +358,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("정지된 사용자의 토큰 재발급 시 403 에러")
     void refresh_suspendedUser() throws Exception {
-      var request = Map.of("refreshToken", "suspended-user-token");
+      Map<String, String> request = Map.of("refreshToken", "suspended-user-token");
       given(refreshTokenUseCase.execute(any(RefreshTokenCommand.class)))
           .willThrow(new BusinessException(ErrorCode.USER_SUSPENDED));
 
@@ -379,7 +379,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("비밀번호 변경 성공 - 204 No Content")
     void changePassword_success() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "admin@example.com",
               "currentPassword", "tempPassword123",
@@ -399,7 +399,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("잘못된 현재 비밀번호 시 401 에러")
     void changePassword_invalidCurrentPassword() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "admin@example.com",
               "currentPassword", "wrongPassword",
@@ -421,7 +421,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("비밀번호 확인 불일치 시 400 에러")
     void changePassword_passwordMismatch() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "admin@example.com",
               "currentPassword", "tempPassword123",
@@ -444,7 +444,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("새 비밀번호 길이 부족 시 400 에러")
     void changePassword_newPasswordTooShort() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "admin@example.com",
               "currentPassword", "tempPassword123",
@@ -463,7 +463,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("정지된 사용자 비밀번호 변경 시 403 에러")
     void changePassword_suspendedUser() throws Exception {
-      var request =
+      Map<String, String> request =
           Map.of(
               "email", "suspended@example.com",
               "currentPassword", "password123!",
