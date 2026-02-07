@@ -1,0 +1,8 @@
+# SonarQube 정적 분석 전용 (린트 체크)
+# 인증: 기본 admin/admin 계정으로 토큰 생성 후 사용
+services:
+  sonarqube:
+    image: sonarqube:community
+    container_name: reservation-sonarqube
+    ports:
+      - "9000:9000"

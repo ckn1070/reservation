@@ -28,6 +28,13 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<!-- SonarQube -->
+		<sonar.host.url>http://localhost:9000</sonar.host.url>
+		<sonar.projectKey>reservation</sonar.projectKey>
+		<sonar.projectName>Reservation System</sonar.projectName>
+		<sonar.java.source>21</sonar.java.source>
+		<sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+		<sonar.exclusions>**/ReservationApplication.java,**/infrastructure/persistence/entity/**</sonar.exclusions>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -169,6 +176,12 @@
 						</exclude>
 					</excludes>
 				</configuration>
+			</plugin>
+			<!-- SonarQube 정적 분석 -->
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>5.0.0.4389</version>
 			</plugin>
 			<!-- JaCoCo 테스트 커버리지 -->
 			<plugin>
