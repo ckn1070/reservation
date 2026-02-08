@@ -1,8 +1,6 @@
 package com.drlom.reservation.booking.presentation.controller;
 
 import com.drlom.reservation.booking.application.dto.command.OpenShowInstanceCommand;
-import com.drlom.reservation.booking.application.dto.query.GetShowInstancesQuery;
-import com.drlom.reservation.booking.application.dto.query.GetShowSlotsQuery;
 import com.drlom.reservation.booking.application.dto.result.ShowInstanceResult;
 import com.drlom.reservation.booking.application.dto.result.ShowSlotsResult;
 import com.drlom.reservation.booking.application.usecase.CreateShowInstanceUseCase;
@@ -52,6 +50,45 @@ import org.springframework.web.bind.annotation.RestController;
 public class ShowController {
 
   private final CreateShowInstanceUseCase createShowInstanceUseCase;
+  private final OpenShowInstanceUseCase openShowInstanceUseCase;
+  private final GetShowInstancesUseCase getShowInstancesUseCase;
+  private final GetShowSlotsUseCase getShowSlotsUseCase;
+
+  @Operation(
+      summary = "공연 회차 목록 조회",
+      description = "공연 회차 목록을 조회합니다. venueId, status로 필터링 가능합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = "공연 회차 목록 조회 성공",
+      content =
+          @Content(
+              array =
+                  @ArraySchema(schema = @Schema(implementation = ShowInstanceWebResponse.class))))
+  @ApiResponse(
+      responseCode = "401",
+      description = "인증 필요",
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"UNAUTHORIZED\", \"message\": \"인증이 필요합니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")))
+  @GetMapping
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<List<ShowInstanceWebResponse>> getShowInstances(
+      @Parameter(description = "공연장 ID", example = "1")
+          @RequestParam(required = false)
+          Long venueId,
+      @Parameter(description = "공연 상태", example = "OPEN")
+          @RequestParam(required = false)
+          ShowStatus status) {
+    log.info("공연 회차 목록 조회 요청: venueId={}, status={}", venueId, status);
+    List<ShowInstanceResult> results = getShowInstancesUseCase.execute(venueId, status);
+    List<ShowInstanceWebResponse> responses =
+        results.stream().map(ShowInstanceWebResponse::from).toList();
+    return ResponseEntity.ok(responses);
+  }
 
   @Operation(summary = "공연 회차 생성", description = "새로운 공연 회차를 등록합니다.")
   @ApiResponse(
@@ -229,8 +266,7 @@ public class ShowController {
   public ResponseEntity<ShowSlotsWebResponse> getShowSlots(
       @Parameter(description = "공연 회차 ID", example = "1") @PathVariable Long id) {
     log.info("좌석 현황 조회 요청: showInstanceId={}", id);
-    GetShowSlotsQuery query = GetShowSlotsQuery.builder().showInstanceId(id).build();
-    ShowSlotsResult result = getShowSlotsUseCase.execute(query);
+    ShowSlotsResult result = getShowSlotsUseCase.execute(id);
     return ResponseEntity.ok(ShowSlotsWebResponse.from(result));
   }
 }
