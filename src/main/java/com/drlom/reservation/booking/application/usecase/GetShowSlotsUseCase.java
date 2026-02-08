@@ -1,6 +1,5 @@
 package com.drlom.reservation.booking.application.usecase;
 
-import com.drlom.reservation.booking.application.dto.query.GetShowSlotsQuery;
 import com.drlom.reservation.booking.application.dto.result.ShowSlotsResult;
 import com.drlom.reservation.booking.application.dto.result.SlotDetailResult;
 import com.drlom.reservation.booking.application.port.CatalogQueryPort;
@@ -38,23 +37,20 @@ public class GetShowSlotsUseCase {
   /**
    * 좌석 현황 조회
    *
-   * @param query 조회 조건 (showInstanceId 필수)
+   * @param showInstanceId 공연 회차 ID
    * @return 공연 요약 + 슬롯 상세 목록
    */
-  public ShowSlotsResult execute(GetShowSlotsQuery query) {
-    query.validate();
-
-    ShowInstance showInstance = findShowInstance(query.getShowInstanceId());
+  public ShowSlotsResult execute(Long showInstanceId) {
+    ShowInstance showInstance = findShowInstance(showInstanceId);
     validateOpenStatus(showInstance);
 
-    List<ResourceSlot> slots =
-        resourceSlotRepository.findByShowInstanceId(query.getShowInstanceId());
+    List<ResourceSlot> slots = resourceSlotRepository.findByShowInstanceId(showInstanceId);
 
     List<SlotDetailResult> slotDetails = buildSlotDetails(slots);
 
     log.info(
         "좌석 현황 조회 완료: showInstanceId={}, totalSlots={}, availableSlots={}",
-        query.getShowInstanceId(),
+        showInstanceId,
         slotDetails.size(),
         slotDetails.stream().filter(s -> s.getStatus().isAvailable()).count());
 
