@@ -68,4 +68,37 @@ public interface ResourceRateJpaRepository extends JpaRepository<ResourceRateJpa
   @Modifying
   @Query("DELETE FROM ResourceRateJpaEntity r WHERE r.resource = :resource")
   void deleteByResource(@Param("resource") ResourceJpaEntity resource);
+
+  /**
+   * 좌석 목록에 대해 적용 가능한 요금 일괄 조회 (조상 리소스 포함)
+   *
+   * <p>각 좌석과 그 조상 리소스들의 요금을 한 번에 조회하여 N+1 방지
+   *
+   * <p>결과 순서: 좌석 ID → rate_type(PROMOTION > OVERRIDE > BASE) → priority DESC → depth ASC
+   *
+   * @param seatIds 좌석 ID 목록
+   * @param dateTime 적용 시점
+   * @return [seatId, rateId, amount, currency] Object 배열 목록
+   */
+  @Query(
+      """
+      SELECT c.descendant.id, rate.id, rate.amount, rate.currency
+      FROM ResourceClosureJpaEntity c
+      JOIN ResourceRateJpaEntity rate ON rate.resource = c.ancestor
+      WHERE c.descendant.id IN :seatIds
+        AND (
+          (rate.startAt IS NULL AND rate.endAt IS NULL)
+          OR (:dateTime >= rate.startAt AND :dateTime < rate.endAt)
+        )
+      ORDER BY c.descendant.id,
+        CASE rate.rateType
+          WHEN 'PROMOTION' THEN 3
+          WHEN 'OVERRIDE' THEN 2
+          WHEN 'BASE' THEN 1
+        END DESC,
+        rate.priority DESC,
+        c.depth ASC
+      """)
+  List<Object[]> findApplicableRatesForSeats(
+      @Param("seatIds") List<Long> seatIds, @Param("dateTime") LocalDateTime dateTime);
 }
