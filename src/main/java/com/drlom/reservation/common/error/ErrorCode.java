@@ -61,12 +61,14 @@ public enum ErrorCode {
   INVALID_VENUE_TYPE(HttpStatus.BAD_REQUEST, "BKG-4004", "공연장(VENUE) 타입의 리소스만 지정할 수 있습니다"),
   INVALID_SHOW_STATUS(HttpStatus.BAD_REQUEST, "BKG-4005", "공연 상태가 올바르지 않습니다"),
 
-  // Booking BC - Reservation Domain (BKG-4xxx)
-  RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "BKG-4000", "예약을 찾을 수 없습니다"),
-  INVALID_RESERVATION_STATUS(HttpStatus.BAD_REQUEST, "BKG-4001", "예약 상태가 올바르지 않습니다"),
-  SLOT_NOT_FOUND(HttpStatus.NOT_FOUND, "BKG-4002", "슬롯을 찾을 수 없습니다"),
-  SLOT_ALREADY_LOCKED(HttpStatus.CONFLICT, "BKG-4003", "이미 선점된 좌석입니다"),
-  LOCK_EXPIRED(HttpStatus.BAD_REQUEST, "BKG-4004", "락이 만료되었습니다");
+  // Booking BC - Reservation Domain (BKG-41xx)
+  RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "BKG-4100", "예약을 찾을 수 없습니다"),
+  INVALID_RESERVATION_STATUS(HttpStatus.BAD_REQUEST, "BKG-4101", "예약 상태가 올바르지 않습니다"),
+
+  // Booking BC - Slot/Lock Domain (BKG-42xx)
+  SLOT_NOT_FOUND(HttpStatus.NOT_FOUND, "BKG-4200", "슬롯을 찾을 수 없습니다"),
+  SLOT_ALREADY_LOCKED(HttpStatus.CONFLICT, "BKG-4201", "이미 선점된 좌석입니다"),
+  LOCK_EXPIRED(HttpStatus.BAD_REQUEST, "BKG-4202", "락이 만료되었습니다");
 
   private final HttpStatus httpStatus;
   private final String code;
