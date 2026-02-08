@@ -54,4 +54,41 @@ public interface ResourceJpaRepository extends JpaRepository<ResourceJpaEntity, 
    * @return ResourceJpaEntity 목록
    */
   List<ResourceJpaEntity> findByType(String type);
+
+  /**
+   * 공연장 하위의 ACTIVE + 예약 가능 좌석 조회
+   *
+   * <p>Closure Table을 이용하여 venue 하위 모든 SEAT 조회
+   *
+   * @param ancestorId 조상 리소스(공연장) ID
+   * @return 활성 좌석 ResourceJpaEntity 목록
+   */
+  @Query(
+      """
+      SELECT r FROM ResourceJpaEntity r
+      JOIN ResourceClosureJpaEntity c ON c.descendant = r
+      WHERE c.ancestor.id = :ancestorId
+        AND r.type = 'SEAT'
+        AND r.status = 'ACTIVE'
+        AND r.reservable = true
+      """)
+  List<ResourceJpaEntity> findActiveReservableSeats(@Param("ancestorId") Long ancestorId);
+
+  /**
+   * 좌석 ID 목록으로 좌석 상세 정보 조회 (코드, 이름, 등급)
+   *
+   * <p>Native Query: seat_properties 테이블에 JPA 엔티티가 없어 native query 사용
+   *
+   * @param seatIds 좌석 ID 목록
+   * @return [id, code, name, grade_name] 배열 목록
+   */
+  @Query(
+      value =
+          "SELECT r.id, r.code, r.name, sg.grade_name "
+              + "FROM resources r "
+              + "LEFT JOIN seat_properties sp ON sp.seat_id = r.id "
+              + "LEFT JOIN seat_grades sg ON sg.id = sp.grade_id "
+              + "WHERE r.id IN :seatIds",
+      nativeQuery = true)
+  List<Object[]> findSeatDetailsWithGrade(@Param("seatIds") List<Long> seatIds);
 }

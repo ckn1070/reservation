@@ -1,6 +1,7 @@
 package com.drlom.reservation.catalog.infrastructure.adapter;
 
 import com.drlom.reservation.booking.application.port.CatalogQueryPort;
+import com.drlom.reservation.booking.application.port.model.SeatDetailInfo;
 import com.drlom.reservation.booking.application.port.model.SeatPriceInfo;
 import com.drlom.reservation.catalog.domain.Resource;
 import com.drlom.reservation.catalog.domain.ResourceRepository;
@@ -75,6 +76,28 @@ public class CatalogQueryPortImpl implements CatalogQueryPort {
                         .priceAmount(0L)
                         .currency(DEFAULT_CURRENCY)
                         .build()))
+        .toList();
+  }
+
+  @Override
+  public List<SeatDetailInfo> findSeatDetailsByIds(List<Long> seatIds) {
+    log.debug("CatalogQueryPort: 좌석 상세 정보 조회 seatIds={}", seatIds);
+
+    if (seatIds.isEmpty()) {
+      return List.of();
+    }
+
+    List<Object[]> results = resourceJpaRepository.findSeatDetailsWithGrade(seatIds);
+
+    return results.stream()
+        .map(
+            row ->
+                SeatDetailInfo.builder()
+                    .seatId(((Number) row[0]).longValue())
+                    .seatCode((String) row[1])
+                    .seatName((String) row[2])
+                    .gradeName((String) row[3])
+                    .build())
         .toList();
   }
 
