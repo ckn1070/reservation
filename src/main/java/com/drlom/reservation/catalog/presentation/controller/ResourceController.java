@@ -68,18 +68,8 @@ public class ResourceController {
                   @ExampleObject(
                       value =
                           "{\"code\": \"UNAUTHORIZED\", \"message\": \"인증이 필요합니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")))
-  @ApiResponse(
-      responseCode = "403",
-      description = "권한 없음 (ADMIN만 가능)",
-      content =
-          @Content(
-              schema = @Schema(implementation = ErrorResponse.class),
-              examples =
-                  @ExampleObject(
-                      value =
-                          "{\"code\": \"FORBIDDEN\", \"message\": \"접근 권한이 없습니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")))
   @GetMapping("/venues")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("isAuthenticated()")
   public ResponseEntity<List<ResourceWebResponse>> getVenues() {
     log.info("VENUE 목록 조회 요청");
     List<ResourceResult> results = getVenuesUseCase.execute();

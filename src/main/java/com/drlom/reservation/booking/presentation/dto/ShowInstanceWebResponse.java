@@ -41,6 +41,9 @@ public class ShowInstanceWebResponse {
   @Schema(description = "공연 상태", example = "SCHEDULED")
   private ShowStatus status;
 
+  @Schema(description = "생성된 슬롯 수 (오픈 시에만 포함)", example = "500")
+  private Long totalSlots;
+
   /**
    * Result → WebResponse 변환
    *
@@ -57,6 +60,7 @@ public class ShowInstanceWebResponse {
         .salesOpenAt(result.getSalesOpenAt())
         .salesCloseAt(result.getSalesCloseAt())
         .status(result.getStatus())
+        .totalSlots(result.getTotalSlots())
         .build();
   }
 }
