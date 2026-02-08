@@ -23,6 +23,7 @@ public class ShowInstanceResult {
   private final LocalDateTime salesOpenAt;
   private final LocalDateTime salesCloseAt;
   private final ShowStatus status;
+  private final Long totalSlots;
 
   /**
    * Domain ShowInstance로부터 ShowInstanceResult 생성
@@ -31,6 +32,17 @@ public class ShowInstanceResult {
    * @return ShowInstanceResult
    */
   public static ShowInstanceResult from(ShowInstance showInstance) {
+    return from(showInstance, null);
+  }
+
+  /**
+   * Domain ShowInstance와 슬롯 수로부터 ShowInstanceResult 생성
+   *
+   * @param showInstance Domain ShowInstance
+   * @param totalSlots 생성된 슬롯 수
+   * @return ShowInstanceResult
+   */
+  public static ShowInstanceResult from(ShowInstance showInstance, Long totalSlots) {
     return ShowInstanceResult.builder()
         .id(showInstance.getId())
         .venueId(showInstance.getVenue().getId())
@@ -40,6 +52,7 @@ public class ShowInstanceResult {
         .salesOpenAt(showInstance.getSalesOpenAt())
         .salesCloseAt(showInstance.getSalesCloseAt())
         .status(showInstance.getStatus())
+        .totalSlots(totalSlots)
         .build();
   }
 }
