@@ -170,7 +170,7 @@ class CreateShowInstanceIntegrationTest {
       assertThat(result.getTitle()).isEqualTo("두 번째 공연");
 
       // DB 확인: 2개의 공연이 저장됨
-      List<ShowInstanceJpaEntity> showsInVenue = showInstanceJpaRepository.findByResourceId(venue.getId());
+      List<ShowInstanceJpaEntity> showsInVenue = showInstanceJpaRepository.findByResourceIdOrderByStartAtAsc(venue.getId());
       assertThat(showsInVenue).hasSize(2);
     }
   }
