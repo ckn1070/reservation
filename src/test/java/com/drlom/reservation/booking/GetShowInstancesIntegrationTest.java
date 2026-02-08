@@ -245,7 +245,7 @@ class GetShowInstancesIntegrationTest {
       createShow(venue2, "연극 B", 14, ShowStatus.SCHEDULED);
 
       // when
-      List<ShowInstanceResult> results = getShowInstancesUseCase.execute(null);
+      List<ShowInstanceResult> results = getShowInstancesUseCase.execute(null, null);
 
       // then
       assertThat(results).hasSize(2);
