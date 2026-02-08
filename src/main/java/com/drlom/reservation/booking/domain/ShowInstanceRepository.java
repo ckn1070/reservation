@@ -60,6 +60,22 @@ public interface ShowInstanceRepository {
   List<ShowInstance> findByStatus(ShowStatus status);
 
   /**
+   * 모든 공연 회차 조회 (시작 시간 오름차순)
+   *
+   * @return 전체 공연 회차 목록
+   */
+  List<ShowInstance> findAll();
+
+  /**
+   * 공연장 ID와 상태로 공연 회차 조회
+   *
+   * @param venueId 공연장 ID
+   * @param status 공연 상태
+   * @return 공연 회차 목록
+   */
+  List<ShowInstance> findByVenueIdAndStatus(Long venueId, ShowStatus status);
+
+  /**
    * ShowInstance 삭제
    *
    * @param showInstance 삭제할 ShowInstance

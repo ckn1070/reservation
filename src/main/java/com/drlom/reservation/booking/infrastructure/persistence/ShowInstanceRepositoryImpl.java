@@ -62,7 +62,7 @@ public class ShowInstanceRepositoryImpl implements ShowInstanceRepository {
   public List<ShowInstance> findByVenueId(Long venueId) {
     log.debug("ShowInstance 조회 by venueId: venueId={}", venueId);
 
-    return jpaRepository.findByResourceId(venueId).stream()
+    return jpaRepository.findByResourceIdOrderByStartAtAsc(venueId).stream()
         .map(this::toDomainWithVenue)
         .toList();
   }
@@ -71,7 +71,27 @@ public class ShowInstanceRepositoryImpl implements ShowInstanceRepository {
   public List<ShowInstance> findByStatus(ShowStatus status) {
     log.debug("ShowInstance 조회 by status: status={}", status);
 
-    return jpaRepository.findByStatus(status.name()).stream()
+    return jpaRepository.findByStatusOrderByStartAtAsc(status.name()).stream()
+        .map(this::toDomainWithVenue)
+        .toList();
+  }
+
+  @Override
+  public List<ShowInstance> findAll() {
+    log.debug("ShowInstance 전체 조회");
+
+    return jpaRepository.findAllByOrderByStartAtAsc().stream()
+        .map(this::toDomainWithVenue)
+        .toList();
+  }
+
+  @Override
+  public List<ShowInstance> findByVenueIdAndStatus(Long venueId, ShowStatus status) {
+    log.debug("ShowInstance 조회 by venueId and status: venueId={}, status={}", venueId, status);
+
+    return jpaRepository
+        .findByResourceIdAndStatusOrderByStartAtAsc(venueId, status.name())
+        .stream()
         .map(this::toDomainWithVenue)
         .toList();
   }

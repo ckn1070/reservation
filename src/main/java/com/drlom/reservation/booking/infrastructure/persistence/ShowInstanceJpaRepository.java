@@ -19,20 +19,37 @@ import org.springframework.data.repository.query.Param;
 public interface ShowInstanceJpaRepository extends JpaRepository<ShowInstanceJpaEntity, Long> {
 
   /**
-   * 공연장 ID로 공연 회차 조회
+   * 공연장 ID로 공연 회차 조회 (시작 시간 오름차순)
    *
    * @param resourceId 공연장 Resource ID
    * @return ShowInstanceJpaEntity 목록
    */
-  List<ShowInstanceJpaEntity> findByResourceId(Long resourceId);
+  List<ShowInstanceJpaEntity> findByResourceIdOrderByStartAtAsc(Long resourceId);
 
   /**
-   * 상태로 공연 회차 조회
+   * 상태로 공연 회차 조회 (시작 시간 오름차순)
    *
    * @param status 공연 상태 문자열
    * @return ShowInstanceJpaEntity 목록
    */
-  List<ShowInstanceJpaEntity> findByStatus(String status);
+  List<ShowInstanceJpaEntity> findByStatusOrderByStartAtAsc(String status);
+
+  /**
+   * 모든 공연 회차 조회 (시작 시간 오름차순)
+   *
+   * @return 전체 ShowInstanceJpaEntity 목록
+   */
+  List<ShowInstanceJpaEntity> findAllByOrderByStartAtAsc();
+
+  /**
+   * 공연장 ID와 상태로 공연 회차 조회 (시작 시간 오름차순)
+   *
+   * @param resourceId 공연장 Resource ID
+   * @param status 공연 상태 문자열
+   * @return ShowInstanceJpaEntity 목록
+   */
+  List<ShowInstanceJpaEntity> findByResourceIdAndStatusOrderByStartAtAsc(
+      Long resourceId, String status);
 
   /**
    * 동일 공연장에서 시간대가 겹치는 공연 조회
