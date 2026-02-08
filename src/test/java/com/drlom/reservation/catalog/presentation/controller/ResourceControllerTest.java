@@ -99,6 +99,32 @@ class ResourceControllerTest {
     @DisplayName("SUPER_ADMIN 권한으로 VENUE 목록 조회 성공")
     @WithMockUser(roles = "SUPER_ADMIN")
     void getVenues_asSuperAdmin_success() throws Exception {
+      verifyGetVenuesSuccess();
+    }
+
+    @Test
+    @DisplayName("VENUE가 없으면 빈 배열 반환")
+    @WithMockUser(roles = "ADMIN")
+    void getVenues_emptyList() throws Exception {
+      // given
+      given(getVenuesUseCase.execute()).willReturn(List.of());
+
+      // when & then
+      mockMvc
+          .perform(get("/api/resources/venues").with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$").isArray())
+          .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("USER 권한으로 VENUE 목록 조회 성공 (역할 계층)")
+    @WithMockUser(roles = "USER")
+    void getVenues_asUser_success() throws Exception {
+      verifyGetVenuesSuccess();
+    }
+
+    private void verifyGetVenuesSuccess() throws Exception {
       // given
       ResourceResult venue =
           ResourceResult.builder()
@@ -121,29 +147,6 @@ class ResourceControllerTest {
           .andExpect(jsonPath("$").isArray())
           .andExpect(jsonPath("$.length()").value(1))
           .andExpect(jsonPath("$[0].code").value("VN001"));
-    }
-
-    @Test
-    @DisplayName("VENUE가 없으면 빈 배열 반환")
-    @WithMockUser(roles = "ADMIN")
-    void getVenues_emptyList() throws Exception {
-      // given
-      given(getVenuesUseCase.execute()).willReturn(List.of());
-
-      // when & then
-      mockMvc
-          .perform(get("/api/resources/venues").with(csrf()))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$").isArray())
-          .andExpect(jsonPath("$.length()").value(0));
-    }
-
-    @Test
-    @DisplayName("USER 권한으로 VENUE 목록 조회 시 403 에러")
-    @WithMockUser(roles = "USER")
-    void getVenues_forbidden() throws Exception {
-      // when & then
-      mockMvc.perform(get("/api/resources/venues").with(csrf())).andExpect(status().isForbidden());
     }
 
     @Test
