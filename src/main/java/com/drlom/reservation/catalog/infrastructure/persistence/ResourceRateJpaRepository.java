@@ -2,6 +2,7 @@ package com.drlom.reservation.catalog.infrastructure.persistence;
 
 import com.drlom.reservation.catalog.infrastructure.persistence.entity.ResourceJpaEntity;
 import com.drlom.reservation.catalog.infrastructure.persistence.entity.ResourceRateJpaEntity;
+import com.drlom.reservation.catalog.infrastructure.persistence.projection.ApplicableRateProjection;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -78,11 +79,12 @@ public interface ResourceRateJpaRepository extends JpaRepository<ResourceRateJpa
    *
    * @param seatIds 좌석 ID 목록
    * @param dateTime 적용 시점
-   * @return [seatId, rateId, amount, currency] Object 배열 목록
+   * @return ApplicableRateProjection 목록
    */
   @Query(
       """
-      SELECT c.descendant.id, rate.id, rate.amount, rate.currency
+      SELECT c.descendant.id AS seatId, rate.id AS rateId,
+             rate.amount AS amount, rate.currency AS currency
       FROM ResourceClosureJpaEntity c
       JOIN ResourceRateJpaEntity rate ON rate.resource = c.ancestor
       WHERE c.descendant.id IN :seatIds
@@ -99,6 +101,6 @@ public interface ResourceRateJpaRepository extends JpaRepository<ResourceRateJpa
         rate.priority DESC,
         c.depth ASC
       """)
-  List<Object[]> findApplicableRatesForSeats(
+  List<ApplicableRateProjection> findApplicableRatesForSeats(
       @Param("seatIds") List<Long> seatIds, @Param("dateTime") LocalDateTime dateTime);
 }

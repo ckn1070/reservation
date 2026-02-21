@@ -1,6 +1,7 @@
 package com.drlom.reservation.catalog.infrastructure.persistence;
 
 import com.drlom.reservation.catalog.infrastructure.persistence.entity.ResourceJpaEntity;
+import com.drlom.reservation.catalog.infrastructure.persistence.projection.SeatDetailProjection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -80,15 +81,15 @@ public interface ResourceJpaRepository extends JpaRepository<ResourceJpaEntity, 
    * <p>Native Query: seat_properties 테이블에 JPA 엔티티가 없어 native query 사용
    *
    * @param seatIds 좌석 ID 목록
-   * @return [id, code, name, grade_name] 배열 목록
+   * @return SeatDetailProjection 목록
    */
   @Query(
       value =
-          "SELECT r.id, r.code, r.name, sg.grade_name "
+          "SELECT r.id, r.code, r.name, sg.grade_name AS gradeName "
               + "FROM resources r "
               + "LEFT JOIN seat_properties sp ON sp.seat_id = r.id "
               + "LEFT JOIN seat_grades sg ON sg.id = sp.grade_id "
               + "WHERE r.id IN :seatIds",
       nativeQuery = true)
-  List<Object[]> findSeatDetailsWithGrade(@Param("seatIds") List<Long> seatIds);
+  List<SeatDetailProjection> findSeatDetailsWithGrade(@Param("seatIds") List<Long> seatIds);
 }

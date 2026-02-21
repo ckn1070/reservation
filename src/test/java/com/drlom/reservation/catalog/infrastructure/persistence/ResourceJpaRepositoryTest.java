@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import com.drlom.reservation.catalog.infrastructure.persistence.entity.ResourceJpaEntity;
 import com.drlom.reservation.catalog.infrastructure.persistence.entity.SeatGradeJpaEntity;
+import com.drlom.reservation.catalog.infrastructure.persistence.projection.SeatDetailProjection;
 import com.drlom.reservation.common.config.JpaAuditingConfig;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -78,7 +79,7 @@ class ResourceJpaRepositoryTest {
           savedGrade.getId());
 
       // when
-      List<Object[]> results =
+      List<SeatDetailProjection> results =
           resourceJpaRepository.findSeatDetailsWithGrade(
               List.of(savedSeat1.getId(), savedSeat2.getId()));
 
@@ -86,24 +87,24 @@ class ResourceJpaRepositoryTest {
       assertThat(results).hasSize(2);
 
       // seat1: 등급 있음
-      Object[] seat1Row =
+      SeatDetailProjection seat1 =
           results.stream()
-              .filter(row -> ((Number) row[0]).longValue() == savedSeat1.getId())
+              .filter(p -> p.getId().equals(savedSeat1.getId()))
               .findFirst()
               .orElseThrow();
-      assertThat((String) seat1Row[1]).isEqualTo("A-1");
-      assertThat((String) seat1Row[2]).isEqualTo("A열 1번");
-      assertThat((String) seat1Row[3]).isEqualTo("VIP석");
+      assertThat(seat1.getCode()).isEqualTo("A-1");
+      assertThat(seat1.getName()).isEqualTo("A열 1번");
+      assertThat(seat1.getGradeName()).isEqualTo("VIP석");
 
       // seat2: 등급 없음
-      Object[] seat2Row =
+      SeatDetailProjection seat2 =
           results.stream()
-              .filter(row -> ((Number) row[0]).longValue() == savedSeat2.getId())
+              .filter(p -> p.getId().equals(savedSeat2.getId()))
               .findFirst()
               .orElseThrow();
-      assertThat((String) seat2Row[1]).isEqualTo("A-2");
-      assertThat((String) seat2Row[2]).isEqualTo("A열 2번");
-      assertThat(seat2Row[3]).isNull();
+      assertThat(seat2.getCode()).isEqualTo("A-2");
+      assertThat(seat2.getName()).isEqualTo("A열 2번");
+      assertThat(seat2.getGradeName()).isNull();
     }
 
     @Test
@@ -112,22 +113,23 @@ class ResourceJpaRepositoryTest {
       // given: seat_properties 없음
 
       // when
-      List<Object[]> results =
+      List<SeatDetailProjection> results =
           resourceJpaRepository.findSeatDetailsWithGrade(List.of(savedSeat1.getId()));
 
       // then
       assertThat(results).hasSize(1);
-      Object[] row = results.getFirst();
-      assertThat((String) row[1]).isEqualTo("A-1");
-      assertThat((String) row[2]).isEqualTo("A열 1번");
-      assertThat(row[3]).isNull();
+      SeatDetailProjection projection = results.getFirst();
+      assertThat(projection.getCode()).isEqualTo("A-1");
+      assertThat(projection.getName()).isEqualTo("A열 1번");
+      assertThat(projection.getGradeName()).isNull();
     }
 
     @Test
     @DisplayName("존재하지 않는 ID → 빈 결과")
     void findSeatDetailsWithGrade_nonExistentId_emptyResult() {
       // when
-      List<Object[]> results = resourceJpaRepository.findSeatDetailsWithGrade(List.of(999L));
+      List<SeatDetailProjection> results =
+          resourceJpaRepository.findSeatDetailsWithGrade(List.of(999L));
 
       // then
       assertThat(results).isEmpty();

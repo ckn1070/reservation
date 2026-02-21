@@ -17,19 +17,21 @@
 - [관련 파일 위치](#관련-파일-위치)
 
 ---
+d
 
 ## API 엔드포인트 요약
 
 **기본 경로**: `/api/shows`
 
-| 기능 | 메서드 | URL | 상태코드 | 권한 | 설명 |
-|------|--------|-----|---------|------|------|
-| 공연 회차 목록 조회 | GET | `/api/shows` | 200 OK | 인증된 사용자 | 전체/필터 조회 |
-| 공연 회차 생성 | POST | `/api/shows` | 201 Created | ADMIN 이상 | 새 공연 회차 등록 |
-| 공연 회차 오픈 | POST | `/api/shows/{id}/open` | 200 OK | ADMIN 이상 | SCHEDULED → OPEN 전환, 좌석 슬롯 자동 생성 |
-| 좌석 현황 조회 | GET | `/api/shows/{id}/slots` | 200 OK | 인증된 사용자 | OPEN 공연의 좌석 슬롯 목록, 좌석 정보, 가격, 상태 |
+| 기능          | 메서드  | URL                     | 상태코드        | 권한       | 설명                               |
+|-------------|------|-------------------------|-------------|----------|----------------------------------|
+| 공연 회차 목록 조회 | GET  | `/api/shows`            | 200 OK      | 인증된 사용자  | 전체/필터 조회                         |
+| 공연 회차 생성    | POST | `/api/shows`            | 201 Created | ADMIN 이상 | 새 공연 회차 등록                       |
+| 공연 회차 오픈    | POST | `/api/shows/{id}/open`  | 200 OK      | ADMIN 이상 | SCHEDULED → OPEN 전환, 좌석 슬롯 자동 생성 |
+| 좌석 현황 조회    | GET  | `/api/shows/{id}/slots` | 200 OK      | 인증된 사용자  | OPEN 공연의 좌석 슬롯 목록, 좌석 정보, 가격, 상태 |
 
 **공통 인증 요구사항**:
+
 - **필수**: Bearer Token (JWT Access Token)
 - **권한**: 엔드포인트별 상이 (위 표 참조)
 
@@ -90,6 +92,7 @@ GET /api/shows
 ### 요청 (Request)
 
 **Headers**:
+
 ```
 Authorization: Bearer {accessToken}
 ```
@@ -101,6 +104,7 @@ Authorization: Bearer {accessToken}
 | status | ShowStatus | ❌ | 공연 상태로 필터 (SCHEDULED, OPEN, CLOSED, CANCELLED) |
 
 **요청 예시**:
+
 ```
 GET /api/shows                           → 전체 회차 목록
 GET /api/shows?venueId=1                 → 특정 공연장의 회차 목록
@@ -111,6 +115,7 @@ GET /api/shows?venueId=1&status=OPEN     → 공연장 + 상태 복합 필터
 ### 응답 (Response)
 
 **성공 (200 OK)**:
+
 ```json
 [
   {
@@ -166,12 +171,14 @@ POST /api/shows
 ### 요청 (Request)
 
 **Headers**:
+
 ```
 Content-Type: application/json
 Authorization: Bearer {accessToken}
 ```
 
 **Body** (`CreateShowInstanceWebRequest`):
+
 ```json
 {
   "venueId": 1,
@@ -194,12 +201,14 @@ Authorization: Bearer {accessToken}
 | salesCloseAt | LocalDateTime | ❌ | salesOpenAt과 함께 설정 |
 
 **판매 시간 규칙**:
+
 - `salesOpenAt`과 `salesCloseAt`은 둘 다 있거나 둘 다 없어야 합니다
 - 둘 다 있는 경우 `salesOpenAt < salesCloseAt`이어야 합니다
 
 ### 응답 (Response)
 
 **성공 (201 Created)**:
+
 ```json
 {
   "id": 1,
@@ -214,6 +223,7 @@ Authorization: Bearer {accessToken}
 ```
 
 **성공 (판매 시간 없이)**:
+
 ```json
 {
   "id": 1,
@@ -280,6 +290,7 @@ Authorization: Bearer {accessToken}
 동일 공연장에서 시간대가 겹치는 공연이 있는지 확인합니다.
 
 **겹침 조건**:
+
 ```
 기존 공연: [A_start, A_end]
 신규 공연: [B_start, B_end]
@@ -289,6 +300,7 @@ Authorization: Bearer {accessToken}
 ```
 
 **예시**:
+
 ```
 기존 공연: 19:00 ~ 22:00
 신규 공연: 20:00 ~ 23:00 → 겹침 ❌ (중복)
@@ -311,6 +323,7 @@ POST /api/shows/{id}/open
 ### 요청 (Request)
 
 **Headers**:
+
 ```
 Authorization: Bearer {accessToken}
 ```
@@ -323,6 +336,7 @@ Authorization: Bearer {accessToken}
 ### 응답 (Response)
 
 **성공 (200 OK)**:
+
 ```json
 {
   "id": 1,
@@ -388,6 +402,7 @@ Authorization: Bearer {accessToken}
 ```
 
 **예시**:
+
 - seat1에 BASE(55,000원)가 직접 설정 → 55,000원 적용
 - seat2에 요금 없고 ROW에 BASE(40,000원) 설정 → 40,000원 적용 (조상 상속)
 - seat3에 BASE(55,000원) + PROMOTION(35,000원) → 35,000원 적용 (PROMOTION 우선)
@@ -395,10 +410,10 @@ Authorization: Bearer {accessToken}
 
 ### 슬롯 상태
 
-| 상태 | 설명 | 예약 가능 |
-|------|------|----------|
-| OPEN | 예약 가능 | ✅ |
-| CLOSED | 예약 불가 | ❌ |
+| 상태     | 설명    | 예약 가능 |
+|--------|-------|-------|
+| OPEN   | 예약 가능 | ✅     |
+| CLOSED | 예약 불가 | ❌     |
 
 **전이 규칙**: OPEN → CLOSED (단방향)
 
@@ -436,6 +451,7 @@ GET /api/shows/{id}/slots
 ### 요청 (Request)
 
 **Headers**:
+
 ```
 Authorization: Bearer {accessToken}
 ```
@@ -448,6 +464,7 @@ Authorization: Bearer {accessToken}
 ### 응답 (Response)
 
 **성공 (200 OK)**:
+
 ```json
 {
   "showInstanceId": 1,
@@ -557,6 +574,7 @@ Booking BC                              Catalog BC
 ```
 
 **SeatDetailInfo** (Port 모델):
+
 - 좌석 등급이 설정되지 않은 좌석은 `gradeName`이 null
 - `seat_properties` 테이블에 JPA 엔티티가 없어 Native Query 사용
 
@@ -566,31 +584,31 @@ Booking BC                              Catalog BC
 
 ### 공연 회차 관련 (BKG-40xx)
 
-| 코드 | 에러 코드 | HTTP 상태 | 설명 |
-|------|---------|----------|------|
-| BKG-4000 | `SHOW_INSTANCE_NOT_FOUND` | 404 | 공연 회차를 찾을 수 없음 |
-| BKG-4001 | `SHOW_INSTANCE_ALREADY_EXISTS` | 409 | 동일 시간대에 이미 공연 존재 |
-| BKG-4002 | `INVALID_SHOW_TIME` | 400 | 공연 시간이 올바르지 않음 |
-| BKG-4003 | `INVALID_SALES_TIME` | 400 | 판매 시간이 올바르지 않음 |
-| BKG-4004 | `INVALID_VENUE_TYPE` | 400 | VENUE 타입이 아닌 리소스 |
-| BKG-4005 | `INVALID_SHOW_STATUS` | 400 | 공연 상태가 올바르지 않음 |
-| BKG-4006 | `NO_AVAILABLE_SEATS` | 400 | 예약 가능한 좌석이 없음 |
+| 코드       | 에러 코드                          | HTTP 상태 | 설명               |
+|----------|--------------------------------|---------|------------------|
+| BKG-4000 | `SHOW_INSTANCE_NOT_FOUND`      | 404     | 공연 회차를 찾을 수 없음   |
+| BKG-4001 | `SHOW_INSTANCE_ALREADY_EXISTS` | 409     | 동일 시간대에 이미 공연 존재 |
+| BKG-4002 | `INVALID_SHOW_TIME`            | 400     | 공연 시간이 올바르지 않음   |
+| BKG-4003 | `INVALID_SALES_TIME`           | 400     | 판매 시간이 올바르지 않음   |
+| BKG-4004 | `INVALID_VENUE_TYPE`           | 400     | VENUE 타입이 아닌 리소스 |
+| BKG-4005 | `INVALID_SHOW_STATUS`          | 400     | 공연 상태가 올바르지 않음   |
+| BKG-4006 | `NO_AVAILABLE_SEATS`           | 400     | 예약 가능한 좌석이 없음    |
 
 ### 예약 관련 (BKG-41xx) - 예정
 
-| 코드 | 에러 코드 | HTTP 상태 | 설명 |
-|------|---------|----------|------|
-| BKG-4100 | `RESERVATION_NOT_FOUND` | 404 | 예약을 찾을 수 없음 |
-| BKG-4101 | `INVALID_RESERVATION_STATUS` | 400 | 예약 상태가 올바르지 않음 |
+| 코드       | 에러 코드                        | HTTP 상태 | 설명             |
+|----------|------------------------------|---------|----------------|
+| BKG-4100 | `RESERVATION_NOT_FOUND`      | 404     | 예약을 찾을 수 없음    |
+| BKG-4101 | `INVALID_RESERVATION_STATUS` | 400     | 예약 상태가 올바르지 않음 |
 
 ### 좌석 잠금 관련 (BKG-42xx) - 예정
 
-| 코드 | 에러 코드 | HTTP 상태 | 설명 |
-|------|---------|----------|------|
-| BKG-4200 | `SLOT_NOT_FOUND` | 404 | 슬롯을 찾을 수 없음 |
-| BKG-4201 | `SLOT_ALREADY_LOCKED` | 409 | 이미 선점된 좌석 |
-| BKG-4202 | `LOCK_EXPIRED` | 400 | 락이 만료됨 |
-| BKG-4203 | `INVALID_SLOT_STATUS` | 400 | 슬롯 상태가 올바르지 않음 |
+| 코드       | 에러 코드                 | HTTP 상태 | 설명             |
+|----------|-----------------------|---------|----------------|
+| BKG-4200 | `SLOT_NOT_FOUND`      | 404     | 슬롯을 찾을 수 없음    |
+| BKG-4201 | `SLOT_ALREADY_LOCKED` | 409     | 이미 선점된 좌석      |
+| BKG-4202 | `LOCK_EXPIRED`        | 400     | 락이 만료됨         |
+| BKG-4203 | `INVALID_SLOT_STATUS` | 400     | 슬롯 상태가 올바르지 않음 |
 
 ### 에러 응답 형식
 
@@ -609,36 +627,40 @@ Booking BC                              Catalog BC
 ### 도메인 모델
 
 **ShowInstance (Aggregate Root)**:
+
 - ID 기반 Entity
 - 공연장(VENUE) 참조 (Catalog BC)
 - 상태 전이 로직 포함
 - 비즈니스 규칙 검증
 
 **ShowStatus (Value Object/Enum)**:
+
 - SCHEDULED: 예정됨
 - OPEN: 예매 진행 중
 - CLOSED: 예매 마감
 - CANCELLED: 취소됨
 
 **ResourceSlot (Entity)**:
+
 - 공연 회차 + 좌석 조합으로 예약 가능한 단위
 - 회차 오픈 시 자동 생성
 - 적용 요금 정보 포함 (appliedRateId, priceAmount, currency)
 
 **SlotStatus (Value Object/Enum)**:
+
 - OPEN: 예약 가능
 - CLOSED: 예약 불가
 
 ### 주요 비즈니스 규칙
 
-| 규칙 | 검증 위치 | 설명 |
-|------|----------|------|
-| VENUE 타입만 허용 | ShowInstance.create() | 공연은 공연장에서만 개최 가능 |
-| startAt < endAt | ShowInstance.create() | 시작은 종료보다 이전이어야 함 |
-| 판매 시간 쌍 검증 | ShowInstance.create() | 둘 다 있거나 둘 다 없어야 함 |
-| salesOpenAt < salesCloseAt | ShowInstance.create() | 판매 시작은 종료보다 이전 |
-| 상태 전이 규칙 | ShowStatus.canTransitionTo() | 허용된 전이만 가능 |
-| 시간 중복 방지 | UseCase | 동일 공연장/시간대 중복 불가 |
+| 규칙                         | 검증 위치                        | 설명                |
+|----------------------------|------------------------------|-------------------|
+| VENUE 타입만 허용               | ShowInstance.create()        | 공연은 공연장에서만 개최 가능  |
+| startAt < endAt            | ShowInstance.create()        | 시작은 종료보다 이전이어야 함  |
+| 판매 시간 쌍 검증                 | ShowInstance.create()        | 둘 다 있거나 둘 다 없어야 함 |
+| salesOpenAt < salesCloseAt | ShowInstance.create()        | 판매 시작은 종료보다 이전    |
+| 상태 전이 규칙                   | ShowStatus.canTransitionTo() | 허용된 전이만 가능        |
+| 시간 중복 방지                   | UseCase                      | 동일 공연장/시간대 중복 불가  |
 
 ### BC 간 통신
 
@@ -657,6 +679,7 @@ Booking BC                         Catalog BC
 ```
 
 **Port 패턴 사용**:
+
 - `CatalogQueryPort`: Booking BC에서 정의한 인터페이스
 - `CatalogQueryPortImpl`: Catalog BC에서 구현 (의존성 역전)
 
@@ -728,23 +751,23 @@ catalog/
 
 ## 테스트 커버리지
 
-| 계층 | 테스트 클래스 | 테스트 수 |
-|------|-------------|----------|
-| Domain | ShowStatusTest | 25 |
-| Domain | ShowInstanceTest | 27 |
-| Domain | SlotStatusTest | 9 |
-| Domain | ResourceSlotTest | 21 |
-| Application | CreateShowInstanceUseCaseTest | 14 |
-| Application | OpenShowInstanceUseCaseTest | 9 |
-| Application | GetShowInstancesUseCaseTest | 9 |
-| Application | GetShowSlotsUseCaseTest | 11 |
-| Infrastructure | ShowInstanceEntityMapperTest | 8 |
-| Infrastructure | ResourceSlotEntityMapperTest | 9 |
-| Infrastructure | ShowInstanceRepositoryImplTest | 9 |
-| Infrastructure | ResourceJpaRepositoryTest | 3 |
-| Presentation | ShowControllerTest | 32 |
-| Integration | CreateShowInstanceIntegrationTest | 7 |
-| Integration | OpenShowInstanceIntegrationTest | 10 |
-| Integration | GetShowInstancesIntegrationTest | 9 |
-| Integration | GetShowSlotsIntegrationTest | 6 |
-| **합계** | | **218** |
+| 계층             | 테스트 클래스                           | 테스트 수   |
+|----------------|-----------------------------------|---------|
+| Domain         | ShowStatusTest                    | 25      |
+| Domain         | ShowInstanceTest                  | 27      |
+| Domain         | SlotStatusTest                    | 9       |
+| Domain         | ResourceSlotTest                  | 21      |
+| Application    | CreateShowInstanceUseCaseTest     | 14      |
+| Application    | OpenShowInstanceUseCaseTest       | 9       |
+| Application    | GetShowInstancesUseCaseTest       | 9       |
+| Application    | GetShowSlotsUseCaseTest           | 11      |
+| Infrastructure | ShowInstanceEntityMapperTest      | 8       |
+| Infrastructure | ResourceSlotEntityMapperTest      | 9       |
+| Infrastructure | ShowInstanceRepositoryImplTest    | 9       |
+| Infrastructure | ResourceJpaRepositoryTest         | 3       |
+| Presentation   | ShowControllerTest                | 32      |
+| Integration    | CreateShowInstanceIntegrationTest | 7       |
+| Integration    | OpenShowInstanceIntegrationTest   | 10      |
+| Integration    | GetShowInstancesIntegrationTest   | 9       |
+| Integration    | GetShowSlotsIntegrationTest       | 6       |
+| **합계**         |                                   | **218** |

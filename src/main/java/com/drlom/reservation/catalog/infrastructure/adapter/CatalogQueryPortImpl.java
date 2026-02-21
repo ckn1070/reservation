@@ -8,6 +8,8 @@ import com.drlom.reservation.catalog.domain.ResourceRepository;
 import com.drlom.reservation.catalog.infrastructure.persistence.ResourceJpaRepository;
 import com.drlom.reservation.catalog.infrastructure.persistence.ResourceRateJpaRepository;
 import com.drlom.reservation.catalog.infrastructure.persistence.entity.ResourceJpaEntity;
+import com.drlom.reservation.catalog.infrastructure.persistence.projection.ApplicableRateProjection;
+import com.drlom.reservation.catalog.infrastructure.persistence.projection.SeatDetailProjection;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -59,7 +61,8 @@ public class CatalogQueryPortImpl implements CatalogQueryPort {
     List<Long> seatIds = seats.stream().map(ResourceJpaEntity::getId).toList();
 
     // 3. 좌석별 적용 요금 일괄 조회 (조상 리소스 포함, 우선순위 정렬)
-    List<Object[]> rateResults = rateJpaRepository.findApplicableRatesForSeats(seatIds, showStartAt);
+    List<ApplicableRateProjection> rateResults =
+        rateJpaRepository.findApplicableRatesForSeats(seatIds, showStartAt);
 
     // 4. 좌석별 최우선 요금 매핑 (첫 번째 결과가 가장 높은 우선순위)
     Map<Long, SeatPriceInfo> bestRateMap = buildBestRateMap(rateResults);
@@ -87,42 +90,39 @@ public class CatalogQueryPortImpl implements CatalogQueryPort {
       return List.of();
     }
 
-    List<Object[]> results = resourceJpaRepository.findSeatDetailsWithGrade(seatIds);
+    List<SeatDetailProjection> results = resourceJpaRepository.findSeatDetailsWithGrade(seatIds);
 
     return results.stream()
         .map(
-            row ->
+            projection ->
                 SeatDetailInfo.builder()
-                    .seatId(((Number) row[0]).longValue())
-                    .seatCode((String) row[1])
-                    .seatName((String) row[2])
-                    .gradeName((String) row[3])
+                    .seatId(projection.getId())
+                    .seatCode(projection.getCode())
+                    .seatName(projection.getName())
+                    .gradeName(projection.getGradeName())
                     .build())
         .toList();
   }
 
-  private Map<Long, SeatPriceInfo> buildBestRateMap(List<Object[]> rateResults) {
+  private Map<Long, SeatPriceInfo> buildBestRateMap(
+      List<ApplicableRateProjection> rateResults) {
     Map<Long, SeatPriceInfo> bestRateMap = new LinkedHashMap<>();
 
-    for (Object[] row : rateResults) {
-      Long seatId = (Long) row[0];
+    for (ApplicableRateProjection projection : rateResults) {
+      Long seatId = projection.getSeatId();
 
       // 이미 매핑된 좌석은 건너뜀 (첫 번째가 최우선)
       if (bestRateMap.containsKey(seatId)) {
         continue;
       }
 
-      Long rateId = (Long) row[1];
-      long amount = (Long) row[2];
-      String currency = (String) row[3];
-
       bestRateMap.put(
           seatId,
           SeatPriceInfo.builder()
               .seatId(seatId)
-              .appliedRateId(rateId)
-              .priceAmount(amount)
-              .currency(currency)
+              .appliedRateId(projection.getRateId())
+              .priceAmount(projection.getAmount())
+              .currency(projection.getCurrency())
               .build());
     }
 
