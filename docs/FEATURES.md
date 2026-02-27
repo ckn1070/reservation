@@ -75,8 +75,8 @@
 | 회차 생성 | POST | `/api/shows` | 공연 회차 등록 |
 | 회차 오픈 | POST | `/api/shows/{id}/open` | SCHEDULED → OPEN 전환, 좌석 슬롯 자동 생성 |
 | 좌석 현황 조회 | GET | `/api/shows/{id}/slots` | OPEN 공연의 좌석 슬롯 목록, 좌석 정보, 가격, 상태 |
-| 좌석 임시 점유 | POST | `/api/slots/{id}/hold` | 결제 전 좌석 선점 (예정) |
-| 예약 확정 | POST | `/api/reservations` | 결제 완료 후 예약 생성 (예정) |
+| 좌석 임시 점유 | POST | `/api/reservations` | 좌석 1~10개를 10분간 임시 점유 (결제 전 선점) |
+| 예약 확정 | POST | `/api/reservations/{id}/confirm` | 결제 완료 후 예약 확정 (예정) |
 | 예약 취소 | POST | `/api/reservations/{id}/cancel` | 예약 취소 (예정) |
 
 **주요 특징**:
@@ -85,8 +85,8 @@
 - 동일 공연장/시간대 중복 방지
 - 회차 오픈 시 좌석별 예약 슬롯 자동 생성
 - 우선순위 기반 요금 적용 (PROMOTION > OVERRIDE > BASE, 조상 상속)
-- 동시성 제어 (비관적 락) - 예정
-- 임시 잠금 → 확정 잠금 2단계 - 예정
+- 동시성 제어: DB UNIQUE + Application exists 체크 이중 방어
+- 임시 점유(HELD) 10분 TTL → 결제 확정(CONFIRMED) 2단계
 
 → 상세: [features/BOOKING.md](features/BOOKING.md)
 
@@ -138,6 +138,12 @@
 | BKG-4004 | `INVALID_VENUE_TYPE` | 400 |
 | BKG-4005 | `INVALID_SHOW_STATUS` | 400 |
 | BKG-4006 | `NO_AVAILABLE_SEATS` | 400 |
+| BKG-4100 | `RESERVATION_NOT_FOUND` | 404 |
+| BKG-4101 | `INVALID_RESERVATION_STATUS` | 400 |
+| BKG-4200 | `SLOT_NOT_FOUND` | 404 |
+| BKG-4201 | `SLOT_ALREADY_LOCKED` | 409 |
+| BKG-4202 | `LOCK_EXPIRED` | 400 |
+| BKG-4203 | `INVALID_SLOT_STATUS` | 400 |
 
 → 전체 목록: [features/BOOKING.md#에러-코드-체계](features/BOOKING.md#에러-코드-체계)
 
