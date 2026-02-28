@@ -1082,8 +1082,12 @@ void encryptedPasswordNeverEqualsPlaintext(@ForAll @StringLength(min = 8) String
 | `ShowInstanceTest.java` | ShowInstance Aggregate Root | ✅ |
 | `SlotStatusTest.java` | SlotStatus 상태 전이 | ✅ |
 | `ResourceSlotTest.java` | ResourceSlot Entity | ✅ |
-| `ReservationTest.java` | Reservation Aggregate Root | ⬜ |
-| `ResourceSlotLockTest.java` | ResourceSlotLock Entity | ⬜ |
+| `ReservationStatusTest.java` | ReservationStatus 상태 전이 | ✅ |
+| `LockStatusTest.java` | LockStatus 상태 전이 | ✅ |
+| `LockActionTest.java` | LockAction Enum | ✅ |
+| `ReservationTest.java` | Reservation Aggregate Root | ✅ |
+| `ResourceSlotLockTest.java` | ResourceSlotLock Entity | ✅ |
+| `ResourceSlotLockHistoryTest.java` | ResourceSlotLockHistory Entity | ✅ |
 
 #### Application 계층
 
@@ -1092,7 +1096,7 @@ void encryptedPasswordNeverEqualsPlaintext(@ForAll @StringLength(min = 8) String
 | `CreateShowInstanceUseCaseTest.java` | CreateShowInstanceUseCase | ✅ |
 | `OpenShowInstanceUseCaseTest.java` | OpenShowInstanceUseCase | ✅ |
 | `GetShowInstancesUseCaseTest.java` | GetShowInstancesUseCase | ✅ |
-| `HoldSlotsUseCaseTest.java` | HoldSlotsUseCase | ⬜ |
+| `HoldSlotsUseCaseTest.java` | HoldSlotsUseCase | ✅ |
 | `ConfirmReservationUseCaseTest.java` | ConfirmReservationUseCase | ⬜ |
 | `CancelReservationUseCaseTest.java` | CancelReservationUseCase | ⬜ |
 
@@ -1104,12 +1108,18 @@ void encryptedPasswordNeverEqualsPlaintext(@ForAll @StringLength(min = 8) String
 | `ShowInstanceRepositoryImplTest.java` | ShowInstanceRepositoryImpl (@DataJpaTest) | ✅ |
 | `ResourceSlotEntityMapperTest.java` | ResourceSlot Mapper | ✅ |
 | `ResourceSlotRepositoryImplTest.java` | ResourceSlot Repository + JPQL 쿼리 | ✅ |
+| `ReservationEntityMapperTest.java` | Reservation Mapper | ✅ |
+| `ResourceSlotLockEntityMapperTest.java` | ResourceSlotLock Mapper | ✅ |
+| `ResourceSlotLockHistoryEntityMapperTest.java` | ResourceSlotLockHistory Mapper | ✅ |
+| `ReservationRepositoryImplTest.java` | ReservationRepositoryImpl (@DataJpaTest) | ✅ |
+| `ResourceSlotLockRepositoryImplTest.java` | ResourceSlotLockRepositoryImpl (@DataJpaTest) | ✅ |
 
 #### Presentation 계층
 
 | 테스트 파일 | 대상 | 상태 |
 |------------|------|------|
 | `ShowControllerTest.java` | ShowController (생성, 오픈, 목록 조회) | ✅ |
+| `ReservationControllerTest.java` | ReservationController (좌석 임시 점유) | ✅ |
 
 #### Integration 테스트
 
@@ -1118,6 +1128,7 @@ void encryptedPasswordNeverEqualsPlaintext(@ForAll @StringLength(min = 8) String
 | `CreateShowInstanceIntegrationTest.java` | 공연 회차 생성 E2E | ✅ |
 | `OpenShowInstanceIntegrationTest.java` | 공연 회차 오픈 E2E | ✅ |
 | `GetShowInstancesIntegrationTest.java` | 공연 회차 목록 조회 E2E | ✅ |
+| `HoldSlotsIntegrationTest.java` | 좌석 임시 점유 E2E | ✅ |
 
 ---
 
