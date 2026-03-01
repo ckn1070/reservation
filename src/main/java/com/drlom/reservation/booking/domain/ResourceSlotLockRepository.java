@@ -1,5 +1,6 @@
 package com.drlom.reservation.booking.domain;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -34,4 +35,12 @@ public interface ResourceSlotLockRepository {
    * @return 락이 존재하면 true
    */
   boolean existsBySlotId(Long slotId);
+
+  /**
+   * 예약 ID로 모든 Lock 조회
+   *
+   * @param reservationId 예약 ID
+   * @return 해당 예약의 Lock 목록 (없으면 빈 리스트)
+   */
+  List<ResourceSlotLock> findAllByReservationId(Long reservationId);
 }

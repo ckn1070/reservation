@@ -4,6 +4,7 @@ import com.drlom.reservation.booking.domain.ResourceSlotLock;
 import com.drlom.reservation.booking.domain.ResourceSlotLockRepository;
 import com.drlom.reservation.booking.infrastructure.persistence.entity.ResourceSlotLockJpaEntity;
 import com.drlom.reservation.booking.infrastructure.persistence.mapper.ResourceSlotLockEntityMapper;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,5 +46,14 @@ public class ResourceSlotLockRepositoryImpl implements ResourceSlotLockRepositor
     log.debug("ResourceSlotLock 존재 여부 확인: slotId={}", slotId);
 
     return jpaRepository.existsBySlotId(slotId);
+  }
+
+  @Override
+  public List<ResourceSlotLock> findAllByReservationId(Long reservationId) {
+    log.debug("ResourceSlotLock 예약별 조회: reservationId={}", reservationId);
+
+    return jpaRepository.findByReservationId(reservationId).stream()
+        .map(entityMapper::toDomain)
+        .toList();
   }
 }
