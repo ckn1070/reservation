@@ -64,6 +64,13 @@ public class ResourceSlotRepositoryImpl implements ResourceSlotRepository {
   }
 
   @Override
+  public List<ResourceSlot> findAllByIds(List<Long> ids) {
+    log.debug("ResourceSlot 일괄 조회: ids={}", ids);
+
+    return jpaRepository.findAllById(ids).stream().map(entityMapper::toDomain).toList();
+  }
+
+  @Override
   public long countByShowInstanceId(Long showInstanceId) {
     log.debug("ResourceSlot 수 조회: showInstanceId={}", showInstanceId);
 

@@ -45,6 +45,14 @@ public interface ResourceSlotRepository {
   List<ResourceSlot> findByShowInstanceId(Long showInstanceId);
 
   /**
+   * 여러 ID로 ResourceSlot 일괄 조회
+   *
+   * @param ids ResourceSlot ID 목록
+   * @return ResourceSlot 목록
+   */
+  List<ResourceSlot> findAllByIds(List<Long> ids);
+
+  /**
    * 공연 회차의 슬롯 수 조회
    *
    * @param showInstanceId 공연 회차 ID
