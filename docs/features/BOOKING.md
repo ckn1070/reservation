@@ -12,6 +12,7 @@
 - [2. 공연 회차 생성 (Create Show Instance)](#2-공연-회차-생성-create-show-instance)
 - [3. 공연 회차 오픈 (Open Show Instance)](#3-공연-회차-오픈-open-show-instance)
 - [4. 좌석 현황 조회 (Get Show Slots)](#4-좌석-현황-조회-get-show-slots)
+- [5. 좌석 임시 점유 (Hold Slots)](#5-좌석-임시-점유-hold-slots)
 - [에러 코드 체계](#에러-코드-체계)
 - [데이터 모델](#데이터-모델)
 - [관련 파일 위치](#관련-파일-위치)
@@ -21,7 +22,7 @@ d
 
 ## API 엔드포인트 요약
 
-**기본 경로**: `/api/shows`
+**기본 경로**: `/api/shows`, `/api/reservations`
 
 | 기능          | 메서드  | URL                     | 상태코드        | 권한       | 설명                               |
 |-------------|------|-------------------------|-------------|----------|----------------------------------|
@@ -29,6 +30,7 @@ d
 | 공연 회차 생성    | POST | `/api/shows`            | 201 Created | ADMIN 이상 | 새 공연 회차 등록                       |
 | 공연 회차 오픈    | POST | `/api/shows/{id}/open`  | 200 OK      | ADMIN 이상 | SCHEDULED → OPEN 전환, 좌석 슬롯 자동 생성 |
 | 좌석 현황 조회    | GET  | `/api/shows/{id}/slots` | 200 OK      | 인증된 사용자  | OPEN 공연의 좌석 슬롯 목록, 좌석 정보, 가격, 상태 |
+| 좌석 임시 점유    | POST | `/api/reservations`     | 201 Created | 인증된 사용자  | 좌석 1~10개를 10분간 임시 점유             |
 
 **공통 인증 요구사항**:
 
@@ -580,6 +582,157 @@ Booking BC                              Catalog BC
 
 ---
 
+## 5. 좌석 임시 점유 (Hold Slots)
+
+선택한 좌석(1~10개)을 10분간 임시 점유하여 결제 전 선점을 보장합니다. DB UNIQUE 제약 + 애플리케이션 레벨 이중 방어로 동시 예약 시 Race Condition을 완벽 차단합니다.
+
+### 엔드포인트
+
+```
+POST /api/reservations
+```
+
+### 요청 (Request)
+
+**Headers**:
+
+```
+Content-Type: application/json
+Authorization: Bearer {accessToken}
+```
+
+**Body** (`HoldSlotsWebRequest`):
+
+```json
+{
+  "slotIds": [1, 2, 3]
+}
+```
+
+**필드 검증**:
+| 필드 | 타입 | 필수 | 검증 규칙 |
+|------|------|------|----------|
+| slotIds | List\<Long\> | ✅ | 1개 이상, 최대 10개 |
+
+**추가 검증 (UseCase)**:
+- 모든 슬롯이 존재해야 함
+- 모든 슬롯이 OPEN 상태여야 함
+- 모든 슬롯이 동일한 showInstanceId에 속해야 함
+- 해당 공연 회차가 OPEN 상태여야 함
+- 슬롯이 이미 선점되지 않았어야 함
+
+### 응답 (Response)
+
+**성공 (201 Created)**:
+
+```json
+{
+  "id": 1,
+  "showInstanceId": 100,
+  "status": "PENDING",
+  "items": [
+    {
+      "slotId": 1,
+      "priceAmount": 55000,
+      "currency": "KRW"
+    },
+    {
+      "slotId": 2,
+      "priceAmount": 65000,
+      "currency": "KRW"
+    }
+  ],
+  "expiresAt": "2026-03-01T10:10:00"
+}
+```
+
+**응답 필드 설명**:
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long | 예약 ID |
+| showInstanceId | Long | 공연 회차 ID (슬롯에서 자동 도출) |
+| status | ReservationStatus | 예약 상태 (PENDING) |
+| items[].slotId | Long | 슬롯 ID |
+| items[].priceAmount | long | 예약 시점 가격 (원) |
+| items[].currency | String | 통화 코드 (ISO 4217) |
+| expiresAt | LocalDateTime | 임시 점유 만료 시각 (10분 후) |
+
+**실패 응답**:
+| HTTP 상태 | 에러 코드 | 상황 |
+|-----------|---------|------|
+| 400 Bad Request | `INVALID_INPUT_VALUE` | 슬롯 미선택, 10개 초과 |
+| 400 Bad Request | `INVALID_SLOT_STATUS` | 예약 가능한 상태의 슬롯이 아님 |
+| 400 Bad Request | `INVALID_SHOW_STATUS` | 예약 가능한 상태의 공연이 아님 |
+| 401 Unauthorized | - | 인증 토큰 없음/만료 |
+| 404 Not Found | `SLOT_NOT_FOUND` | 슬롯을 찾을 수 없음 |
+| 404 Not Found | `SHOW_INSTANCE_NOT_FOUND` | 공연 회차를 찾을 수 없음 |
+| 409 Conflict | `SLOT_ALREADY_LOCKED` | 이미 선점된 좌석 |
+
+### 비즈니스 로직 흐름
+
+```
+1. Command 검증
+   └─ userId, slotIds 필수 / 최대 10개
+
+2. 슬롯 조회 + 검증
+   └─ resourceSlotRepository.findAllByIds(slotIds)
+      ├─ 존재하지 않는 슬롯: SLOT_NOT_FOUND
+      ├─ OPEN이 아닌 슬롯: INVALID_SLOT_STATUS
+      └─ 서로 다른 공연 회차: INVALID_INPUT_VALUE
+
+3. ShowInstance 조회 + 검증
+   └─ showInstanceRepository.findById(showInstanceId)
+      ├─ 미존재: SHOW_INSTANCE_NOT_FOUND
+      └─ OPEN 아님: INVALID_SHOW_STATUS
+
+4. Reservation 생성 + items 구성 (메모리)
+   └─ Reservation.create(userId, showInstanceId)
+   └─ reservation.addItem(slotId, priceAmount, currency) × N
+
+5. Reservation 저장 (CascadeType.ALL → items 함께)
+   └─ reservationRepository.save(reservation)
+
+6. 각 슬롯 Lock 획득
+   ├─ 1차 방어: existsBySlotId() → 친절한 에러 메시지
+   ├─ 2차 방어: uk_lock_slot UNIQUE → GlobalExceptionHandler
+   └─ 이력 기록: ResourceSlotLockHistory (HELD)
+
+7. ReservationResult 반환 (expiresAt 포함)
+```
+
+### 동시성 제어 (매우 중요!)
+
+```
+사용자 A ─────────────────────────────────────────────►
+    exists? → false → INSERT lock ✅ (성공)
+
+사용자 B ─────────────────────────────────────────────►
+    exists? → false → INSERT lock ❌ (UNIQUE 위반 → GlobalExceptionHandler)
+```
+
+**이중 방어 전략**:
+1. **1차 방어**: `existsBySlotId()` — 대부분의 중복을 빠르게 차단, 친절한 에러 메시지
+2. **2차 방어**: `uk_lock_slot` UNIQUE 제약 — 1차를 통과한 Race Condition까지 완벽 차단
+
+### 예약 상태 전이
+
+```
+PENDING → CONFIRMED (결제 완료)
+PENDING → CANCELLED (사용자 취소 또는 만료)
+CONFIRMED → CANCELLED (환불)
+CONFIRMED → NO_SHOW (미방문)
+CONFIRMED → COMPLETED (공연 종료)
+```
+
+### Lock 상태 전이
+
+```
+HELD → CONFIRMED (결제 확정)
+HELD → (삭제) (만료/취소 시)
+```
+
+---
+
 ## 에러 코드 체계
 
 ### 공연 회차 관련 (BKG-40xx)
@@ -594,14 +747,14 @@ Booking BC                              Catalog BC
 | BKG-4005 | `INVALID_SHOW_STATUS`          | 400     | 공연 상태가 올바르지 않음   |
 | BKG-4006 | `NO_AVAILABLE_SEATS`           | 400     | 예약 가능한 좌석이 없음    |
 
-### 예약 관련 (BKG-41xx) - 예정
+### 예약 관련 (BKG-41xx)
 
 | 코드       | 에러 코드                        | HTTP 상태 | 설명             |
 |----------|------------------------------|---------|----------------|
 | BKG-4100 | `RESERVATION_NOT_FOUND`      | 404     | 예약을 찾을 수 없음    |
 | BKG-4101 | `INVALID_RESERVATION_STATUS` | 400     | 예약 상태가 올바르지 않음 |
 
-### 좌석 잠금 관련 (BKG-42xx) - 예정
+### 좌석 잠금 관련 (BKG-42xx)
 
 | 코드       | 에러 코드                 | HTTP 상태 | 설명             |
 |----------|-----------------------|---------|----------------|
@@ -691,18 +844,23 @@ Booking BC                         Catalog BC
 booking/
 ├── presentation/
 │   ├── controller/
-│   │   └── ShowController.java              # /api/shows, /api/shows/{id}/open, /api/shows/{id}/slots
+│   │   ├── ShowController.java              # /api/shows, /api/shows/{id}/open, /api/shows/{id}/slots
+│   │   └── ReservationController.java       # /api/reservations
 │   └── dto/
 │       ├── CreateShowInstanceWebRequest.java
 │       ├── ShowInstanceWebResponse.java
 │       ├── ShowSlotsWebResponse.java        # 좌석 현황 래퍼 응답
-│       └── SlotDetailWebResponse.java       # 개별 슬롯 응답
+│       ├── SlotDetailWebResponse.java       # 개별 슬롯 응답
+│       ├── HoldSlotsWebRequest.java         # 좌석 점유 요청
+│       ├── ReservationWebResponse.java      # 예약 응답
+│       └── ReservationItemWebResponse.java  # 예약 항목 응답
 ├── application/
 │   ├── usecase/
 │   │   ├── GetShowInstancesUseCase.java
 │   │   ├── CreateShowInstanceUseCase.java
 │   │   ├── OpenShowInstanceUseCase.java
-│   │   └── GetShowSlotsUseCase.java         # 좌석 현황 조회
+│   │   ├── GetShowSlotsUseCase.java         # 좌석 현황 조회
+│   │   └── HoldSlotsUseCase.java            # 좌석 임시 점유
 │   ├── port/
 │   │   ├── CatalogQueryPort.java            # BC 간 통신 인터페이스
 │   │   └── model/
@@ -711,33 +869,59 @@ booking/
 │   └── dto/
 │       ├── command/
 │       │   ├── CreateShowInstanceCommand.java
-│       │   └── OpenShowInstanceCommand.java
+│       │   ├── OpenShowInstanceCommand.java
+│       │   └── HoldSlotsCommand.java        # 좌석 점유 Command
 │       ├── query/
 │       │   ├── GetShowInstancesQuery.java
 │       │   └── GetShowSlotsQuery.java       # 좌석 현황 조회 Query
 │       └── result/
 │           ├── ShowInstanceResult.java
 │           ├── ShowSlotsResult.java          # 좌석 현황 래퍼 Result
-│           └── SlotDetailResult.java         # 개별 슬롯 Result
+│           ├── SlotDetailResult.java         # 개별 슬롯 Result
+│           ├── ReservationResult.java        # 예약 Result
+│           └── ReservationItemResult.java    # 예약 항목 Result
 ├── domain/
 │   ├── ShowInstance.java                    # Aggregate Root
 │   ├── ShowStatus.java                      # 상태 Enum
 │   ├── ShowInstanceRepository.java          # Repository 인터페이스
 │   ├── ResourceSlot.java                    # Entity
 │   ├── SlotStatus.java                      # 상태 Enum
-│   └── ResourceSlotRepository.java          # Repository 인터페이스
+│   ├── ResourceSlotRepository.java          # Repository 인터페이스
+│   ├── Reservation.java                     # Aggregate Root
+│   ├── ReservationItem.java                 # Entity
+│   ├── ReservationStatus.java               # 상태 Enum
+│   ├── ReservationRepository.java           # Repository 인터페이스
+│   ├── ResourceSlotLock.java                # Entity
+│   ├── LockStatus.java                      # 상태 Enum
+│   ├── LockAction.java                      # 이력 Enum
+│   ├── ResourceSlotLockRepository.java      # Repository 인터페이스
+│   ├── ResourceSlotLockHistory.java         # Entity
+│   └── ResourceSlotLockHistoryRepository.java # Repository 인터페이스
 └── infrastructure/
     └── persistence/
         ├── entity/
         │   ├── ShowInstanceJpaEntity.java
-        │   └── ResourceSlotJpaEntity.java
+        │   ├── ResourceSlotJpaEntity.java
+        │   ├── ReservationJpaEntity.java          # @OneToMany items
+        │   ├── ReservationItemJpaEntity.java      # @ManyToOne reservation
+        │   ├── ResourceSlotLockJpaEntity.java     # unique slotId
+        │   └── ResourceSlotLockHistoryJpaEntity.java
         ├── mapper/
         │   ├── ShowInstanceEntityMapper.java
-        │   └── ResourceSlotEntityMapper.java
+        │   ├── ResourceSlotEntityMapper.java
+        │   ├── ReservationEntityMapper.java
+        │   ├── ResourceSlotLockEntityMapper.java
+        │   └── ResourceSlotLockHistoryEntityMapper.java
         ├── ShowInstanceJpaRepository.java
         ├── ShowInstanceRepositoryImpl.java
         ├── ResourceSlotJpaRepository.java
-        └── ResourceSlotRepositoryImpl.java
+        ├── ResourceSlotRepositoryImpl.java
+        ├── ReservationJpaRepository.java
+        ├── ReservationRepositoryImpl.java
+        ├── ResourceSlotLockJpaRepository.java
+        ├── ResourceSlotLockRepositoryImpl.java
+        ├── ResourceSlotLockHistoryJpaRepository.java
+        └── ResourceSlotLockHistoryRepositoryImpl.java
 
 catalog/
 └── infrastructure/
@@ -751,23 +935,37 @@ catalog/
 
 ## 테스트 커버리지
 
-| 계층             | 테스트 클래스                           | 테스트 수   |
-|----------------|-----------------------------------|---------|
-| Domain         | ShowStatusTest                    | 25      |
-| Domain         | ShowInstanceTest                  | 27      |
-| Domain         | SlotStatusTest                    | 9       |
-| Domain         | ResourceSlotTest                  | 21      |
-| Application    | CreateShowInstanceUseCaseTest     | 14      |
-| Application    | OpenShowInstanceUseCaseTest       | 9       |
-| Application    | GetShowInstancesUseCaseTest       | 9       |
-| Application    | GetShowSlotsUseCaseTest           | 11      |
-| Infrastructure | ShowInstanceEntityMapperTest      | 8       |
-| Infrastructure | ResourceSlotEntityMapperTest      | 9       |
-| Infrastructure | ShowInstanceRepositoryImplTest    | 9       |
-| Infrastructure | ResourceJpaRepositoryTest         | 3       |
-| Presentation   | ShowControllerTest                | 32      |
-| Integration    | CreateShowInstanceIntegrationTest | 7       |
-| Integration    | OpenShowInstanceIntegrationTest   | 10      |
-| Integration    | GetShowInstancesIntegrationTest   | 9       |
-| Integration    | GetShowSlotsIntegrationTest       | 6       |
-| **합계**         |                                   | **218** |
+| 계층             | 테스트 클래스                                     | 테스트 수   |
+|----------------|-----------------------------------------------|---------|
+| Domain         | ShowStatusTest                                | 25      |
+| Domain         | ShowInstanceTest                              | 27      |
+| Domain         | SlotStatusTest                                | 9       |
+| Domain         | ResourceSlotTest                              | 21      |
+| Domain         | ReservationStatusTest                         | 13      |
+| Domain         | LockStatusTest                                | 7       |
+| Domain         | LockActionTest                                | 7       |
+| Domain         | ReservationTest                               | 30      |
+| Domain         | ResourceSlotLockTest                          | 20      |
+| Domain         | ResourceSlotLockHistoryTest                   | 16      |
+| Application    | CreateShowInstanceUseCaseTest                 | 14      |
+| Application    | OpenShowInstanceUseCaseTest                   | 9       |
+| Application    | GetShowInstancesUseCaseTest                   | 9       |
+| Application    | GetShowSlotsUseCaseTest                       | 11      |
+| Application    | HoldSlotsUseCaseTest                          | 16      |
+| Infrastructure | ShowInstanceEntityMapperTest                  | 8       |
+| Infrastructure | ResourceSlotEntityMapperTest                  | 9       |
+| Infrastructure | ReservationEntityMapperTest                   | 8       |
+| Infrastructure | ResourceSlotLockEntityMapperTest              | 8       |
+| Infrastructure | ResourceSlotLockHistoryEntityMapperTest        | 8       |
+| Infrastructure | ShowInstanceRepositoryImplTest                | 9       |
+| Infrastructure | ResourceJpaRepositoryTest                     | 3       |
+| Infrastructure | ReservationRepositoryImplTest                 | 5       |
+| Infrastructure | ResourceSlotLockRepositoryImplTest            | 5       |
+| Presentation   | ShowControllerTest                            | 32      |
+| Presentation   | ReservationControllerTest                     | 11      |
+| Integration    | CreateShowInstanceIntegrationTest             | 7       |
+| Integration    | OpenShowInstanceIntegrationTest               | 10      |
+| Integration    | GetShowInstancesIntegrationTest               | 9       |
+| Integration    | GetShowSlotsIntegrationTest                   | 6       |
+| Integration    | HoldSlotsIntegrationTest                      | 6       |
+| **합계**         |                                               | **388** |
