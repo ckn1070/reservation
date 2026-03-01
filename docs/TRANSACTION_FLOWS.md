@@ -16,79 +16,71 @@
 
 **목적**: 사용자가 선택한 좌석을 임시로 점유 (결제 대기)
 
-**트랜잭션 순서** (매우 중요! - 개선된 흐름):
+**트랜잭션 순서** (매우 중요!):
 ```java
 @Transactional
 public ReservationResult execute(HoldSlotsCommand command) {
-    // 1. slotIds 조회
-    List<ResourceSlot> slots = slotRepository.findAllById(command.getSlotIds());
-    if (slots.size() != command.getSlotIds().size()) {
-        throw new SlotNotFoundException("존재하지 않는 슬롯이 포함되어 있습니다");
+    // 1. Command 검증
+    command.validate();
+
+    // 2. 슬롯 조회 + 검증 (존재, OPEN 상태, 동일 showInstanceId)
+    List<ResourceSlot> slots = findAndValidateSlots(command.getSlotIds());
+
+    // 3. ShowInstance 조회 + OPEN 상태 검증
+    Long showInstanceId = slots.getFirst().getShowInstanceId();
+    ShowInstance showInstance = findAndValidateShowInstance(showInstanceId);
+
+    // 4. Reservation 생성 + items 구성 (메모리)
+    Reservation reservation = Reservation.create(command.getUserId(), showInstance.getId());
+    for (ResourceSlot slot : slots) {
+        reservation.addItem(slot.getId(), slot.getPriceAmount(), slot.getCurrency());
     }
 
-    // 2. 예약 생성 + 예약 항목 구성 (메모리에서)
-    //    → Lock의 reservation_id가 NOT NULL이므로 reservation을 먼저 생성
-    User user = userRepository.findById(command.getUserId())
-        .orElseThrow(() -> new UserNotFoundException(command.getUserId()));
-
-    Reservation reservation = Reservation.create(user);
-
-    // 예약 항목 구성 (메모리)
-    slots.forEach(reservation::addItem);
-
-    // 3. 예약 저장 (1회만)
+    // 5. Reservation 저장 (CascadeType.ALL → items 함께)
     Reservation savedReservation = reservationRepository.save(reservation);
 
-    // 4. 각 슬롯에 대해 락 획득 + 이력 기록
+    // 6. 각 슬롯에 대해 Lock 획득 + 이력 기록
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime expiresAt = now.plusMinutes(LOCK_TTL_MINUTES);
+
     for (ResourceSlot slot : slots) {
-        try {
-            // 4-1. 1차 방어: exists 체크 (best effort - 친절한 에러)
-            if (lockRepository.existsBySlotId(slot.getId())) {
-                throw new SlotAlreadyLockedException(slot.getId());
-            }
-
-            // 4-2. 락 생성 (HELD, 10분 TTL)
-            ResourceSlotLock lock = ResourceSlotLock.createHeld(
-                slot,
-                savedReservation,
-                LocalDateTime.now().plusMinutes(10)
-            );
-            lockRepository.save(lock);
-
-            // 4-3. 이력 기록 (감사 로그)
-            LockHistory history = LockHistory.create(lock, "HELD", "좌석 선점");
-            lockHistoryRepository.save(history);
-
-        } catch (DataIntegrityViolationException e) {
-            // 4-4. 2차 방어: uk_lock_slot UNIQUE 제약 위반 (final guard)
-            //      → 두 요청이 동시에 exists=false를 본 후 둘 다 insert 시도한 경우
-            throw new SlotAlreadyLockedException(
-                slot.getId(),
-                "동시 예약 시도로 인해 이미 선점된 좌석입니다"
-            );
+        // 6-1. 1차 방어: exists 체크 (best effort - 친절한 에러 메시지)
+        if (resourceSlotLockRepository.existsBySlotId(slot.getId())) {
+            throw new BusinessException(ErrorCode.SLOT_ALREADY_LOCKED);
         }
+
+        // 6-2. Lock 생성 + 저장
+        //      2차 방어: uk_lock_slot UNIQUE 제약 → GlobalExceptionHandler에서 처리
+        ResourceSlotLock lock = ResourceSlotLock.createHeld(
+            slot.getId(), savedReservation.getId(), now, expiresAt);
+        ResourceSlotLock savedLock = resourceSlotLockRepository.save(lock);
+
+        // 6-3. 이력 기록 (감사 추적)
+        ResourceSlotLockHistory history = ResourceSlotLockHistory.fromLock(
+            savedLock, LockAction.HELD, null, now);
+        resourceSlotLockHistoryRepository.save(history);
     }
 
-    return ReservationResult.from(savedReservation);
+    return ReservationResult.from(savedReservation, expiresAt);
 }
 ```
 
 **핵심 포인트 (동시성 제어 - 매우 중요!)**:
-- ✅ **순서**: Reservation 생성 → items 구성(메모리) → 저장(1회) → Lock 획득
+- ✅ **순서**: 슬롯/공연 검증 → Reservation 생성 + items 구성(메모리) → 저장(1회, Cascade) → Lock 획득
 - ✅ **동시성 이중 방어**:
-  1. **1차 방어**: `existsBySlotId()` - best effort, 친절한 에러 메시지
-  2. **2차 방어**: `uk_lock_slot` UNIQUE 제약 → DataIntegrityViolation 예외 매핑
+  1. **1차 방어**: `existsBySlotId()` — best effort, 친절한 에러 메시지 (`BusinessException`)
+  2. **2차 방어**: `uk_lock_slot` UNIQUE 제약 → `GlobalExceptionHandler`에서 자동 매핑
 - ✅ **Race Condition 완벽 차단**: 두 요청이 동시에 exists=false를 봐도 UNIQUE 제약이 막음
-- ✅ **읽기 쉬운 흐름**: 예약 구성과 락 획득이 명확히 분리
-- ✅ **이력**: 모든 상태 변화를 LockHistory에 기록 (감사 추적)
+- ✅ **읽기 쉬운 흐름**: 검증 → 예약 생성 → 락 획득이 명확히 분리
+- ✅ **이력**: 모든 상태 변화를 `ResourceSlotLockHistory`에 기록 (감사 추적)
 
-**실무 포인트**:
+**2차 방어 — GlobalExceptionHandler에서 자동 처리**:
 ```java
-// GlobalExceptionHandler에서 DataIntegrityViolationException 매핑
+// GlobalExceptionHandler에서 DataIntegrityViolationException 자동 매핑
+// UseCase에서 별도 catch 불필요 → 코드 간결, 관심사 분리
 @ExceptionHandler(DataIntegrityViolationException.class)
 public ErrorResponse handleDataIntegrityViolation(DataIntegrityViolationException e) {
     if (e.getMessage().contains("uk_lock_slot")) {
-        // UNIQUE 제약 위반 = 슬롯 중복 락
         return ErrorResponse.of(ErrorCode.SLOT_ALREADY_LOCKED, "이미 선점된 좌석입니다");
     }
     return ErrorResponse.of(ErrorCode.DATA_INTEGRITY_VIOLATION, e.getMessage());
