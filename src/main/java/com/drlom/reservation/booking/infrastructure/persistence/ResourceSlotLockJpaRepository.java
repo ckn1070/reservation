@@ -1,6 +1,7 @@
 package com.drlom.reservation.booking.infrastructure.persistence;
 
 import com.drlom.reservation.booking.infrastructure.persistence.entity.ResourceSlotLockJpaEntity;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -22,4 +23,12 @@ public interface ResourceSlotLockJpaRepository
    * @return 락이 존재하면 true
    */
   boolean existsBySlotId(Long slotId);
+
+  /**
+   * 예약 ID로 Lock 목록 조회
+   *
+   * @param reservationId 예약 ID
+   * @return 해당 예약의 Lock JPA Entity 목록
+   */
+  List<ResourceSlotLockJpaEntity> findByReservationId(Long reservationId);
 }
