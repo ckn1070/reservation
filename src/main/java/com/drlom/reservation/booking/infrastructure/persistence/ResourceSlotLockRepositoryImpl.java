@@ -1,9 +1,11 @@
 package com.drlom.reservation.booking.infrastructure.persistence;
 
+import com.drlom.reservation.booking.domain.LockStatus;
 import com.drlom.reservation.booking.domain.ResourceSlotLock;
 import com.drlom.reservation.booking.domain.ResourceSlotLockRepository;
 import com.drlom.reservation.booking.infrastructure.persistence.entity.ResourceSlotLockJpaEntity;
 import com.drlom.reservation.booking.infrastructure.persistence.mapper.ResourceSlotLockEntityMapper;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -55,5 +57,21 @@ public class ResourceSlotLockRepositoryImpl implements ResourceSlotLockRepositor
     return jpaRepository.findByReservationId(reservationId).stream()
         .map(entityMapper::toDomain)
         .toList();
+  }
+
+  @Override
+  public List<ResourceSlotLock> findExpiredHeldLocks(LocalDateTime now) {
+    log.debug("만료된 HELD 락 조회: now={}", now);
+
+    return jpaRepository.findByStatusAndExpiresAtBefore(LockStatus.HELD.name(), now).stream()
+        .map(entityMapper::toDomain)
+        .toList();
+  }
+
+  @Override
+  public void delete(ResourceSlotLock lock) {
+    log.debug("ResourceSlotLock 삭제: id={}, slotId={}", lock.getId(), lock.getSlotId());
+
+    jpaRepository.deleteById(lock.getId());
   }
 }

@@ -1,5 +1,6 @@
 package com.drlom.reservation.booking.domain;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,4 +44,19 @@ public interface ResourceSlotLockRepository {
    * @return 해당 예약의 Lock 목록 (없으면 빈 리스트)
    */
   List<ResourceSlotLock> findAllByReservationId(Long reservationId);
+
+  /**
+   * 만료된 HELD 락 조회 (status=HELD AND expiresAt < now)
+   *
+   * @param now 기준 시각
+   * @return 만료된 HELD 락 목록 (없으면 빈 리스트)
+   */
+  List<ResourceSlotLock> findExpiredHeldLocks(LocalDateTime now);
+
+  /**
+   * 락 삭제 (hard delete — 감사 이력은 history 테이블에 보존)
+   *
+   * @param lock 삭제할 ResourceSlotLock
+   */
+  void delete(ResourceSlotLock lock);
 }

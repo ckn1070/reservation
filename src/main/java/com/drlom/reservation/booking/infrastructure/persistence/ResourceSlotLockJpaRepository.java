@@ -1,6 +1,7 @@
 package com.drlom.reservation.booking.infrastructure.persistence;
 
 import com.drlom.reservation.booking.infrastructure.persistence.entity.ResourceSlotLockJpaEntity;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -31,4 +32,14 @@ public interface ResourceSlotLockJpaRepository
    * @return 해당 예약의 Lock JPA Entity 목록
    */
   List<ResourceSlotLockJpaEntity> findByReservationId(Long reservationId);
+
+  /**
+   * 만료된 HELD 락 조회
+   *
+   * @param status 잠금 상태 (HELD)
+   * @param expiresAt 기준 시각
+   * @return status이면서 expiresAt 이전에 만료된 Lock 목록
+   */
+  List<ResourceSlotLockJpaEntity> findByStatusAndExpiresAtBefore(
+      String status, LocalDateTime expiresAt);
 }
