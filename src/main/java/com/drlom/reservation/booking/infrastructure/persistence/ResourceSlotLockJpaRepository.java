@@ -34,6 +34,14 @@ public interface ResourceSlotLockJpaRepository
   List<ResourceSlotLockJpaEntity> findByReservationId(Long reservationId);
 
   /**
+   * 여러 예약 ID로 Lock 배치 조회
+   *
+   * @param reservationIds 예약 ID 목록
+   * @return 해당 예약들의 Lock JPA Entity 목록
+   */
+  List<ResourceSlotLockJpaEntity> findByReservationIdIn(List<Long> reservationIds);
+
+  /**
    * 만료된 HELD 락 조회
    *
    * @param status 잠금 상태 (HELD)
