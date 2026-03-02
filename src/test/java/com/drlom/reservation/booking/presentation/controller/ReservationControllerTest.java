@@ -6,9 +6,11 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.drlom.reservation.booking.application.dto.command.ConfirmReservationCommand;
 import com.drlom.reservation.booking.application.dto.command.HoldSlotsCommand;
 import com.drlom.reservation.booking.application.dto.result.ReservationItemResult;
 import com.drlom.reservation.booking.application.dto.result.ReservationResult;
+import com.drlom.reservation.booking.application.usecase.ConfirmReservationUseCase;
 import com.drlom.reservation.booking.application.usecase.HoldSlotsUseCase;
 import com.drlom.reservation.booking.domain.ReservationStatus;
 import com.drlom.reservation.common.error.BusinessException;
@@ -42,6 +44,7 @@ class ReservationControllerTest {
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
   @MockitoBean private HoldSlotsUseCase holdSlotsUseCase;
+  @MockitoBean private ConfirmReservationUseCase confirmReservationUseCase;
 
   private static final LocalDateTime EXPIRES_AT = LocalDateTime.of(2026, 3, 1, 10, 10);
 
@@ -286,6 +289,118 @@ class ReservationControllerTest {
                   .content(objectMapper.writeValueAsString(request)))
           .andExpect(status().isCreated())
           .andExpect(jsonPath("$.items.length()").value(10));
+    }
+  }
+
+  @Nested
+  @DisplayName("POST /api/reservations/{reservationId}/confirm")
+  class ConfirmReservation {
+
+    private static final LocalDateTime CONFIRMED_AT = LocalDateTime.of(2026, 3, 1, 10, 5);
+
+    @Test
+    @DisplayName("예약 확정 성공 시 200 OK")
+    void confirmReservation_success() throws Exception {
+      // given
+      ReservationResult result =
+          ReservationResult.builder()
+              .id(1L)
+              .userId(100L)
+              .showInstanceId(10L)
+              .status(ReservationStatus.CONFIRMED)
+              .items(List.of(createItemResult(1L, 50000L)))
+              .expiresAt(null)
+              .confirmedAt(CONFIRMED_AT)
+              .build();
+
+      given(confirmReservationUseCase.execute(any(ConfirmReservationCommand.class)))
+          .willReturn(result);
+
+      // when & then
+      mockMvc
+          .perform(
+              post("/api/reservations/1/confirm")
+                  .with(authentication(createUserAuth(100L)))
+                  .with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.id").value(1))
+          .andExpect(jsonPath("$.status").value("CONFIRMED"))
+          .andExpect(jsonPath("$.confirmedAt").exists())
+          .andExpect(jsonPath("$.expiresAt").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("인증 없이 요청 시 401 에러")
+    void confirmReservation_unauthorized() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/reservations/1/confirm")
+                  .with(csrf()))
+          .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("예약 미존재 시 404 에러")
+    void confirmReservation_notFound() throws Exception {
+      // given
+      given(confirmReservationUseCase.execute(any(ConfirmReservationCommand.class)))
+          .willThrow(new BusinessException(ErrorCode.RESERVATION_NOT_FOUND));
+
+      // when & then
+      mockMvc
+          .perform(
+              post("/api/reservations/999/confirm")
+                  .with(authentication(createUserAuth(100L)))
+                  .with(csrf()))
+          .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("예약 상태 불일치 시 400 에러")
+    void confirmReservation_invalidStatus() throws Exception {
+      // given
+      given(confirmReservationUseCase.execute(any(ConfirmReservationCommand.class)))
+          .willThrow(new BusinessException(ErrorCode.INVALID_RESERVATION_STATUS));
+
+      // when & then
+      mockMvc
+          .perform(
+              post("/api/reservations/1/confirm")
+                  .with(authentication(createUserAuth(100L)))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Lock 만료 시 400 에러")
+    void confirmReservation_lockExpired() throws Exception {
+      // given
+      given(confirmReservationUseCase.execute(any(ConfirmReservationCommand.class)))
+          .willThrow(new BusinessException(ErrorCode.LOCK_EXPIRED));
+
+      // when & then
+      mockMvc
+          .perform(
+              post("/api/reservations/1/confirm")
+                  .with(authentication(createUserAuth(100L)))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Lock 미존재 시 404 에러")
+    void confirmReservation_lockNotFound() throws Exception {
+      // given
+      given(confirmReservationUseCase.execute(any(ConfirmReservationCommand.class)))
+          .willThrow(new BusinessException(ErrorCode.LOCK_NOT_FOUND));
+
+      // when & then
+      mockMvc
+          .perform(
+              post("/api/reservations/1/confirm")
+                  .with(authentication(createUserAuth(100L)))
+                  .with(csrf()))
+          .andExpect(status().isNotFound());
     }
   }
 
