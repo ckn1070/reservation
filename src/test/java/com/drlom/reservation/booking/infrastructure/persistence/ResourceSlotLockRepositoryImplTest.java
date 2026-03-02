@@ -148,6 +148,73 @@ class ResourceSlotLockRepositoryImplTest {
   }
 
   @Nested
+  @DisplayName("findAllByReservationIds 테스트")
+  class FindAllByReservationIdsTest {
+
+    @Test
+    @DisplayName("여러 예약 ID로 Lock 배치 조회 성공")
+    void findAllByReservationIdsSuccess() {
+      // given
+      ResourceSlotLock lock1 =
+          ResourceSlotLock.createHeld(10L, 100L, HELD_AT, EXPIRES_AT);
+      ResourceSlotLock lock2 =
+          ResourceSlotLock.createHeld(11L, 100L, HELD_AT, EXPIRES_AT);
+      ResourceSlotLock lock3 =
+          ResourceSlotLock.createHeld(12L, 200L, HELD_AT, EXPIRES_AT);
+
+      resourceSlotLockRepository.save(lock1);
+      resourceSlotLockRepository.save(lock2);
+      resourceSlotLockRepository.save(lock3);
+
+      // when
+      List<ResourceSlotLock> locks =
+          resourceSlotLockRepository.findAllByReservationIds(List.of(100L, 200L));
+
+      // then
+      assertThat(locks).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("일부 예약 ID만 매칭되는 경우")
+    void findAllByReservationIdsPartialMatch() {
+      // given
+      ResourceSlotLock lock =
+          ResourceSlotLock.createHeld(10L, 100L, HELD_AT, EXPIRES_AT);
+      resourceSlotLockRepository.save(lock);
+
+      // when
+      List<ResourceSlotLock> locks =
+          resourceSlotLockRepository.findAllByReservationIds(List.of(100L, 999L));
+
+      // then
+      assertThat(locks).hasSize(1);
+      assertThat(locks.getFirst().getReservationId()).isEqualTo(100L);
+    }
+
+    @Test
+    @DisplayName("빈 리스트 전달 시 빈 결과 반환")
+    void findAllByReservationIdsEmptyInput() {
+      // when
+      List<ResourceSlotLock> locks =
+          resourceSlotLockRepository.findAllByReservationIds(List.of());
+
+      // then
+      assertThat(locks).isEmpty();
+    }
+
+    @Test
+    @DisplayName("매칭되는 예약 ID가 없으면 빈 리스트 반환")
+    void findAllByReservationIdsNoMatch() {
+      // when
+      List<ResourceSlotLock> locks =
+          resourceSlotLockRepository.findAllByReservationIds(List.of(998L, 999L));
+
+      // then
+      assertThat(locks).isEmpty();
+    }
+  }
+
+  @Nested
   @DisplayName("findExpiredHeldLocks 테스트")
   class FindExpiredHeldLocksTest {
 

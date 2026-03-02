@@ -13,6 +13,8 @@ import com.drlom.reservation.booking.application.dto.result.ReservationItemResul
 import com.drlom.reservation.booking.application.dto.result.ReservationResult;
 import com.drlom.reservation.booking.application.usecase.CancelReservationUseCase;
 import com.drlom.reservation.booking.application.usecase.ConfirmReservationUseCase;
+import com.drlom.reservation.booking.application.usecase.GetMyReservationsUseCase;
+import com.drlom.reservation.booking.application.usecase.GetReservationDetailUseCase;
 import com.drlom.reservation.booking.application.usecase.HoldSlotsUseCase;
 import com.drlom.reservation.booking.domain.ReservationStatus;
 import com.drlom.reservation.common.error.BusinessException;
@@ -48,6 +50,8 @@ class ReservationControllerTest {
   @MockitoBean private HoldSlotsUseCase holdSlotsUseCase;
   @MockitoBean private ConfirmReservationUseCase confirmReservationUseCase;
   @MockitoBean private CancelReservationUseCase cancelReservationUseCase;
+  @MockitoBean private GetMyReservationsUseCase getMyReservationsUseCase;
+  @MockitoBean private GetReservationDetailUseCase getReservationDetailUseCase;
 
   private static final LocalDateTime EXPIRES_AT = LocalDateTime.of(2026, 3, 1, 10, 10);
 
@@ -520,6 +524,140 @@ class ReservationControllerTest {
                   .with(csrf()))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.status").value("CANCELLED"));
+    }
+  }
+
+  @Nested
+  @DisplayName("GET /api/reservations")
+  class GetMyReservations {
+
+    @Test
+    @DisplayName("예약 목록 조회 성공")
+    void getMyReservations_success() throws Exception {
+      // given
+      ReservationResult result1 =
+          createReservationResult(1L, 10L, List.of(createItemResult(1L, 50000L)));
+      ReservationResult result2 =
+          ReservationResult.builder()
+              .id(2L)
+              .userId(100L)
+              .showInstanceId(10L)
+              .status(ReservationStatus.CONFIRMED)
+              .items(List.of(createItemResult(2L, 60000L)))
+              .confirmedAt(LocalDateTime.of(2026, 3, 1, 10, 5))
+              .build();
+
+      given(getMyReservationsUseCase.execute(eq(100L), isNull()))
+          .willReturn(List.of(result1, result2));
+
+      // when & then
+      mockMvc
+          .perform(
+              get("/api/reservations")
+                  .with(authentication(createUserAuth(100L))))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$").isArray())
+          .andExpect(jsonPath("$.length()").value(2))
+          .andExpect(jsonPath("$[0].id").value(1))
+          .andExpect(jsonPath("$[0].status").value("PENDING"))
+          .andExpect(jsonPath("$[1].id").value(2))
+          .andExpect(jsonPath("$[1].status").value("CONFIRMED"));
+    }
+
+    @Test
+    @DisplayName("상태 필터 조회 성공")
+    void getMyReservations_withStatusFilter_success() throws Exception {
+      // given
+      ReservationResult result =
+          createReservationResult(1L, 10L, List.of(createItemResult(1L, 50000L)));
+
+      given(getMyReservationsUseCase.execute(100L, ReservationStatus.PENDING))
+          .willReturn(List.of(result));
+
+      // when & then
+      mockMvc
+          .perform(
+              get("/api/reservations")
+                  .param("status", "PENDING")
+                  .with(authentication(createUserAuth(100L))))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.length()").value(1))
+          .andExpect(jsonPath("$[0].status").value("PENDING"));
+    }
+
+    @Test
+    @DisplayName("인증 없이 조회 시 401 에러")
+    void getMyReservations_unauthorized() throws Exception {
+      mockMvc
+          .perform(get("/api/reservations"))
+          .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("예약 없음 시 200 OK + 빈 리스트")
+    void getMyReservations_empty_success() throws Exception {
+      // given
+      given(getMyReservationsUseCase.execute(eq(100L), isNull()))
+          .willReturn(List.of());
+
+      // when & then
+      mockMvc
+          .perform(
+              get("/api/reservations")
+                  .with(authentication(createUserAuth(100L))))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$").isArray())
+          .andExpect(jsonPath("$.length()").value(0));
+    }
+  }
+
+  @Nested
+  @DisplayName("GET /api/reservations/{reservationId}")
+  class GetReservationDetail {
+
+    @Test
+    @DisplayName("예약 상세 조회 성공")
+    void getReservationDetail_success() throws Exception {
+      // given
+      ReservationResult result =
+          createReservationResult(1L, 10L, List.of(createItemResult(1L, 50000L)));
+
+      given(getReservationDetailUseCase.execute(100L, 1L)).willReturn(result);
+
+      // when & then
+      mockMvc
+          .perform(
+              get("/api/reservations/1")
+                  .with(authentication(createUserAuth(100L))))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.id").value(1))
+          .andExpect(jsonPath("$.showInstanceId").value(10))
+          .andExpect(jsonPath("$.status").value("PENDING"))
+          .andExpect(jsonPath("$.items.length()").value(1))
+          .andExpect(jsonPath("$.expiresAt").exists());
+    }
+
+    @Test
+    @DisplayName("인증 없이 조회 시 401 에러")
+    void getReservationDetail_unauthorized() throws Exception {
+      mockMvc
+          .perform(get("/api/reservations/1"))
+          .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 예약 조회 시 404 에러")
+    void getReservationDetail_notFound() throws Exception {
+      // given
+      given(getReservationDetailUseCase.execute(100L, 999L))
+          .willThrow(new BusinessException(ErrorCode.RESERVATION_NOT_FOUND));
+
+      // when & then
+      mockMvc
+          .perform(
+              get("/api/reservations/999")
+                  .with(authentication(createUserAuth(100L))))
+          .andExpect(status().isNotFound());
     }
   }
 
