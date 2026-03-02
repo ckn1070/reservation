@@ -70,7 +70,8 @@ public enum ErrorCode {
   SLOT_NOT_FOUND(HttpStatus.NOT_FOUND, "BKG-4200", "슬롯을 찾을 수 없습니다"),
   SLOT_ALREADY_LOCKED(HttpStatus.CONFLICT, "BKG-4201", "이미 선점된 좌석입니다"),
   LOCK_EXPIRED(HttpStatus.BAD_REQUEST, "BKG-4202", "락이 만료되었습니다"),
-  INVALID_SLOT_STATUS(HttpStatus.BAD_REQUEST, "BKG-4203", "슬롯 상태가 올바르지 않습니다");
+  INVALID_SLOT_STATUS(HttpStatus.BAD_REQUEST, "BKG-4203", "슬롯 상태가 올바르지 않습니다"),
+  LOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "BKG-4204", "락을 찾을 수 없습니다");
 
   private final HttpStatus httpStatus;
   private final String code;
