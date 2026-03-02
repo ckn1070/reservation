@@ -36,6 +36,12 @@ public class ReservationWebResponse {
   @Schema(description = "예약 확정 시각 (UTC, 확정 시에만 존재)", example = "2026-03-01T10:05:00")
   private LocalDateTime confirmedAt;
 
+  @Schema(description = "취소 사유 (취소 시에만 존재)", example = "개인 사정으로 취소")
+  private String cancelReason;
+
+  @Schema(description = "취소 시각 (UTC, 취소 시에만 존재)", example = "2026-03-01T10:15:00")
+  private LocalDateTime cancelledAt;
+
   /**
    * Result → WebResponse 변환
    *
@@ -53,6 +59,8 @@ public class ReservationWebResponse {
         .items(itemResponses)
         .expiresAt(result.getExpiresAt())
         .confirmedAt(result.getConfirmedAt())
+        .cancelReason(result.getCancelReason())
+        .cancelledAt(result.getCancelledAt())
         .build();
   }
 }

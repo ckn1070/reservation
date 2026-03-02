@@ -23,6 +23,8 @@ public class ReservationResult {
   private final List<ReservationItemResult> items;
   private final LocalDateTime expiresAt;
   private final LocalDateTime confirmedAt;
+  private final String cancelReason;
+  private final LocalDateTime cancelledAt;
 
   /**
    * Domain Reservation과 만료 시각으로부터 ReservationResult 생성
@@ -43,6 +45,8 @@ public class ReservationResult {
         .items(itemResults)
         .expiresAt(expiresAt)
         .confirmedAt(reservation.getConfirmedAt())
+        .cancelReason(reservation.getCancelReason())
+        .cancelledAt(reservation.getCancelledAt())
         .build();
   }
 }
