@@ -5,13 +5,17 @@ import com.drlom.reservation.booking.application.dto.command.ConfirmReservationC
 import com.drlom.reservation.booking.application.dto.result.ReservationResult;
 import com.drlom.reservation.booking.application.usecase.CancelReservationUseCase;
 import com.drlom.reservation.booking.application.usecase.ConfirmReservationUseCase;
+import com.drlom.reservation.booking.application.usecase.GetMyReservationsUseCase;
+import com.drlom.reservation.booking.application.usecase.GetReservationDetailUseCase;
 import com.drlom.reservation.booking.application.usecase.HoldSlotsUseCase;
+import com.drlom.reservation.booking.domain.ReservationStatus;
 import com.drlom.reservation.booking.presentation.dto.CancelReservationWebRequest;
 import com.drlom.reservation.booking.presentation.dto.HoldSlotsWebRequest;
 import com.drlom.reservation.booking.presentation.dto.ReservationWebResponse;
 import com.drlom.reservation.common.error.GlobalExceptionHandler.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -19,16 +23,19 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -47,6 +54,84 @@ public class ReservationController {
   private final HoldSlotsUseCase holdSlotsUseCase;
   private final ConfirmReservationUseCase confirmReservationUseCase;
   private final CancelReservationUseCase cancelReservationUseCase;
+  private final GetMyReservationsUseCase getMyReservationsUseCase;
+  private final GetReservationDetailUseCase getReservationDetailUseCase;
+
+  @Operation(
+      summary = "내 예약 목록 조회",
+      description = "인증된 사용자의 예약 목록을 조회합니다. status 파라미터로 상태별 필터링이 가능합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = "예약 목록 조회 성공",
+      content =
+          @Content(
+              array =
+                  @ArraySchema(
+                      schema = @Schema(implementation = ReservationWebResponse.class))))
+  @ApiResponse(
+      responseCode = "401",
+      description = "인증 필요",
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"COM-1004\", \"message\": \"인증이 필요합니다\", \"timestamp\": \"2026-03-01T12:00:00\"}")))
+  @GetMapping
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<List<ReservationWebResponse>> getMyReservations(
+      @Parameter(description = "예약 상태 필터", example = "PENDING")
+          @RequestParam(required = false)
+          ReservationStatus status,
+      Authentication authentication) {
+    Long userId = (Long) authentication.getPrincipal();
+    log.info("내 예약 목록 조회 요청: userId={}, status={}", userId, status);
+
+    List<ReservationResult> results = getMyReservationsUseCase.execute(userId, status);
+    List<ReservationWebResponse> responses =
+        results.stream().map(ReservationWebResponse::from).toList();
+    return ResponseEntity.ok(responses);
+  }
+
+  @Operation(
+      summary = "예약 상세 조회",
+      description = "특정 예약의 상세 정보를 조회합니다. 본인의 예약만 조회 가능합니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = "예약 상세 조회 성공",
+      content = @Content(schema = @Schema(implementation = ReservationWebResponse.class)))
+  @ApiResponse(
+      responseCode = "401",
+      description = "인증 필요",
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"COM-1004\", \"message\": \"인증이 필요합니다\", \"timestamp\": \"2026-03-01T12:00:00\"}")))
+  @ApiResponse(
+      responseCode = "404",
+      description = "예약을 찾을 수 없음",
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"BKG-4100\", \"message\": \"예약을 찾을 수 없습니다\", \"timestamp\": \"2026-03-01T12:00:00\"}")))
+  @GetMapping("/{reservationId}")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ReservationWebResponse> getReservationDetail(
+      @Parameter(description = "예약 ID", example = "1") @PathVariable Long reservationId,
+      Authentication authentication) {
+    Long userId = (Long) authentication.getPrincipal();
+    log.info("예약 상세 조회 요청: userId={}, reservationId={}", userId, reservationId);
+
+    ReservationResult result = getReservationDetailUseCase.execute(userId, reservationId);
+    return ResponseEntity.ok(ReservationWebResponse.from(result));
+  }
 
   @Operation(summary = "좌석 임시 점유", description = "선택한 좌석(1~10개)을 10분간 임시 점유합니다. 결제 전 선점을 보장합니다.")
   @ApiResponse(
