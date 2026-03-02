@@ -6,10 +6,12 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.drlom.reservation.booking.application.dto.command.CancelReservationCommand;
 import com.drlom.reservation.booking.application.dto.command.ConfirmReservationCommand;
 import com.drlom.reservation.booking.application.dto.command.HoldSlotsCommand;
 import com.drlom.reservation.booking.application.dto.result.ReservationItemResult;
 import com.drlom.reservation.booking.application.dto.result.ReservationResult;
+import com.drlom.reservation.booking.application.usecase.CancelReservationUseCase;
 import com.drlom.reservation.booking.application.usecase.ConfirmReservationUseCase;
 import com.drlom.reservation.booking.application.usecase.HoldSlotsUseCase;
 import com.drlom.reservation.booking.domain.ReservationStatus;
@@ -45,6 +47,7 @@ class ReservationControllerTest {
   @Autowired private ObjectMapper objectMapper;
   @MockitoBean private HoldSlotsUseCase holdSlotsUseCase;
   @MockitoBean private ConfirmReservationUseCase confirmReservationUseCase;
+  @MockitoBean private CancelReservationUseCase cancelReservationUseCase;
 
   private static final LocalDateTime EXPIRES_AT = LocalDateTime.of(2026, 3, 1, 10, 10);
 
@@ -401,6 +404,122 @@ class ReservationControllerTest {
                   .with(authentication(createUserAuth(100L)))
                   .with(csrf()))
           .andExpect(status().isNotFound());
+    }
+  }
+
+  @Nested
+  @DisplayName("POST /api/reservations/{reservationId}/cancel")
+  class CancelReservation {
+
+    private static final LocalDateTime CANCELLED_AT = LocalDateTime.of(2026, 3, 1, 10, 15);
+
+    @Test
+    @DisplayName("취소 사유와 함께 취소 성공 시 200 OK")
+    void cancelReservation_withReason_success() throws Exception {
+      // given
+      ReservationResult result =
+          ReservationResult.builder()
+              .id(1L)
+              .userId(100L)
+              .showInstanceId(10L)
+              .status(ReservationStatus.CANCELLED)
+              .items(List.of(createItemResult(1L, 50000L)))
+              .cancelReason("개인 사정으로 취소")
+              .cancelledAt(CANCELLED_AT)
+              .build();
+
+      given(cancelReservationUseCase.execute(any(CancelReservationCommand.class)))
+          .willReturn(result);
+
+      Map<String, Object> request = Map.of("reason", "개인 사정으로 취소");
+
+      // when & then
+      mockMvc
+          .perform(
+              post("/api/reservations/1/cancel")
+                  .with(authentication(createUserAuth(100L)))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(objectMapper.writeValueAsString(request)))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.id").value(1))
+          .andExpect(jsonPath("$.status").value("CANCELLED"))
+          .andExpect(jsonPath("$.cancelReason").value("개인 사정으로 취소"))
+          .andExpect(jsonPath("$.cancelledAt").exists());
+    }
+
+    @Test
+    @DisplayName("인증 없이 요청 시 401 에러")
+    void cancelReservation_unauthorized() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/reservations/1/cancel")
+                  .with(csrf()))
+          .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("예약 미존재 시 404 에러")
+    void cancelReservation_notFound() throws Exception {
+      // given
+      given(cancelReservationUseCase.execute(any(CancelReservationCommand.class)))
+          .willThrow(new BusinessException(ErrorCode.RESERVATION_NOT_FOUND));
+
+      // when & then
+      mockMvc
+          .perform(
+              post("/api/reservations/999/cancel")
+                  .with(authentication(createUserAuth(100L)))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("{}"))
+          .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("예약 상태 불일치 시 400 에러")
+    void cancelReservation_invalidStatus() throws Exception {
+      // given
+      given(cancelReservationUseCase.execute(any(CancelReservationCommand.class)))
+          .willThrow(new BusinessException(ErrorCode.INVALID_RESERVATION_STATUS));
+
+      // when & then
+      mockMvc
+          .perform(
+              post("/api/reservations/1/cancel")
+                  .with(authentication(createUserAuth(100L)))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("{}"))
+          .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("사유 없이 (빈 body) 취소 성공 시 200 OK")
+    void cancelReservation_emptyBody_success() throws Exception {
+      // given
+      ReservationResult result =
+          ReservationResult.builder()
+              .id(1L)
+              .userId(100L)
+              .showInstanceId(10L)
+              .status(ReservationStatus.CANCELLED)
+              .items(List.of(createItemResult(1L, 50000L)))
+              .cancelReason("사용자 요청에 의한 취소")
+              .cancelledAt(CANCELLED_AT)
+              .build();
+
+      given(cancelReservationUseCase.execute(any(CancelReservationCommand.class)))
+          .willReturn(result);
+
+      // when & then
+      mockMvc
+          .perform(
+              post("/api/reservations/1/cancel")
+                  .with(authentication(createUserAuth(100L)))
+                  .with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.status").value("CANCELLED"));
     }
   }
 
