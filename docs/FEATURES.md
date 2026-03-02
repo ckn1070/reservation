@@ -92,6 +92,24 @@
 
 ---
 
+### 시스템 운영
+
+자동화된 시스템 운영 기능
+
+| 기능 | 트리거 | 설명 |
+|------|--------|------|
+| 만료 락 자동 해제 | `@Scheduled` (60초 주기) | HELD 상태 + TTL 초과 Lock 삭제, PENDING 예약 자동 취소 |
+
+**만료 락 자동 해제 상세**:
+- HELD 상태이면서 `expiresAt < now()`인 Lock만 대상
+- Lock hard delete (감사 이력은 `ResourceSlotLockHistory`에 `EXPIRED`로 보존)
+- 연관 Reservation이 PENDING이면 CANCELLED로 전이
+- `fixedDelay` 방식으로 이전 실행 완료 후 대기 (중복 실행 방지)
+
+→ 상세: [features/BOOKING.md](features/BOOKING.md)
+
+---
+
 ## 에러 코드 체계
 
 ### 공통 (COM-1xxx)

@@ -125,7 +125,7 @@ export SPRING_RSV_JWT_SECRET=your_jwt_secret_base64_encoded
 - [x] **동시성 제어**: Application 레벨 exists 체크 + DB UNIQUE 제약 이중 방어
 - [x] **예약 확정**: 결제 후 확정(CONFIRMED) 워크플로우
 - [ ] **예약 취소**: 예약 취소(CANCELLED) 워크플로우
-- [ ] **만료 락 자동 해제**: TTL 기반 임시 잠금 만료 배치 처리
+- [x] **만료 락 자동 해제**: Spring Scheduler로 1분 주기 만료 Lock 삭제 + Reservation 취소
 - [ ] **이벤트 기반 아키텍처**: Spring Events를 활용한 BC 간 비동기 통신
 
 ## 상세 문서

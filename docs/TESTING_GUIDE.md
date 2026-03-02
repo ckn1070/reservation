@@ -1098,6 +1098,7 @@ void encryptedPasswordNeverEqualsPlaintext(@ForAll @StringLength(min = 8) String
 | `GetShowInstancesUseCaseTest.java` | GetShowInstancesUseCase | ✅ |
 | `HoldSlotsUseCaseTest.java` | HoldSlotsUseCase | ✅ |
 | `ConfirmReservationUseCaseTest.java` | ConfirmReservationUseCase | ✅ |
+| `ReleaseExpiredLocksUseCaseTest.java` | ReleaseExpiredLocksUseCase | ✅ |
 | `CancelReservationUseCaseTest.java` | CancelReservationUseCase | ⬜ |
 
 #### Infrastructure 계층
@@ -1130,6 +1131,7 @@ void encryptedPasswordNeverEqualsPlaintext(@ForAll @StringLength(min = 8) String
 | `GetShowInstancesIntegrationTest.java` | 공연 회차 목록 조회 E2E | ✅ |
 | `HoldSlotsIntegrationTest.java` | 좌석 임시 점유 E2E | ✅ |
 | `ConfirmReservationIntegrationTest.java` | 예약 확정 E2E | ✅ |
+| `ReleaseExpiredLocksIntegrationTest.java` | 만료 락 자동 해제 E2E | ✅ |
 
 ---
 

@@ -14,6 +14,7 @@
 - [4. 좌석 현황 조회 (Get Show Slots)](#4-좌석-현황-조회-get-show-slots)
 - [5. 좌석 임시 점유 (Hold Slots)](#5-좌석-임시-점유-hold-slots)
 - [6. 예약 확정 (Confirm Reservation)](#6-예약-확정-confirm-reservation)
+- [7. 만료 락 자동 해제 (Release Expired Locks)](#7-만료-락-자동-해제-release-expired-locks)
 - [에러 코드 체계](#에러-코드-체계)
 - [데이터 모델](#데이터-모델)
 - [관련 파일 위치](#관련-파일-위치)
@@ -856,6 +857,68 @@ fromLock(lock, ...) → lock.confirm()
 
 ---
 
+## 7. 만료 락 자동 해제 (Release Expired Locks)
+
+HELD 상태의 Lock이 TTL(10분)을 초과하면 자동으로 삭제하고, 연관 Reservation을 취소합니다. Spring Scheduler로 1분 주기로 실행됩니다.
+
+### 트리거
+
+- `@Scheduled(fixedDelay = 60000)` — 이전 실행 완료 후 60초 대기
+- 사용자 API 없음 (시스템 배치 작업)
+
+### 처리 대상
+
+- `status = HELD` AND `expires_at < now()`인 Lock만 대상
+- CONFIRMED 상태 Lock은 TTL이 없으므로 대상 아님
+
+### 비즈니스 로직 흐름
+
+```
+1. 만료된 HELD 락 전체 조회
+   └─ findExpiredHeldLocks(now)
+      └─ 없으면: early return
+
+2. reservationId로 그룹핑
+
+3. 각 예약별 처리
+   ├─ 각 Lock에 대해:
+   │   ├─ ResourceSlotLockHistory 기록 (action=EXPIRED)
+   │   └─ Lock hard delete
+   └─ Reservation 조회
+      └─ PENDING이면: cancel("TTL 만료로 자동 해제", now)
+         └─ PENDING이 아니면: skip (이미 확정/취소된 예약)
+
+4. 로그: "만료 락 N건 해제, 예약 M건 취소"
+```
+
+### Hard Delete 이유
+
+- `existsBySlotId(slotId)`가 status를 구분하지 않으므로, Lock 행이 남아 있으면 새 Lock 생성 불가
+- `uk_lock_slot` UNIQUE 제약으로 같은 slotId에 새 Lock INSERT 불가
+- 감사 추적은 `ResourceSlotLockHistory` 테이블에 `EXPIRED` 액션으로 보존
+
+### 설정
+
+```properties
+# application.properties
+scheduler.release-expired-locks.interval=60000  # 밀리초 (기본 60초)
+```
+
+### 관련 파일 위치
+
+```
+common/config/
+└── SchedulingConfig.java                       # @EnableScheduling 설정
+
+booking/
+├── application/usecase/
+│   └── ReleaseExpiredLocksUseCase.java          # 만료 락 해제 비즈니스 로직
+└── infrastructure/scheduler/
+    └── ReleaseExpiredLocksScheduler.java        # @Scheduled 트리거
+```
+
+---
+
 ## 에러 코드 체계
 
 ### 공연 회차 관련 (BKG-40xx)
@@ -985,7 +1048,8 @@ booking/
 │   │   ├── OpenShowInstanceUseCase.java
 │   │   ├── GetShowSlotsUseCase.java         # 좌석 현황 조회
 │   │   ├── HoldSlotsUseCase.java            # 좌석 임시 점유
-│   │   └── ConfirmReservationUseCase.java  # 예약 확정
+│   │   ├── ConfirmReservationUseCase.java  # 예약 확정
+│   │   └── ReleaseExpiredLocksUseCase.java # 만료 락 자동 해제
 │   ├── port/
 │   │   ├── CatalogQueryPort.java            # BC 간 통신 인터페이스
 │   │   └── model/
@@ -1024,6 +1088,8 @@ booking/
 │   ├── ResourceSlotLockHistory.java         # Entity
 │   └── ResourceSlotLockHistoryRepository.java # Repository 인터페이스
 └── infrastructure/
+    ├── scheduler/
+    │   └── ReleaseExpiredLocksScheduler.java    # @Scheduled 트리거
     └── persistence/
         ├── entity/
         │   ├── ShowInstanceJpaEntity.java
@@ -1079,6 +1145,7 @@ catalog/
 | Application    | GetShowSlotsUseCaseTest                       | 11      |
 | Application    | HoldSlotsUseCaseTest                          | 16      |
 | Application    | ConfirmReservationUseCaseTest                 | 11      |
+| Application    | ReleaseExpiredLocksUseCaseTest                | 6       |
 | Infrastructure | ShowInstanceEntityMapperTest                  | 8       |
 | Infrastructure | ResourceSlotEntityMapperTest                  | 9       |
 | Infrastructure | ReservationEntityMapperTest                   | 8       |
@@ -1087,7 +1154,7 @@ catalog/
 | Infrastructure | ShowInstanceRepositoryImplTest                | 9       |
 | Infrastructure | ResourceJpaRepositoryTest                     | 3       |
 | Infrastructure | ReservationRepositoryImplTest                 | 5       |
-| Infrastructure | ResourceSlotLockRepositoryImplTest            | 7       |
+| Infrastructure | ResourceSlotLockRepositoryImplTest            | 11      |
 | Presentation   | ShowControllerTest                            | 32      |
 | Presentation   | ReservationControllerTest                     | 17      |
 | Integration    | CreateShowInstanceIntegrationTest             | 7       |
@@ -1096,4 +1163,5 @@ catalog/
 | Integration    | GetShowSlotsIntegrationTest                   | 6       |
 | Integration    | HoldSlotsIntegrationTest                      | 6       |
 | Integration    | ConfirmReservationIntegrationTest              | 4       |
-| **합계**         |                                               | **409** |
+| Integration    | ReleaseExpiredLocksIntegrationTest             | 4       |
+| **합계**         |                                               | **423** |
