@@ -22,12 +22,13 @@ public class ReservationResult {
   private final ReservationStatus status;
   private final List<ReservationItemResult> items;
   private final LocalDateTime expiresAt;
+  private final LocalDateTime confirmedAt;
 
   /**
    * Domain Reservation과 만료 시각으로부터 ReservationResult 생성
    *
    * @param reservation Domain Reservation
-   * @param expiresAt 락 만료 시각
+   * @param expiresAt 락 만료 시각 (확정 시 null)
    * @return ReservationResult
    */
   public static ReservationResult from(Reservation reservation, LocalDateTime expiresAt) {
@@ -41,6 +42,7 @@ public class ReservationResult {
         .status(reservation.getStatus())
         .items(itemResults)
         .expiresAt(expiresAt)
+        .confirmedAt(reservation.getConfirmedAt())
         .build();
   }
 }

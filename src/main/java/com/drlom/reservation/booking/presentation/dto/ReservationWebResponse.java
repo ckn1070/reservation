@@ -33,6 +33,9 @@ public class ReservationWebResponse {
   @Schema(description = "만료 시각 (UTC)", example = "2026-03-01T10:10:00")
   private LocalDateTime expiresAt;
 
+  @Schema(description = "예약 확정 시각 (UTC, 확정 시에만 존재)", example = "2026-03-01T10:05:00")
+  private LocalDateTime confirmedAt;
+
   /**
    * Result → WebResponse 변환
    *
@@ -49,6 +52,7 @@ public class ReservationWebResponse {
         .status(result.getStatus())
         .items(itemResponses)
         .expiresAt(result.getExpiresAt())
+        .confirmedAt(result.getConfirmedAt())
         .build();
   }
 }
