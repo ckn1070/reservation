@@ -146,4 +146,97 @@ class ResourceSlotLockRepositoryImplTest {
       assertThat(locks).isEmpty();
     }
   }
+
+  @Nested
+  @DisplayName("findExpiredHeldLocks 테스트")
+  class FindExpiredHeldLocksTest {
+
+    @Test
+    @DisplayName("만료된 HELD 락 조회 성공")
+    void findExpiredHeldLocksSuccess() {
+      // given - 만료된 HELD 락 2개 저장 (heldAt < expiresAt < now)
+      LocalDateTime earlyHeldAt = LocalDateTime.of(2026, 3, 1, 9, 0);
+      LocalDateTime pastExpires = LocalDateTime.of(2026, 3, 1, 9, 10);
+      LocalDateTime now = LocalDateTime.of(2026, 3, 1, 10, 0);
+
+      ResourceSlotLock expiredLock1 =
+          ResourceSlotLock.createHeld(10L, 100L, earlyHeldAt, pastExpires);
+      ResourceSlotLock expiredLock2 =
+          ResourceSlotLock.createHeld(11L, 100L, earlyHeldAt, pastExpires);
+      resourceSlotLockRepository.save(expiredLock1);
+      resourceSlotLockRepository.save(expiredLock2);
+
+      // when
+      List<ResourceSlotLock> expired =
+          resourceSlotLockRepository.findExpiredHeldLocks(now);
+
+      // then
+      assertThat(expired)
+          .hasSize(2)
+          .allSatisfy(lock -> {
+            assertThat(lock.getStatus()).isEqualTo(LockStatus.HELD);
+            assertThat(lock.getExpiresAt()).isBefore(now);
+          });
+    }
+
+    @Test
+    @DisplayName("CONFIRMED 상태 락은 조회되지 않음")
+    void confirmedLocksNotReturned() {
+      // given - HELD 락을 저장 후 CONFIRMED로 전이
+      ResourceSlotLock lock =
+          ResourceSlotLock.createHeld(10L, 100L, HELD_AT, EXPIRES_AT);
+      ResourceSlotLock saved = resourceSlotLockRepository.save(lock);
+
+      // CONFIRMED로 전이 후 재저장
+      saved.confirm();
+      resourceSlotLockRepository.save(saved);
+
+      // when - EXPIRES_AT 이후 시점으로 조회
+      LocalDateTime afterExpires = EXPIRES_AT.plusMinutes(5);
+      List<ResourceSlotLock> expired =
+          resourceSlotLockRepository.findExpiredHeldLocks(afterExpires);
+
+      // then
+      assertThat(expired).isEmpty();
+    }
+
+    @Test
+    @DisplayName("만료되지 않은 HELD 락은 조회되지 않음")
+    void notExpiredLocksNotReturned() {
+      // given - 미래에 만료되는 HELD 락
+      LocalDateTime futureExpires = LocalDateTime.of(2026, 3, 1, 10, 30);
+      ResourceSlotLock lock =
+          ResourceSlotLock.createHeld(10L, 100L, HELD_AT, futureExpires);
+      resourceSlotLockRepository.save(lock);
+
+      // when
+      List<ResourceSlotLock> expired =
+          resourceSlotLockRepository.findExpiredHeldLocks(HELD_AT);
+
+      // then
+      assertThat(expired).isEmpty();
+    }
+  }
+
+  @Nested
+  @DisplayName("delete 테스트")
+  class DeleteTest {
+
+    @Test
+    @DisplayName("락 삭제 성공")
+    void deleteLockSuccess() {
+      // given
+      ResourceSlotLock lock =
+          ResourceSlotLock.createHeld(10L, 100L, HELD_AT, EXPIRES_AT);
+      ResourceSlotLock saved = resourceSlotLockRepository.save(lock);
+
+      // when
+      resourceSlotLockRepository.delete(saved);
+
+      // then
+      Optional<ResourceSlotLock> found = resourceSlotLockRepository.findById(saved.getId());
+      assertThat(found).isEmpty();
+      assertThat(resourceSlotLockRepository.existsBySlotId(10L)).isFalse();
+    }
+  }
 }
