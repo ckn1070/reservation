@@ -2,8 +2,10 @@ package com.drlom.reservation.booking.infrastructure.persistence;
 
 import com.drlom.reservation.booking.domain.Reservation;
 import com.drlom.reservation.booking.domain.ReservationRepository;
+import com.drlom.reservation.booking.domain.ReservationStatus;
 import com.drlom.reservation.booking.infrastructure.persistence.entity.ReservationJpaEntity;
 import com.drlom.reservation.booking.infrastructure.persistence.mapper.ReservationEntityMapper;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,5 +42,23 @@ public class ReservationRepositoryImpl implements ReservationRepository {
     log.debug("Reservation 조회: id={}", id);
 
     return jpaRepository.findById(id).map(entityMapper::toDomain);
+  }
+
+  @Override
+  public List<Reservation> findByUserId(Long userId) {
+    log.debug("Reservation 사용자별 조회: userId={}", userId);
+
+    return jpaRepository.findByUserIdOrderByIdDesc(userId).stream()
+        .map(entityMapper::toDomain)
+        .toList();
+  }
+
+  @Override
+  public List<Reservation> findByUserIdAndStatus(Long userId, ReservationStatus status) {
+    log.debug("Reservation 사용자+상태별 조회: userId={}, status={}", userId, status);
+
+    return jpaRepository.findByUserIdAndStatusOrderByIdDesc(userId, status.name()).stream()
+        .map(entityMapper::toDomain)
+        .toList();
   }
 }

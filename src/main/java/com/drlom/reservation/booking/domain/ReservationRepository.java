@@ -1,5 +1,6 @@
 package com.drlom.reservation.booking.domain;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -28,4 +29,21 @@ public interface ReservationRepository {
    * @return Reservation (존재하지 않으면 Optional.empty())
    */
   Optional<Reservation> findById(Long id);
+
+  /**
+   * 사용자 ID로 예약 목록 조회 (최신순)
+   *
+   * @param userId 사용자 ID
+   * @return 해당 사용자의 예약 목록 (없으면 빈 리스트)
+   */
+  List<Reservation> findByUserId(Long userId);
+
+  /**
+   * 사용자 ID와 상태로 예약 목록 조회 (최신순)
+   *
+   * @param userId 사용자 ID
+   * @param status 예약 상태
+   * @return 해당 사용자의 예약 목록 (없으면 빈 리스트)
+   */
+  List<Reservation> findByUserIdAndStatus(Long userId, ReservationStatus status);
 }
