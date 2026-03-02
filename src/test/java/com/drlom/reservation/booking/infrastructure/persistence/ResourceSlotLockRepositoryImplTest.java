@@ -8,6 +8,7 @@ import com.drlom.reservation.booking.domain.ResourceSlotLockRepository;
 import com.drlom.reservation.booking.infrastructure.persistence.mapper.ResourceSlotLockEntityMapper;
 import com.drlom.reservation.common.config.JpaAuditingConfig;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -104,6 +105,45 @@ class ResourceSlotLockRepositoryImplTest {
     @DisplayName("존재하지 않는 slotId면 false 반환")
     void existsBySlotIdFalse() {
       assertThat(resourceSlotLockRepository.existsBySlotId(999L)).isFalse();
+    }
+  }
+
+  @Nested
+  @DisplayName("findAllByReservationId 테스트")
+  class FindAllByReservationIdTest {
+
+    @Test
+    @DisplayName("예약 ID로 Lock 목록 조회 성공")
+    void findAllByReservationIdSuccess() {
+      // given
+      ResourceSlotLock lock1 =
+          ResourceSlotLock.createHeld(10L, 100L, HELD_AT, EXPIRES_AT);
+      ResourceSlotLock lock2 =
+          ResourceSlotLock.createHeld(11L, 100L, HELD_AT, EXPIRES_AT);
+      ResourceSlotLock lock3 =
+          ResourceSlotLock.createHeld(12L, 200L, HELD_AT, EXPIRES_AT);
+
+      resourceSlotLockRepository.save(lock1);
+      resourceSlotLockRepository.save(lock2);
+      resourceSlotLockRepository.save(lock3);
+
+      // when
+      List<ResourceSlotLock> locks =
+          resourceSlotLockRepository.findAllByReservationId(100L);
+
+      // then
+      assertThat(locks).hasSize(2).allSatisfy(lock -> {
+        assertThat(lock.getReservationId()).isEqualTo(100L);
+        assertThat(lock.getStatus()).isEqualTo(LockStatus.HELD);
+      });
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 예약 ID로 조회 시 빈 리스트 반환")
+    void findAllByReservationIdNotFound() {
+      List<ResourceSlotLock> locks =
+          resourceSlotLockRepository.findAllByReservationId(999L);
+      assertThat(locks).isEmpty();
     }
   }
 }
