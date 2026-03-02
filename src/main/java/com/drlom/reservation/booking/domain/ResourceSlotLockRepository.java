@@ -46,6 +46,14 @@ public interface ResourceSlotLockRepository {
   List<ResourceSlotLock> findAllByReservationId(Long reservationId);
 
   /**
+   * 여러 예약의 Lock 배치 조회
+   *
+   * @param reservationIds 예약 ID 목록
+   * @return 해당 예약들의 Lock 목록 (없으면 빈 리스트)
+   */
+  List<ResourceSlotLock> findAllByReservationIds(List<Long> reservationIds);
+
+  /**
    * 만료된 HELD 락 조회 (status=HELD AND expiresAt < now)
    *
    * @param now 기준 시각

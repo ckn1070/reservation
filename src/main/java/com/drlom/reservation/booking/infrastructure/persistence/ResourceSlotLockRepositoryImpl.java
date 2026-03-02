@@ -60,6 +60,19 @@ public class ResourceSlotLockRepositoryImpl implements ResourceSlotLockRepositor
   }
 
   @Override
+  public List<ResourceSlotLock> findAllByReservationIds(List<Long> reservationIds) {
+    if (reservationIds.isEmpty()) {
+      return List.of();
+    }
+
+    log.debug("ResourceSlotLock 배치 조회: reservationIds={}", reservationIds);
+
+    return jpaRepository.findByReservationIdIn(reservationIds).stream()
+        .map(entityMapper::toDomain)
+        .toList();
+  }
+
+  @Override
   public List<ResourceSlotLock> findExpiredHeldLocks(LocalDateTime now) {
     log.debug("만료된 HELD 락 조회: now={}", now);
 
