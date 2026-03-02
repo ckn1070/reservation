@@ -1,9 +1,12 @@
 package com.drlom.reservation.booking.presentation.controller;
 
+import com.drlom.reservation.booking.application.dto.command.CancelReservationCommand;
 import com.drlom.reservation.booking.application.dto.command.ConfirmReservationCommand;
 import com.drlom.reservation.booking.application.dto.result.ReservationResult;
+import com.drlom.reservation.booking.application.usecase.CancelReservationUseCase;
 import com.drlom.reservation.booking.application.usecase.ConfirmReservationUseCase;
 import com.drlom.reservation.booking.application.usecase.HoldSlotsUseCase;
+import com.drlom.reservation.booking.presentation.dto.CancelReservationWebRequest;
 import com.drlom.reservation.booking.presentation.dto.HoldSlotsWebRequest;
 import com.drlom.reservation.booking.presentation.dto.ReservationWebResponse;
 import com.drlom.reservation.common.error.GlobalExceptionHandler.ErrorResponse;
@@ -43,6 +46,7 @@ public class ReservationController {
 
   private final HoldSlotsUseCase holdSlotsUseCase;
   private final ConfirmReservationUseCase confirmReservationUseCase;
+  private final CancelReservationUseCase cancelReservationUseCase;
 
   @Operation(summary = "좌석 임시 점유", description = "선택한 좌석(1~10개)을 10분간 임시 점유합니다. 결제 전 선점을 보장합니다.")
   @ApiResponse(
@@ -173,6 +177,61 @@ public class ReservationController {
         ConfirmReservationCommand.builder().userId(userId).reservationId(reservationId).build();
 
     ReservationResult result = confirmReservationUseCase.execute(command);
+    return ResponseEntity.ok(ReservationWebResponse.from(result));
+  }
+
+  @Operation(
+      summary = "예약 취소",
+      description =
+          "PENDING(임시 점유) 또는 CONFIRMED(확정) 상태의 예약을 취소합니다. 취소 사유는 선택사항입니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = "예약 취소 성공",
+      content = @Content(schema = @Schema(implementation = ReservationWebResponse.class)))
+  @ApiResponse(
+      responseCode = "400",
+      description = "예약 상태 불일치 (이미 취소/완료/미방문)",
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"BKG-4101\", \"message\": \"예약 상태가 올바르지 않습니다\", \"timestamp\": \"2026-03-01T12:00:00\"}")))
+  @ApiResponse(
+      responseCode = "401",
+      description = "인증 필요",
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"COM-1004\", \"message\": \"인증이 필요합니다\", \"timestamp\": \"2026-03-01T12:00:00\"}")))
+  @ApiResponse(
+      responseCode = "404",
+      description = "예약을 찾을 수 없음",
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"BKG-4100\", \"message\": \"예약을 찾을 수 없습니다\", \"timestamp\": \"2026-03-01T12:00:00\"}")))
+  @PostMapping("/{reservationId}/cancel")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ReservationWebResponse> cancelReservation(
+      @Parameter(description = "예약 ID", example = "1") @PathVariable Long reservationId,
+      @Valid @RequestBody(required = false) CancelReservationWebRequest request,
+      Authentication authentication) {
+    Long userId = (Long) authentication.getPrincipal();
+    log.info("예약 취소 요청: userId={}, reservationId={}", userId, reservationId);
+
+    CancelReservationWebRequest actualRequest =
+        request != null ? request : new CancelReservationWebRequest();
+    CancelReservationCommand command = actualRequest.toCommand(userId, reservationId);
+
+    ReservationResult result = cancelReservationUseCase.execute(command);
     return ResponseEntity.ok(ReservationWebResponse.from(result));
   }
 }
