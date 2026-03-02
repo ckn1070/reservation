@@ -1097,7 +1097,7 @@ void encryptedPasswordNeverEqualsPlaintext(@ForAll @StringLength(min = 8) String
 | `OpenShowInstanceUseCaseTest.java` | OpenShowInstanceUseCase | ✅ |
 | `GetShowInstancesUseCaseTest.java` | GetShowInstancesUseCase | ✅ |
 | `HoldSlotsUseCaseTest.java` | HoldSlotsUseCase | ✅ |
-| `ConfirmReservationUseCaseTest.java` | ConfirmReservationUseCase | ⬜ |
+| `ConfirmReservationUseCaseTest.java` | ConfirmReservationUseCase | ✅ |
 | `CancelReservationUseCaseTest.java` | CancelReservationUseCase | ⬜ |
 
 #### Infrastructure 계층
@@ -1119,7 +1119,7 @@ void encryptedPasswordNeverEqualsPlaintext(@ForAll @StringLength(min = 8) String
 | 테스트 파일 | 대상 | 상태 |
 |------------|------|------|
 | `ShowControllerTest.java` | ShowController (생성, 오픈, 목록 조회) | ✅ |
-| `ReservationControllerTest.java` | ReservationController (좌석 임시 점유) | ✅ |
+| `ReservationControllerTest.java` | ReservationController (좌석 임시 점유, 예약 확정) | ✅ |
 
 #### Integration 테스트
 
@@ -1129,6 +1129,7 @@ void encryptedPasswordNeverEqualsPlaintext(@ForAll @StringLength(min = 8) String
 | `OpenShowInstanceIntegrationTest.java` | 공연 회차 오픈 E2E | ✅ |
 | `GetShowInstancesIntegrationTest.java` | 공연 회차 목록 조회 E2E | ✅ |
 | `HoldSlotsIntegrationTest.java` | 좌석 임시 점유 E2E | ✅ |
+| `ConfirmReservationIntegrationTest.java` | 예약 확정 E2E | ✅ |
 
 ---
 

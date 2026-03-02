@@ -76,7 +76,7 @@
 | 회차 오픈 | POST | `/api/shows/{id}/open` | SCHEDULED → OPEN 전환, 좌석 슬롯 자동 생성 |
 | 좌석 현황 조회 | GET | `/api/shows/{id}/slots` | OPEN 공연의 좌석 슬롯 목록, 좌석 정보, 가격, 상태 |
 | 좌석 임시 점유 | POST | `/api/reservations` | 좌석 1~10개를 10분간 임시 점유 (결제 전 선점) |
-| 예약 확정 | POST | `/api/reservations/{id}/confirm` | 결제 완료 후 예약 확정 (예정) |
+| 예약 확정 | POST | `/api/reservations/{id}/confirm` | 결제 완료 후 예약 확정 |
 | 예약 취소 | POST | `/api/reservations/{id}/cancel` | 예약 취소 (예정) |
 
 **주요 특징**:
@@ -144,6 +144,7 @@
 | BKG-4201 | `SLOT_ALREADY_LOCKED` | 409 |
 | BKG-4202 | `LOCK_EXPIRED` | 400 |
 | BKG-4203 | `INVALID_SLOT_STATUS` | 400 |
+| BKG-4204 | `LOCK_NOT_FOUND` | 404 |
 
 → 전체 목록: [features/BOOKING.md#에러-코드-체계](features/BOOKING.md#에러-코드-체계)
 

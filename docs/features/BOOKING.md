@@ -13,6 +13,7 @@
 - [3. 공연 회차 오픈 (Open Show Instance)](#3-공연-회차-오픈-open-show-instance)
 - [4. 좌석 현황 조회 (Get Show Slots)](#4-좌석-현황-조회-get-show-slots)
 - [5. 좌석 임시 점유 (Hold Slots)](#5-좌석-임시-점유-hold-slots)
+- [6. 예약 확정 (Confirm Reservation)](#6-예약-확정-confirm-reservation)
 - [에러 코드 체계](#에러-코드-체계)
 - [데이터 모델](#데이터-모델)
 - [관련 파일 위치](#관련-파일-위치)
@@ -31,6 +32,7 @@ d
 | 공연 회차 오픈    | POST | `/api/shows/{id}/open`  | 200 OK      | ADMIN 이상 | SCHEDULED → OPEN 전환, 좌석 슬롯 자동 생성 |
 | 좌석 현황 조회    | GET  | `/api/shows/{id}/slots` | 200 OK      | 인증된 사용자  | OPEN 공연의 좌석 슬롯 목록, 좌석 정보, 가격, 상태 |
 | 좌석 임시 점유    | POST | `/api/reservations`     | 201 Created | 인증된 사용자  | 좌석 1~10개를 10분간 임시 점유             |
+| 예약 확정       | POST | `/api/reservations/{id}/confirm` | 200 OK | 인증된 사용자  | PENDING 상태의 예약을 결제 후 확정          |
 
 **공통 인증 요구사항**:
 
@@ -733,6 +735,127 @@ HELD → (삭제) (만료/취소 시)
 
 ---
 
+## 6. 예약 확정 (Confirm Reservation)
+
+임시 점유(PENDING) 상태의 예약을 결제 완료 후 확정합니다. 모든 Lock이 만료(10분 TTL) 전이어야 하며, 확정 시 Lock은 영구 잠금(expiresAt = null)으로 전환됩니다.
+
+### 엔드포인트
+
+```
+POST /api/reservations/{reservationId}/confirm
+```
+
+### 요청 (Request)
+
+**Headers**:
+
+```
+Authorization: Bearer {accessToken}
+```
+
+**Path Parameter**:
+| 파라미터 | 타입 | 설명 |
+|---------|------|------|
+| reservationId | Long | 예약 ID |
+
+**Body**: 없음
+
+### 응답 (Response)
+
+**성공 (200 OK)**:
+
+```json
+{
+  "id": 1,
+  "showInstanceId": 100,
+  "status": "CONFIRMED",
+  "items": [
+    {
+      "slotId": 1,
+      "priceAmount": 55000,
+      "currency": "KRW"
+    }
+  ],
+  "expiresAt": null,
+  "confirmedAt": "2026-03-01T10:05:00"
+}
+```
+
+**응답 필드 설명**:
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long | 예약 ID |
+| showInstanceId | Long | 공연 회차 ID |
+| status | ReservationStatus | 예약 상태 (CONFIRMED) |
+| items[].slotId | Long | 슬롯 ID |
+| items[].priceAmount | long | 예약 시점 가격 (원) |
+| items[].currency | String | 통화 코드 (ISO 4217) |
+| expiresAt | LocalDateTime | null (확정 시 만료 없음) |
+| confirmedAt | LocalDateTime | 예약 확정 시각 (UTC) |
+
+**실패 응답**:
+| HTTP 상태 | 에러 코드 | 상황 |
+|-----------|---------|------|
+| 400 Bad Request | `INVALID_RESERVATION_STATUS` | PENDING이 아닌 상태에서 확정 시도 |
+| 400 Bad Request | `LOCK_EXPIRED` | Lock 만료 (10분 TTL 초과) |
+| 401 Unauthorized | - | 인증 토큰 없음/만료 |
+| 404 Not Found | `RESERVATION_NOT_FOUND` | 예약 미존재 또는 다른 사용자의 예약 |
+| 404 Not Found | `LOCK_NOT_FOUND` | Lock이 존재하지 않음 |
+
+### 비즈니스 로직 흐름
+
+```
+1. Command 검증
+   └─ userId, reservationId 필수
+
+2. Reservation 조회
+   └─ reservationRepository.findById(reservationId)
+      └─ 없으면: RESERVATION_NOT_FOUND
+
+3. 소유권 확인
+   └─ reservation.userId != command.userId
+      └─ 불일치: RESERVATION_NOT_FOUND (보안: 존재 여부 노출 방지)
+
+4. Reservation 상태 검증
+   └─ PENDING이 아니면: INVALID_RESERVATION_STATUS
+
+5. Lock 전체 조회
+   └─ lockRepository.findAllByReservationId(reservationId)
+      └─ 비어있으면: LOCK_NOT_FOUND
+
+6. Lock 만료 체크 (all-or-nothing)
+   └─ lock.isExpired(now) → 하나라도 만료 시: LOCK_EXPIRED
+
+7. Lock 확정 + History 기록
+   └─ 각 Lock에 대해:
+      ├─ ResourceSlotLockHistory.fromLock(lock, CONFIRMED) → 원래 expiresAt 캡처
+      ├─ lock.confirm() → CONFIRMED, expiresAt = null
+      └─ 저장: lock + history
+
+8. Reservation 확정
+   └─ reservation.confirm(now) → CONFIRMED, confirmedAt 설정
+
+9. Result 반환 (expiresAt = null, confirmedAt 포함)
+```
+
+### 소유권 검증 전략
+
+다른 사용자의 예약에 접근할 때 `403 Forbidden` 대신 `404 Not Found`를 반환합니다.
+
+- `403`을 반환하면 해당 ID의 예약이 존재한다는 사실이 노출됨
+- `404`로 통일하면 공격자가 예약 존재 여부를 추론할 수 없음
+- REST API 보안 Best Practice
+
+### History 기록 순서
+
+```
+fromLock(lock, ...) → lock.confirm()
+```
+
+`ResourceSlotLockHistory.fromLock()`이 `lock.getExpiresAt()`을 캡처하므로, `confirm()` 호출 전에 실행해야 원래 TTL이 기록됩니다.
+
+---
+
 ## 에러 코드 체계
 
 ### 공연 회차 관련 (BKG-40xx)
@@ -762,6 +885,7 @@ HELD → (삭제) (만료/취소 시)
 | BKG-4201 | `SLOT_ALREADY_LOCKED` | 409     | 이미 선점된 좌석      |
 | BKG-4202 | `LOCK_EXPIRED`        | 400     | 락이 만료됨         |
 | BKG-4203 | `INVALID_SLOT_STATUS` | 400     | 슬롯 상태가 올바르지 않음 |
+| BKG-4204 | `LOCK_NOT_FOUND`      | 404     | 락을 찾을 수 없음      |
 
 ### 에러 응답 형식
 
@@ -860,7 +984,8 @@ booking/
 │   │   ├── CreateShowInstanceUseCase.java
 │   │   ├── OpenShowInstanceUseCase.java
 │   │   ├── GetShowSlotsUseCase.java         # 좌석 현황 조회
-│   │   └── HoldSlotsUseCase.java            # 좌석 임시 점유
+│   │   ├── HoldSlotsUseCase.java            # 좌석 임시 점유
+│   │   └── ConfirmReservationUseCase.java  # 예약 확정
 │   ├── port/
 │   │   ├── CatalogQueryPort.java            # BC 간 통신 인터페이스
 │   │   └── model/
@@ -870,7 +995,8 @@ booking/
 │       ├── command/
 │       │   ├── CreateShowInstanceCommand.java
 │       │   ├── OpenShowInstanceCommand.java
-│       │   └── HoldSlotsCommand.java        # 좌석 점유 Command
+│       │   ├── HoldSlotsCommand.java        # 좌석 점유 Command
+│       │   └── ConfirmReservationCommand.java # 예약 확정 Command
 │       ├── query/
 │       │   ├── GetShowInstancesQuery.java
 │       │   └── GetShowSlotsQuery.java       # 좌석 현황 조회 Query
@@ -952,6 +1078,7 @@ catalog/
 | Application    | GetShowInstancesUseCaseTest                   | 9       |
 | Application    | GetShowSlotsUseCaseTest                       | 11      |
 | Application    | HoldSlotsUseCaseTest                          | 16      |
+| Application    | ConfirmReservationUseCaseTest                 | 11      |
 | Infrastructure | ShowInstanceEntityMapperTest                  | 8       |
 | Infrastructure | ResourceSlotEntityMapperTest                  | 9       |
 | Infrastructure | ReservationEntityMapperTest                   | 8       |
@@ -960,12 +1087,13 @@ catalog/
 | Infrastructure | ShowInstanceRepositoryImplTest                | 9       |
 | Infrastructure | ResourceJpaRepositoryTest                     | 3       |
 | Infrastructure | ReservationRepositoryImplTest                 | 5       |
-| Infrastructure | ResourceSlotLockRepositoryImplTest            | 5       |
+| Infrastructure | ResourceSlotLockRepositoryImplTest            | 7       |
 | Presentation   | ShowControllerTest                            | 32      |
-| Presentation   | ReservationControllerTest                     | 11      |
+| Presentation   | ReservationControllerTest                     | 17      |
 | Integration    | CreateShowInstanceIntegrationTest             | 7       |
 | Integration    | OpenShowInstanceIntegrationTest               | 10      |
 | Integration    | GetShowInstancesIntegrationTest               | 9       |
 | Integration    | GetShowSlotsIntegrationTest                   | 6       |
 | Integration    | HoldSlotsIntegrationTest                      | 6       |
-| **합계**         |                                               | **388** |
+| Integration    | ConfirmReservationIntegrationTest              | 4       |
+| **합계**         |                                               | **409** |
