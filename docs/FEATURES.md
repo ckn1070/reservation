@@ -77,7 +77,7 @@
 | 좌석 현황 조회 | GET | `/api/shows/{id}/slots` | OPEN 공연의 좌석 슬롯 목록, 좌석 정보, 가격, 상태 |
 | 좌석 임시 점유 | POST | `/api/reservations` | 좌석 1~10개를 10분간 임시 점유 (결제 전 선점) |
 | 예약 확정 | POST | `/api/reservations/{id}/confirm` | 결제 완료 후 예약 확정 |
-| 예약 취소 | POST | `/api/reservations/{id}/cancel` | 예약 취소 (예정) |
+| 예약 취소 | POST | `/api/reservations/{id}/cancel` | PENDING/CONFIRMED 예약 취소 |
 
 **주요 특징**:
 - 공연 회차 상태 관리 (SCHEDULED → OPEN → CLOSED)

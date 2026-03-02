@@ -137,7 +137,49 @@ public ReservationResult execute(ConfirmReservationCommand command) {
 
 ---
 
-### 3. ReleaseExpiredLocksUseCase (만료된 락 해제 - 배치)
+### 3. CancelReservationUseCase (예약 취소)
+
+**목적**: 사용자가 PENDING 또는 CONFIRMED 예약을 직접 취소
+
+**트랜잭션 순서**:
+```java
+@Transactional
+public ReservationResult execute(CancelReservationCommand command) {
+    // 1. Command 검증 + Reservation 조회 + 소유권/상태 검증
+    command.validate();
+    Reservation reservation = findReservation(command.getReservationId());
+    validateOwnership(reservation, command.getUserId());
+    validateReservationStatus(reservation); // canTransitionTo(CANCELLED)
+
+    // 2. 취소 사유 결정 (null/blank → 기본값)
+    String reason = resolveReason(command.getReason());
+
+    // 3. Lock 조회 + History 기록 + Hard Delete
+    List<ResourceSlotLock> locks = lockRepository.findAllByReservationId(reservationId);
+    for (ResourceSlotLock lock : locks) {
+        ResourceSlotLockHistory history =
+            ResourceSlotLockHistory.fromLock(lock, LockAction.RELEASED, reason, now);
+        lockHistoryRepository.save(history);
+        lockRepository.delete(lock); // hard delete (uk_lock_slot 해제)
+    }
+
+    // 4. Reservation 취소
+    reservation.cancel(reason, now);
+    reservationRepository.save(reservation);
+
+    return ReservationResult.from(reservation, null);
+}
+```
+
+**핵심 포인트**:
+- ✅ **PENDING + CONFIRMED 모두 지원**: Domain의 canTransitionTo()로 검증
+- ✅ **Lock Hard Delete**: uk_lock_slot UNIQUE 해제로 재예약 가능
+- ✅ **감사 이력**: RELEASED 액션으로 History에 기록 후 삭제
+- ✅ **방어적 프로그래밍**: Lock 없는 예약도 정상 취소 (타이밍 이슈 대응)
+
+---
+
+### 4. ReleaseExpiredLocksUseCase (만료된 락 해제 - 배치)
 
 **목적**: TTL이 지난 HELD 락을 자동 해제하여 다른 사용자가 예약 가능하게 함
 
@@ -194,7 +236,8 @@ public void execute() {
 |---------|----------|------------|----------|
 | **HoldSlots** | Reservation 생성 → Lock INSERT | uk_lock_slot UNIQUE | HELD 이력 |
 | **ConfirmReservation** | Lock CONFIRMED → Reservation CONFIRMED | 낙관적 락 (version) | CONFIRMED 이력 |
-| **ReleaseExpiredLocks** | Lock 해제 → Reservation CANCELLED | 배치 단일 스레드 | RELEASED 이력 |
+| **CancelReservation** | Lock 삭제 → Reservation CANCELLED | 소유권 검증 | RELEASED 이력 |
+| **ReleaseExpiredLocks** | Lock 해제 → Reservation CANCELLED | 배치 단일 스레드 | EXPIRED 이력 |
 
 **이력(LockHistory) 적재 시점**:
 - ✅ **HoldSlots**: 락 생성 시

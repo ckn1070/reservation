@@ -14,7 +14,8 @@
 - [4. 좌석 현황 조회 (Get Show Slots)](#4-좌석-현황-조회-get-show-slots)
 - [5. 좌석 임시 점유 (Hold Slots)](#5-좌석-임시-점유-hold-slots)
 - [6. 예약 확정 (Confirm Reservation)](#6-예약-확정-confirm-reservation)
-- [7. 만료 락 자동 해제 (Release Expired Locks)](#7-만료-락-자동-해제-release-expired-locks)
+- [7. 예약 취소 (Cancel Reservation)](#7-예약-취소-cancel-reservation)
+- [8. 만료 락 자동 해제 (Release Expired Locks)](#8-만료-락-자동-해제-release-expired-locks)
 - [에러 코드 체계](#에러-코드-체계)
 - [데이터 모델](#데이터-모델)
 - [관련 파일 위치](#관련-파일-위치)
@@ -34,6 +35,7 @@ d
 | 좌석 현황 조회    | GET  | `/api/shows/{id}/slots` | 200 OK      | 인증된 사용자  | OPEN 공연의 좌석 슬롯 목록, 좌석 정보, 가격, 상태 |
 | 좌석 임시 점유    | POST | `/api/reservations`     | 201 Created | 인증된 사용자  | 좌석 1~10개를 10분간 임시 점유             |
 | 예약 확정       | POST | `/api/reservations/{id}/confirm` | 200 OK | 인증된 사용자  | PENDING 상태의 예약을 결제 후 확정          |
+| 예약 취소       | POST | `/api/reservations/{id}/cancel`  | 200 OK | 인증된 사용자  | PENDING/CONFIRMED 예약을 취소           |
 
 **공통 인증 요구사항**:
 
@@ -857,7 +859,153 @@ fromLock(lock, ...) → lock.confirm()
 
 ---
 
-## 7. 만료 락 자동 해제 (Release Expired Locks)
+## 7. 예약 취소 (Cancel Reservation)
+
+PENDING(임시 점유) 또는 CONFIRMED(확정) 상태의 예약을 사용자 요청에 의해 취소합니다. Lock은 hard delete 후 History에 RELEASED 액션으로 감사 기록을 남깁니다.
+
+### 엔드포인트
+
+```
+POST /api/reservations/{reservationId}/cancel
+```
+
+### 요청 (Request)
+
+**Headers**:
+
+```
+Content-Type: application/json (선택)
+Authorization: Bearer {accessToken}
+```
+
+**Path Parameter**:
+| 파라미터 | 타입 | 설명 |
+|---------|------|------|
+| reservationId | Long | 예약 ID |
+
+**Body** (`CancelReservationWebRequest`, 선택):
+
+```json
+{
+  "reason": "개인 사정으로 취소"
+}
+```
+
+**필드 검증**:
+| 필드 | 타입 | 필수 | 검증 규칙 |
+|------|------|------|----------|
+| reason | String | ❌ | 최대 200자, 미제공 시 기본값 "사용자 요청에 의한 취소" |
+
+### 응답 (Response)
+
+**성공 (200 OK)**:
+
+```json
+{
+  "id": 1,
+  "showInstanceId": 100,
+  "status": "CANCELLED",
+  "items": [
+    {
+      "slotId": 1,
+      "priceAmount": 55000,
+      "currency": "KRW"
+    }
+  ],
+  "expiresAt": null,
+  "confirmedAt": null,
+  "cancelReason": "개인 사정으로 취소",
+  "cancelledAt": "2026-03-01T10:15:00"
+}
+```
+
+**응답 필드 설명**:
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long | 예약 ID |
+| showInstanceId | Long | 공연 회차 ID |
+| status | ReservationStatus | 예약 상태 (CANCELLED) |
+| items[].slotId | Long | 슬롯 ID |
+| items[].priceAmount | long | 예약 시점 가격 (원) |
+| items[].currency | String | 통화 코드 (ISO 4217) |
+| cancelReason | String | 취소 사유 |
+| cancelledAt | LocalDateTime | 취소 시각 (UTC) |
+
+**실패 응답**:
+| HTTP 상태 | 에러 코드 | 상황 |
+|-----------|---------|------|
+| 400 Bad Request | `INVALID_RESERVATION_STATUS` | 취소 불가 상태 (CANCELLED, COMPLETED, NO_SHOW) |
+| 401 Unauthorized | - | 인증 토큰 없음/만료 |
+| 404 Not Found | `RESERVATION_NOT_FOUND` | 예약 미존재 또는 다른 사용자의 예약 |
+
+### 비즈니스 로직 흐름
+
+```
+1. Command 검증
+   └─ userId, reservationId 필수
+
+2. Reservation 조회
+   └─ reservationRepository.findById(reservationId)
+      └─ 없으면: RESERVATION_NOT_FOUND
+
+3. 소유권 확인
+   └─ reservation.userId != command.userId
+      └─ 불일치: RESERVATION_NOT_FOUND (보안: 존재 여부 노출 방지)
+
+4. Reservation 상태 검증
+   └─ canTransitionTo(CANCELLED) 확인
+      └─ 불가: INVALID_RESERVATION_STATUS
+
+5. 취소 사유 결정
+   └─ reason이 null/blank이면 "사용자 요청에 의한 취소"
+
+6. Lock 조회 + History 기록 + 삭제
+   └─ findAllByReservationId(reservationId)
+   └─ 각 Lock에 대해:
+      ├─ ResourceSlotLockHistory.fromLock(lock, RELEASED, reason, now)
+      └─ Lock hard delete
+
+7. Reservation 취소
+   └─ reservation.cancel(reason, now) → CANCELLED
+
+8. Result 반환 (cancelReason, cancelledAt 포함)
+```
+
+### LockAction 구분
+
+| 액션 | 트리거 | 설명 |
+|------|--------|------|
+| RELEASED | 사용자 직접 취소 | 사용자가 잠금을 해제 |
+| EXPIRED | 시스템 자동 취소 (TTL 만료) | 기존 ReleaseExpiredLocks |
+| CANCELLED | 관리자/시스템 강제 취소 | 향후 확장 |
+
+### Lock 없는 예약 처리
+
+Lock이 이미 삭제된 상태에서 사용자가 취소를 시도할 수 있습니다 (타이밍 이슈).
+이 경우 Lock 처리는 스킵하고 Reservation만 취소합니다 (방어적 프로그래밍).
+
+### 관련 파일 위치
+
+```
+booking/
+├── presentation/
+│   ├── controller/
+│   │   └── ReservationController.java       # cancel 엔드포인트
+│   └── dto/
+│       └── CancelReservationWebRequest.java # 취소 요청 DTO
+├── application/
+│   ├── usecase/
+│   │   └── CancelReservationUseCase.java    # 취소 비즈니스 로직
+│   └── dto/
+│       └── command/
+│           └── CancelReservationCommand.java # 취소 Command
+└── domain/
+    └── Reservation.java                     # cancel(reason, now) 메서드
+```
+
+---
+
+## 8. 만료 락 자동 해제 (Release Expired Locks)
 
 HELD 상태의 Lock이 TTL(10분)을 초과하면 자동으로 삭제하고, 연관 Reservation을 취소합니다. Spring Scheduler로 1분 주기로 실행됩니다.
 
@@ -1039,6 +1187,7 @@ booking/
 │       ├── ShowSlotsWebResponse.java        # 좌석 현황 래퍼 응답
 │       ├── SlotDetailWebResponse.java       # 개별 슬롯 응답
 │       ├── HoldSlotsWebRequest.java         # 좌석 점유 요청
+│       ├── CancelReservationWebRequest.java # 예약 취소 요청
 │       ├── ReservationWebResponse.java      # 예약 응답
 │       └── ReservationItemWebResponse.java  # 예약 항목 응답
 ├── application/
@@ -1049,6 +1198,7 @@ booking/
 │   │   ├── GetShowSlotsUseCase.java         # 좌석 현황 조회
 │   │   ├── HoldSlotsUseCase.java            # 좌석 임시 점유
 │   │   ├── ConfirmReservationUseCase.java  # 예약 확정
+│   │   ├── CancelReservationUseCase.java  # 예약 취소
 │   │   └── ReleaseExpiredLocksUseCase.java # 만료 락 자동 해제
 │   ├── port/
 │   │   ├── CatalogQueryPort.java            # BC 간 통신 인터페이스
@@ -1060,7 +1210,8 @@ booking/
 │       │   ├── CreateShowInstanceCommand.java
 │       │   ├── OpenShowInstanceCommand.java
 │       │   ├── HoldSlotsCommand.java        # 좌석 점유 Command
-│       │   └── ConfirmReservationCommand.java # 예약 확정 Command
+│       │   ├── ConfirmReservationCommand.java # 예약 확정 Command
+│       │   └── CancelReservationCommand.java  # 예약 취소 Command
 │       ├── query/
 │       │   ├── GetShowInstancesQuery.java
 │       │   └── GetShowSlotsQuery.java       # 좌석 현황 조회 Query
@@ -1145,6 +1296,7 @@ catalog/
 | Application    | GetShowSlotsUseCaseTest                       | 11      |
 | Application    | HoldSlotsUseCaseTest                          | 16      |
 | Application    | ConfirmReservationUseCaseTest                 | 11      |
+| Application    | CancelReservationUseCaseTest                  | 12      |
 | Application    | ReleaseExpiredLocksUseCaseTest                | 6       |
 | Infrastructure | ShowInstanceEntityMapperTest                  | 8       |
 | Infrastructure | ResourceSlotEntityMapperTest                  | 9       |
@@ -1156,12 +1308,13 @@ catalog/
 | Infrastructure | ReservationRepositoryImplTest                 | 5       |
 | Infrastructure | ResourceSlotLockRepositoryImplTest            | 11      |
 | Presentation   | ShowControllerTest                            | 32      |
-| Presentation   | ReservationControllerTest                     | 17      |
+| Presentation   | ReservationControllerTest                     | 22      |
 | Integration    | CreateShowInstanceIntegrationTest             | 7       |
 | Integration    | OpenShowInstanceIntegrationTest               | 10      |
 | Integration    | GetShowInstancesIntegrationTest               | 9       |
 | Integration    | GetShowSlotsIntegrationTest                   | 6       |
 | Integration    | HoldSlotsIntegrationTest                      | 6       |
 | Integration    | ConfirmReservationIntegrationTest              | 4       |
+| Integration    | CancelReservationIntegrationTest               | 4       |
 | Integration    | ReleaseExpiredLocksIntegrationTest             | 4       |
-| **합계**         |                                               | **423** |
+| **합계**         |                                               | **444** |
