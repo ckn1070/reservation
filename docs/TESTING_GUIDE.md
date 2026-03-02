@@ -1100,6 +1100,8 @@ void encryptedPasswordNeverEqualsPlaintext(@ForAll @StringLength(min = 8) String
 | `ConfirmReservationUseCaseTest.java` | ConfirmReservationUseCase | ✅ |
 | `ReleaseExpiredLocksUseCaseTest.java` | ReleaseExpiredLocksUseCase | ✅ |
 | `CancelReservationUseCaseTest.java` | CancelReservationUseCase | ✅ |
+| `GetMyReservationsUseCaseTest.java` | GetMyReservationsUseCase | ✅ |
+| `GetReservationDetailUseCaseTest.java` | GetReservationDetailUseCase | ✅ |
 
 #### Infrastructure 계층
 
@@ -1120,7 +1122,7 @@ void encryptedPasswordNeverEqualsPlaintext(@ForAll @StringLength(min = 8) String
 | 테스트 파일 | 대상 | 상태 |
 |------------|------|------|
 | `ShowControllerTest.java` | ShowController (생성, 오픈, 목록 조회) | ✅ |
-| `ReservationControllerTest.java` | ReservationController (좌석 임시 점유, 예약 확정, 예약 취소) | ✅ |
+| `ReservationControllerTest.java` | ReservationController (좌석 임시 점유, 예약 확정, 예약 취소, 예약 조회) | ✅ |
 
 #### Integration 테스트
 
@@ -1132,6 +1134,7 @@ void encryptedPasswordNeverEqualsPlaintext(@ForAll @StringLength(min = 8) String
 | `HoldSlotsIntegrationTest.java` | 좌석 임시 점유 E2E | ✅ |
 | `ConfirmReservationIntegrationTest.java` | 예약 확정 E2E | ✅ |
 | `CancelReservationIntegrationTest.java` | 예약 취소 E2E | ✅ |
+| `GetMyReservationsIntegrationTest.java` | 예약 조회 E2E | ✅ |
 | `ReleaseExpiredLocksIntegrationTest.java` | 만료 락 자동 해제 E2E | ✅ |
 
 ---

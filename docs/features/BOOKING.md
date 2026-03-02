@@ -15,7 +15,9 @@
 - [5. 좌석 임시 점유 (Hold Slots)](#5-좌석-임시-점유-hold-slots)
 - [6. 예약 확정 (Confirm Reservation)](#6-예약-확정-confirm-reservation)
 - [7. 예약 취소 (Cancel Reservation)](#7-예약-취소-cancel-reservation)
-- [8. 만료 락 자동 해제 (Release Expired Locks)](#8-만료-락-자동-해제-release-expired-locks)
+- [8. 내 예약 목록 조회 (Get My Reservations)](#8-내-예약-목록-조회-get-my-reservations)
+- [9. 예약 상세 조회 (Get Reservation Detail)](#9-예약-상세-조회-get-reservation-detail)
+- [10. 만료 락 자동 해제 (Release Expired Locks)](#10-만료-락-자동-해제-release-expired-locks)
 - [에러 코드 체계](#에러-코드-체계)
 - [데이터 모델](#데이터-모델)
 - [관련 파일 위치](#관련-파일-위치)
@@ -36,6 +38,8 @@ d
 | 좌석 임시 점유    | POST | `/api/reservations`     | 201 Created | 인증된 사용자  | 좌석 1~10개를 10분간 임시 점유             |
 | 예약 확정       | POST | `/api/reservations/{id}/confirm` | 200 OK | 인증된 사용자  | PENDING 상태의 예약을 결제 후 확정          |
 | 예약 취소       | POST | `/api/reservations/{id}/cancel`  | 200 OK | 인증된 사용자  | PENDING/CONFIRMED 예약을 취소           |
+| 내 예약 목록 조회  | GET  | `/api/reservations`              | 200 OK | 인증된 사용자  | 인증된 사용자의 예약 목록 (상태 필터 지원)  |
+| 예약 상세 조회    | GET  | `/api/reservations/{id}`         | 200 OK | 인증된 사용자  | 특정 예약의 상세 정보 (소유권 검증)       |
 
 **공통 인증 요구사항**:
 
@@ -1005,7 +1009,122 @@ booking/
 
 ---
 
-## 8. 만료 락 자동 해제 (Release Expired Locks)
+## 8. 내 예약 목록 조회 (Get My Reservations)
+
+인증된 사용자의 예약 목록을 조회합니다. 상태별 필터링이 가능합니다.
+
+### 엔드포인트
+
+```
+GET /api/reservations
+```
+
+### 요청 (Request)
+
+**Query Parameters**:
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|---------|------|------|------|
+| `status` | string | ❌ | 예약 상태 필터 (`PENDING`, `CONFIRMED`, `CANCELLED`, `NO_SHOW`, `COMPLETED`) |
+
+### 응답 (Response)
+
+**200 OK**: `List<ReservationWebResponse>`
+
+```json
+[
+  {
+    "id": 1,
+    "showInstanceId": 100,
+    "status": "PENDING",
+    "items": [
+      {
+        "slotId": 10,
+        "priceAmount": 55000,
+        "currency": "KRW"
+      }
+    ],
+    "expiresAt": "2026-03-01T10:10:00",
+    "confirmedAt": null,
+    "cancelReason": null,
+    "cancelledAt": null
+  }
+]
+```
+
+### 비즈니스 규칙
+
+- JWT에서 userId를 추출하여 해당 사용자의 예약만 반환
+- 최신순(ID 역순) 정렬
+- PENDING 예약은 Lock의 `expiresAt` 포함 (남은 시간 확인용)
+- CONFIRMED/CANCELLED 예약은 `expiresAt` null
+- Lock 배치 조회로 N+1 쿼리 방지
+
+### 에러 코드
+
+| HTTP 상태 | 에러 코드 | 설명 |
+|-----------|---------|------|
+| 401 | - | 인증 필요 |
+
+---
+
+## 9. 예약 상세 조회 (Get Reservation Detail)
+
+특정 예약의 상세 정보를 조회합니다. 본인의 예약만 조회 가능합니다.
+
+### 엔드포인트
+
+```
+GET /api/reservations/{reservationId}
+```
+
+### Path Parameters
+
+| 파라미터 | 타입 | 설명 |
+|---------|------|------|
+| `reservationId` | Long | 예약 ID |
+
+### 응답 (Response)
+
+**200 OK**: `ReservationWebResponse`
+
+```json
+{
+  "id": 1,
+  "showInstanceId": 100,
+  "status": "PENDING",
+  "items": [
+    {
+      "slotId": 10,
+      "priceAmount": 55000,
+      "currency": "KRW"
+    }
+  ],
+  "expiresAt": "2026-03-01T10:10:00",
+  "confirmedAt": null,
+  "cancelReason": null,
+  "cancelledAt": null
+}
+```
+
+### 비즈니스 규칙
+
+- 소유권 검증: userId 불일치 시 `RESERVATION_NOT_FOUND`(404) 반환
+  - 403 대신 404를 사용하여 리소스 존재 여부 정보 누출 방지
+- PENDING 예약: Lock의 `expiresAt` 포함
+- CONFIRMED 예약: Lock의 `expiresAt` null, `confirmedAt` 존재
+- CANCELLED 예약: Lock 없음, `cancelReason` + `cancelledAt` 존재
+
+### 에러 코드
+
+| HTTP 상태 | 에러 코드 | 설명 |
+|-----------|---------|------|
+| 401 | - | 인증 필요 |
+| 404 | `RESERVATION_NOT_FOUND` | 예약이 존재하지 않거나 소유권 불일치 |
+
+---
+
+## 10. 만료 락 자동 해제 (Release Expired Locks)
 
 HELD 상태의 Lock이 TTL(10분)을 초과하면 자동으로 삭제하고, 연관 Reservation을 취소합니다. Spring Scheduler로 1분 주기로 실행됩니다.
 
@@ -1199,6 +1318,8 @@ booking/
 │   │   ├── HoldSlotsUseCase.java            # 좌석 임시 점유
 │   │   ├── ConfirmReservationUseCase.java  # 예약 확정
 │   │   ├── CancelReservationUseCase.java  # 예약 취소
+│   │   ├── GetMyReservationsUseCase.java  # 내 예약 목록 조회
+│   │   ├── GetReservationDetailUseCase.java # 예약 상세 조회
 │   │   └── ReleaseExpiredLocksUseCase.java # 만료 락 자동 해제
 │   ├── port/
 │   │   ├── CatalogQueryPort.java            # BC 간 통신 인터페이스
@@ -1297,6 +1418,8 @@ catalog/
 | Application    | HoldSlotsUseCaseTest                          | 16      |
 | Application    | ConfirmReservationUseCaseTest                 | 11      |
 | Application    | CancelReservationUseCaseTest                  | 12      |
+| Application    | GetMyReservationsUseCaseTest                  | 8       |
+| Application    | GetReservationDetailUseCaseTest               | 8       |
 | Application    | ReleaseExpiredLocksUseCaseTest                | 6       |
 | Infrastructure | ShowInstanceEntityMapperTest                  | 8       |
 | Infrastructure | ResourceSlotEntityMapperTest                  | 9       |
@@ -1305,10 +1428,10 @@ catalog/
 | Infrastructure | ResourceSlotLockHistoryEntityMapperTest        | 8       |
 | Infrastructure | ShowInstanceRepositoryImplTest                | 9       |
 | Infrastructure | ResourceJpaRepositoryTest                     | 3       |
-| Infrastructure | ReservationRepositoryImplTest                 | 5       |
-| Infrastructure | ResourceSlotLockRepositoryImplTest            | 11      |
+| Infrastructure | ReservationRepositoryImplTest                 | 11      |
+| Infrastructure | ResourceSlotLockRepositoryImplTest            | 15      |
 | Presentation   | ShowControllerTest                            | 32      |
-| Presentation   | ReservationControllerTest                     | 22      |
+| Presentation   | ReservationControllerTest                     | 29      |
 | Integration    | CreateShowInstanceIntegrationTest             | 7       |
 | Integration    | OpenShowInstanceIntegrationTest               | 10      |
 | Integration    | GetShowInstancesIntegrationTest               | 9       |
@@ -1316,5 +1439,6 @@ catalog/
 | Integration    | HoldSlotsIntegrationTest                      | 6       |
 | Integration    | ConfirmReservationIntegrationTest              | 4       |
 | Integration    | CancelReservationIntegrationTest               | 4       |
+| Integration    | GetMyReservationsIntegrationTest               | 7       |
 | Integration    | ReleaseExpiredLocksIntegrationTest             | 4       |
-| **합계**         |                                               | **444** |
+| **합계**         |                                               | **486** |

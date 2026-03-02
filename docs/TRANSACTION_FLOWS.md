@@ -230,6 +230,53 @@ public void execute() {
 
 ---
 
+### 5. GetMyReservationsUseCase (내 예약 목록 조회)
+
+**목적**: 인증된 사용자의 예약 목록을 Lock 만료 시각 포함하여 조회
+
+**조회 흐름**:
+```java
+@Transactional(readOnly = true)
+public List<ReservationResult> execute(Long userId, ReservationStatus status) {
+    // 1. userId 검증
+    // 2. 예약 조회 (status 있으면 findByUserIdAndStatus, 없으면 findByUserId)
+    // 3. 빈 결과면 즉시 빈 리스트 반환 (Lock 조회 불필요)
+    // 4. Lock 배치 조회 (findAllByReservationIds) → N+1 쿼리 방지
+    // 5. expiresAtMap 생성 (reservationId → expiresAt)
+    // 6. ReservationResult 변환 후 반환
+}
+```
+
+**핵심 포인트**:
+- ✅ **readOnly 트랜잭션**: 조회 전용, 상태 변경 없음
+- ✅ **배치 조회**: Lock을 예약 ID 목록으로 한 번에 조회 (IN 절)
+- ✅ **빈 리스트 최적화**: 예약이 없으면 Lock 조회 건너뜀
+
+---
+
+### 6. GetReservationDetailUseCase (예약 상세 조회)
+
+**목적**: 특정 예약의 상세 정보를 소유권 검증 후 조회
+
+**조회 흐름**:
+```java
+@Transactional(readOnly = true)
+public ReservationResult execute(Long userId, Long reservationId) {
+    // 1. userId, reservationId null 검증
+    // 2. Reservation 조회 (없으면 RESERVATION_NOT_FOUND)
+    // 3. 소유권 확인 (불일치 시 RESERVATION_NOT_FOUND - 보안)
+    // 4. Lock 조회 → expiresAt 추출
+    // 5. ReservationResult 반환
+}
+```
+
+**핵심 포인트**:
+- ✅ **readOnly 트랜잭션**: 조회 전용, 상태 변경 없음
+- ✅ **소유권 검증**: 404 반환으로 리소스 존재 여부 노출 방지
+- ✅ **기존 패턴 재사용**: CancelReservationUseCase의 소유권 검증 패턴 동일
+
+---
+
 ### 트랜잭션 흐름 요약
 
 | UseCase | 핵심 순서 | 동시성 제어 | 이력 기록 |
@@ -238,6 +285,8 @@ public void execute() {
 | **ConfirmReservation** | Lock CONFIRMED → Reservation CONFIRMED | 낙관적 락 (version) | CONFIRMED 이력 |
 | **CancelReservation** | Lock 삭제 → Reservation CANCELLED | 소유권 검증 | RELEASED 이력 |
 | **ReleaseExpiredLocks** | Lock 해제 → Reservation CANCELLED | 배치 단일 스레드 | EXPIRED 이력 |
+| **GetMyReservations** | 예약 조회 → Lock 배치 조회 | readOnly | - |
+| **GetReservationDetail** | 예약 조회 → 소유권 검증 → Lock 조회 | readOnly | - |
 
 **이력(LockHistory) 적재 시점**:
 - ✅ **HoldSlots**: 락 생성 시

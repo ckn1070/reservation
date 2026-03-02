@@ -78,6 +78,8 @@
 | 좌석 임시 점유 | POST | `/api/reservations` | 좌석 1~10개를 10분간 임시 점유 (결제 전 선점) |
 | 예약 확정 | POST | `/api/reservations/{id}/confirm` | 결제 완료 후 예약 확정 |
 | 예약 취소 | POST | `/api/reservations/{id}/cancel` | PENDING/CONFIRMED 예약 취소 |
+| 내 예약 목록 조회 | GET | `/api/reservations` | 사용자의 예약 목록 (상태 필터 지원) |
+| 예약 상세 조회 | GET | `/api/reservations/{id}` | 특정 예약 상세 (소유권 검증) |
 
 **주요 특징**:
 - 공연 회차 상태 관리 (SCHEDULED → OPEN → CLOSED)
