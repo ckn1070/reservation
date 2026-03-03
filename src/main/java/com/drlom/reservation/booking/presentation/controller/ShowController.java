@@ -1,13 +1,18 @@
 package com.drlom.reservation.booking.presentation.controller;
 
+import com.drlom.reservation.booking.application.dto.command.CancelShowInstanceCommand;
+import com.drlom.reservation.booking.application.dto.command.CloseShowInstanceCommand;
 import com.drlom.reservation.booking.application.dto.command.OpenShowInstanceCommand;
 import com.drlom.reservation.booking.application.dto.result.ShowInstanceResult;
 import com.drlom.reservation.booking.application.dto.result.ShowSlotsResult;
+import com.drlom.reservation.booking.application.usecase.CancelShowInstanceUseCase;
+import com.drlom.reservation.booking.application.usecase.CloseShowInstanceUseCase;
 import com.drlom.reservation.booking.application.usecase.CreateShowInstanceUseCase;
 import com.drlom.reservation.booking.application.usecase.GetShowInstancesUseCase;
 import com.drlom.reservation.booking.application.usecase.GetShowSlotsUseCase;
 import com.drlom.reservation.booking.application.usecase.OpenShowInstanceUseCase;
 import com.drlom.reservation.booking.domain.ShowStatus;
+import com.drlom.reservation.booking.presentation.dto.CancelShowInstanceWebRequest;
 import com.drlom.reservation.booking.presentation.dto.CreateShowInstanceWebRequest;
 import com.drlom.reservation.booking.presentation.dto.ShowInstanceWebResponse;
 import com.drlom.reservation.booking.presentation.dto.ShowSlotsWebResponse;
@@ -51,6 +56,8 @@ public class ShowController {
 
   private final CreateShowInstanceUseCase createShowInstanceUseCase;
   private final OpenShowInstanceUseCase openShowInstanceUseCase;
+  private final CloseShowInstanceUseCase closeShowInstanceUseCase;
+  private final CancelShowInstanceUseCase cancelShowInstanceUseCase;
   private final GetShowInstancesUseCase getShowInstancesUseCase;
   private final GetShowSlotsUseCase getShowSlotsUseCase;
 
@@ -268,5 +275,129 @@ public class ShowController {
     log.info("좌석 현황 조회 요청: showInstanceId={}", id);
     ShowSlotsResult result = getShowSlotsUseCase.execute(id);
     return ResponseEntity.ok(ShowSlotsWebResponse.from(result));
+  }
+
+  @Operation(
+      summary = "공연 회차 마감",
+      description = "OPEN 상태의 공연 회차를 CLOSED로 전환합니다. 기존 예약은 유지됩니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = "공연 회차 마감 성공",
+      content = @Content(schema = @Schema(implementation = ShowInstanceWebResponse.class)))
+  @ApiResponse(
+      responseCode = "400",
+      description = "상태 전이 불가 (OPEN 상태가 아님)",
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"INVALID_SHOW_STATUS\", \"message\": \"SCHEDULED 상태에서 CLOSED 상태로 전이할 수 없습니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")))
+  @ApiResponse(
+      responseCode = "401",
+      description = "인증 필요",
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"UNAUTHORIZED\", \"message\": \"인증이 필요합니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")))
+  @ApiResponse(
+      responseCode = "403",
+      description = "권한 없음 (ADMIN만 가능)",
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"FORBIDDEN\", \"message\": \"접근 권한이 없습니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")))
+  @ApiResponse(
+      responseCode = "404",
+      description = "공연 회차를 찾을 수 없음",
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"SHOW_INSTANCE_NOT_FOUND\", \"message\": \"공연 회차를 찾을 수 없습니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")))
+  @PostMapping("/{id}/close")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<ShowInstanceWebResponse> closeShowInstance(
+      @Parameter(description = "공연 회차 ID", example = "1") @PathVariable Long id) {
+    log.info("공연 회차 마감 요청: id={}", id);
+    CloseShowInstanceCommand command =
+        CloseShowInstanceCommand.builder().showInstanceId(id).build();
+    ShowInstanceResult result = closeShowInstanceUseCase.execute(command);
+    return ResponseEntity.ok(ShowInstanceWebResponse.from(result));
+  }
+
+  @Operation(
+      summary = "공연 취소",
+      description =
+          "SCHEDULED 또는 OPEN 상태의 공연 회차를 CANCELLED로 전환합니다. "
+              + "활성 예약(PENDING, CONFIRMED)이 일괄 취소되고 Lock이 해제됩니다.")
+  @ApiResponse(
+      responseCode = "200",
+      description = "공연 취소 성공",
+      content = @Content(schema = @Schema(implementation = ShowInstanceWebResponse.class)))
+  @ApiResponse(
+      responseCode = "400",
+      description = "상태 전이 불가 또는 입력값 검증 실패",
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples = {
+                @ExampleObject(
+                    name = "상태 전이 불가",
+                    value =
+                        "{\"code\": \"INVALID_SHOW_STATUS\", \"message\": \"CLOSED 상태에서 CANCELLED 상태로 전이할 수 없습니다\", \"timestamp\": \"2026-02-01T12:00:00\"}"),
+                @ExampleObject(
+                    name = "취소 사유 누락",
+                    value =
+                        "{\"code\": \"INVALID_INPUT_VALUE\", \"message\": \"입력값이 올바르지 않습니다\", \"fieldErrors\": [{\"field\": \"reason\", \"message\": \"취소 사유는 필수입니다\"}], \"timestamp\": \"2026-02-01T12:00:00\"}")
+              }))
+  @ApiResponse(
+      responseCode = "401",
+      description = "인증 필요",
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"UNAUTHORIZED\", \"message\": \"인증이 필요합니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")))
+  @ApiResponse(
+      responseCode = "403",
+      description = "권한 없음 (ADMIN만 가능)",
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"FORBIDDEN\", \"message\": \"접근 권한이 없습니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")))
+  @ApiResponse(
+      responseCode = "404",
+      description = "공연 회차를 찾을 수 없음",
+      content =
+          @Content(
+              schema = @Schema(implementation = ErrorResponse.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          "{\"code\": \"SHOW_INSTANCE_NOT_FOUND\", \"message\": \"공연 회차를 찾을 수 없습니다\", \"timestamp\": \"2026-02-01T12:00:00\"}")))
+  @PostMapping("/{id}/cancel")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<ShowInstanceWebResponse> cancelShowInstance(
+      @Parameter(description = "공연 회차 ID", example = "1") @PathVariable Long id,
+      @Valid @RequestBody CancelShowInstanceWebRequest request) {
+    log.info("공연 취소 요청: id={}, reason={}", id, request.getReason());
+    CancelShowInstanceCommand command = request.toCommand(id);
+    ShowInstanceResult result = cancelShowInstanceUseCase.execute(command);
+    return ResponseEntity.ok(ShowInstanceWebResponse.from(result));
   }
 }
