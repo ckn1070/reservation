@@ -49,6 +49,15 @@ public class ShowInstanceJpaEntity extends JpaBaseEntity {
   @Column(name = "sales_close_at")
   private LocalDateTime salesCloseAt;
 
+  @Column(name = "closed_at")
+  private LocalDateTime closedAt;
+
+  @Column(name = "cancelled_at")
+  private LocalDateTime cancelledAt;
+
+  @Column(name = "cancel_reason", length = 200)
+  private String cancelReason;
+
   // 새로운 ShowInstance 생성
   public static ShowInstanceJpaEntity create(
       Long resourceId,
@@ -79,7 +88,10 @@ public class ShowInstanceJpaEntity extends JpaBaseEntity {
       LocalDateTime endAt,
       String status,
       LocalDateTime salesOpenAt,
-      LocalDateTime salesCloseAt) {
+      LocalDateTime salesCloseAt,
+      LocalDateTime closedAt,
+      LocalDateTime cancelledAt,
+      String cancelReason) {
     ShowInstanceJpaEntity entity = new ShowInstanceJpaEntity();
     entity.id = id;
     entity.resourceId = resourceId;
@@ -89,11 +101,25 @@ public class ShowInstanceJpaEntity extends JpaBaseEntity {
     entity.status = status;
     entity.salesOpenAt = salesOpenAt;
     entity.salesCloseAt = salesCloseAt;
+    entity.closedAt = closedAt;
+    entity.cancelledAt = cancelledAt;
+    entity.cancelReason = cancelReason;
     return entity;
   }
 
   // 상태 변경
   public void updateStatus(String status) {
     this.status = status;
+  }
+
+  // 마감 정보 업데이트
+  public void updateClosedAt(LocalDateTime closedAt) {
+    this.closedAt = closedAt;
+  }
+
+  // 취소 정보 업데이트
+  public void updateCancelInfo(LocalDateTime cancelledAt, String cancelReason) {
+    this.cancelledAt = cancelledAt;
+    this.cancelReason = cancelReason;
   }
 }
