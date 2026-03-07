@@ -41,6 +41,15 @@ public class ShowInstanceWebResponse {
   @Schema(description = "공연 상태", example = "SCHEDULED")
   private ShowStatus status;
 
+  @Schema(description = "예매 마감 시각", example = "2026-03-01T18:00:00")
+  private LocalDateTime closedAt;
+
+  @Schema(description = "취소 시각", example = "2026-02-15T10:00:00")
+  private LocalDateTime cancelledAt;
+
+  @Schema(description = "취소 사유", example = "출연자 부상으로 인한 공연 취소")
+  private String cancelReason;
+
   @Schema(description = "생성된 슬롯 수 (오픈 시에만 포함)", example = "500")
   private Long totalSlots;
 
@@ -60,6 +69,9 @@ public class ShowInstanceWebResponse {
         .salesOpenAt(result.getSalesOpenAt())
         .salesCloseAt(result.getSalesCloseAt())
         .status(result.getStatus())
+        .closedAt(result.getClosedAt())
+        .cancelledAt(result.getCancelledAt())
+        .cancelReason(result.getCancelReason())
         .totalSlots(result.getTotalSlots())
         .build();
   }

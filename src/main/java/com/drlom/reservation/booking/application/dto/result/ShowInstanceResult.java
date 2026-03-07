@@ -23,6 +23,9 @@ public class ShowInstanceResult {
   private final LocalDateTime salesOpenAt;
   private final LocalDateTime salesCloseAt;
   private final ShowStatus status;
+  private final LocalDateTime closedAt;
+  private final LocalDateTime cancelledAt;
+  private final String cancelReason;
   private final Long totalSlots;
 
   /**
@@ -52,6 +55,9 @@ public class ShowInstanceResult {
         .salesOpenAt(showInstance.getSalesOpenAt())
         .salesCloseAt(showInstance.getSalesCloseAt())
         .status(showInstance.getStatus())
+        .closedAt(showInstance.getClosedAt())
+        .cancelledAt(showInstance.getCancelledAt())
+        .cancelReason(showInstance.getCancelReason())
         .totalSlots(totalSlots)
         .build();
   }
