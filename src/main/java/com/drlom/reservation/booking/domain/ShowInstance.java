@@ -33,6 +33,9 @@ public class ShowInstance {
   private final LocalDateTime salesCloseAt;
 
   private ShowStatus status;
+  private LocalDateTime closedAt;
+  private LocalDateTime cancelledAt;
+  private String cancelReason;
 
   @SuppressWarnings("java:S107") // 도메인 엔티티 - 모든 파라미터가 필수 도메인 속성
   private ShowInstance(
@@ -43,7 +46,10 @@ public class ShowInstance {
       LocalDateTime endAt,
       LocalDateTime salesOpenAt,
       LocalDateTime salesCloseAt,
-      ShowStatus status) {
+      ShowStatus status,
+      LocalDateTime closedAt,
+      LocalDateTime cancelledAt,
+      String cancelReason) {
     this.id = id;
     this.venue = venue;
     this.title = title;
@@ -52,6 +58,9 @@ public class ShowInstance {
     this.salesOpenAt = salesOpenAt;
     this.salesCloseAt = salesCloseAt;
     this.status = status;
+    this.closedAt = closedAt;
+    this.cancelledAt = cancelledAt;
+    this.cancelReason = cancelReason;
   }
 
   /**
@@ -65,6 +74,9 @@ public class ShowInstance {
    * @param salesOpenAt 판매 시작 시간
    * @param salesCloseAt 판매 종료 시간
    * @param status 상태
+   * @param closedAt 마감 시각
+   * @param cancelledAt 취소 시각
+   * @param cancelReason 취소 사유
    * @return ShowInstance
    */
   @SuppressWarnings("java:S107") // DB 재구성용으로 모든 필드가 필요
@@ -76,8 +88,13 @@ public class ShowInstance {
       LocalDateTime endAt,
       LocalDateTime salesOpenAt,
       LocalDateTime salesCloseAt,
-      ShowStatus status) {
-    return new ShowInstance(id, venue, title, startAt, endAt, salesOpenAt, salesCloseAt, status);
+      ShowStatus status,
+      LocalDateTime closedAt,
+      LocalDateTime cancelledAt,
+      String cancelReason) {
+    return new ShowInstance(
+        id, venue, title, startAt, endAt, salesOpenAt, salesCloseAt, status, closedAt,
+        cancelledAt, cancelReason);
   }
 
   /**
@@ -105,7 +122,8 @@ public class ShowInstance {
     validateSalesTime(salesOpenAt, salesCloseAt);
 
     return new ShowInstance(
-        null, venue, title, startAt, endAt, salesOpenAt, salesCloseAt, ShowStatus.SCHEDULED);
+        null, venue, title, startAt, endAt, salesOpenAt, salesCloseAt, ShowStatus.SCHEDULED, null,
+        null, null);
   }
 
   /** 예매 오픈 (SCHEDULED → OPEN) */
@@ -114,16 +132,28 @@ public class ShowInstance {
     this.status = ShowStatus.OPEN;
   }
 
-  /** 예매 마감 (OPEN → CLOSED) */
-  public void close() {
+  /**
+   * 예매 마감 (OPEN → CLOSED)
+   *
+   * @param closedAt 마감 시각
+   */
+  public void close(LocalDateTime closedAt) {
     validateTransition(ShowStatus.CLOSED);
     this.status = ShowStatus.CLOSED;
+    this.closedAt = closedAt;
   }
 
-  /** 공연 취소 (SCHEDULED/OPEN → CANCELLED) */
-  public void cancel() {
+  /**
+   * 공연 취소 (SCHEDULED/OPEN → CANCELLED)
+   *
+   * @param reason 취소 사유
+   * @param cancelledAt 취소 시각
+   */
+  public void cancel(String reason, LocalDateTime cancelledAt) {
     validateTransition(ShowStatus.CANCELLED);
     this.status = ShowStatus.CANCELLED;
+    this.cancelReason = reason;
+    this.cancelledAt = cancelledAt;
   }
 
   /**
