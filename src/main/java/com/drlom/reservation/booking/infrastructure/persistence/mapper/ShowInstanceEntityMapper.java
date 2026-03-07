@@ -34,7 +34,10 @@ public class ShowInstanceEntityMapper {
         jpaEntity.getEndAt(),
         jpaEntity.getSalesOpenAt(),
         jpaEntity.getSalesCloseAt(),
-        ShowStatus.valueOf(jpaEntity.getStatus()));
+        ShowStatus.valueOf(jpaEntity.getStatus()),
+        jpaEntity.getClosedAt(),
+        jpaEntity.getCancelledAt(),
+        jpaEntity.getCancelReason());
   }
 
   /**
@@ -66,7 +69,10 @@ public class ShowInstanceEntityMapper {
           domain.getEndAt(),
           domain.getStatus().name(),
           domain.getSalesOpenAt(),
-          domain.getSalesCloseAt());
+          domain.getSalesCloseAt(),
+          domain.getClosedAt(),
+          domain.getCancelledAt(),
+          domain.getCancelReason());
     }
   }
 }
