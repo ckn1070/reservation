@@ -61,4 +61,16 @@ public class ReservationRepositoryImpl implements ReservationRepository {
         .map(entityMapper::toDomain)
         .toList();
   }
+
+  @Override
+  public List<Reservation> findByShowInstanceIdAndStatusIn(
+      Long showInstanceId, List<ReservationStatus> statuses) {
+    log.debug(
+        "Reservation 회차+상태별 조회: showInstanceId={}, statuses={}", showInstanceId, statuses);
+
+    List<String> statusStrings = statuses.stream().map(Enum::name).toList();
+    return jpaRepository.findByShowInstanceIdAndStatusIn(showInstanceId, statusStrings).stream()
+        .map(entityMapper::toDomain)
+        .toList();
+  }
 }
