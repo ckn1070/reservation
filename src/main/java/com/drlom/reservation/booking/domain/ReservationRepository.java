@@ -46,4 +46,14 @@ public interface ReservationRepository {
    * @return 해당 사용자의 예약 목록 (없으면 빈 리스트)
    */
   List<Reservation> findByUserIdAndStatus(Long userId, ReservationStatus status);
+
+  /**
+   * 공연 회차 ID와 상태 목록으로 예약 조회
+   *
+   * @param showInstanceId 공연 회차 ID
+   * @param statuses 예약 상태 목록
+   * @return 해당 회차의 예약 목록 (없으면 빈 리스트)
+   */
+  List<Reservation> findByShowInstanceIdAndStatusIn(
+      Long showInstanceId, List<ReservationStatus> statuses);
 }
