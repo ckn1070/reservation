@@ -31,4 +31,14 @@ public interface ReservationJpaRepository extends JpaRepository<ReservationJpaEn
    * @return 해당 사용자의 예약 JPA Entity 목록
    */
   List<ReservationJpaEntity> findByUserIdAndStatusOrderByIdDesc(Long userId, String status);
+
+  /**
+   * 공연 회차 ID와 상태 목록으로 예약 조회
+   *
+   * @param showInstanceId 공연 회차 ID
+   * @param statuses 예약 상태 목록 (문자열)
+   * @return 해당 회차의 예약 JPA Entity 목록
+   */
+  List<ReservationJpaEntity> findByShowInstanceIdAndStatusIn(
+      Long showInstanceId, List<String> statuses);
 }
