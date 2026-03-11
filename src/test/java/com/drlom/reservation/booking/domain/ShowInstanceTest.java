@@ -55,6 +55,9 @@ class ShowInstanceTest {
       assertThat(show.getSalesOpenAt()).isEqualTo(salesOpenAt);
       assertThat(show.getSalesCloseAt()).isEqualTo(salesCloseAt);
       assertThat(show.getStatus()).isEqualTo(ShowStatus.SCHEDULED);
+      assertThat(show.getClosedAt()).isNull();
+      assertThat(show.getCancelledAt()).isNull();
+      assertThat(show.getCancelReason()).isNull();
     }
 
     @Test
@@ -266,12 +269,29 @@ class ShowInstanceTest {
       ShowInstance show =
           ShowInstance.create(venue, "레미제라블", startAt, endAt, salesOpenAt, salesCloseAt);
       show.open();
+      LocalDateTime closedAt = LocalDateTime.of(2025, 6, 15, 18, 0);
 
       // when
-      show.close();
+      show.close(closedAt);
 
       // then
       assertThat(show.getStatus()).isEqualTo(ShowStatus.CLOSED);
+    }
+
+    @Test
+    @DisplayName("close 시 closedAt이 기록된다")
+    void closeRecordsClosedAt() {
+      // given
+      ShowInstance show =
+          ShowInstance.create(venue, "레미제라블", startAt, endAt, salesOpenAt, salesCloseAt);
+      show.open();
+      LocalDateTime closedAt = LocalDateTime.of(2025, 6, 15, 18, 0);
+
+      // when
+      show.close(closedAt);
+
+      // then
+      assertThat(show.getClosedAt()).isEqualTo(closedAt);
     }
 
     @Test
@@ -280,9 +300,10 @@ class ShowInstanceTest {
       // given
       ShowInstance show =
           ShowInstance.create(venue, "레미제라블", startAt, endAt, salesOpenAt, salesCloseAt);
+      LocalDateTime cancelledAt = LocalDateTime.of(2025, 5, 10, 12, 0);
 
       // when
-      show.cancel();
+      show.cancel("출연자 부상", cancelledAt);
 
       // then
       assertThat(show.getStatus()).isEqualTo(ShowStatus.CANCELLED);
@@ -295,12 +316,46 @@ class ShowInstanceTest {
       ShowInstance show =
           ShowInstance.create(venue, "레미제라블", startAt, endAt, salesOpenAt, salesCloseAt);
       show.open();
+      LocalDateTime cancelledAt = LocalDateTime.of(2025, 6, 15, 18, 0);
 
       // when
-      show.cancel();
+      show.cancel("공연장 시설 문제", cancelledAt);
 
       // then
       assertThat(show.getStatus()).isEqualTo(ShowStatus.CANCELLED);
+    }
+
+    @Test
+    @DisplayName("cancel 시 cancelledAt과 cancelReason이 기록된다")
+    void cancelRecordsCancelledAtAndReason() {
+      // given
+      ShowInstance show =
+          ShowInstance.create(venue, "레미제라블", startAt, endAt, salesOpenAt, salesCloseAt);
+      LocalDateTime cancelledAt = LocalDateTime.of(2025, 5, 10, 12, 0);
+      String reason = "출연자 부상으로 인한 공연 취소";
+
+      // when
+      show.cancel(reason, cancelledAt);
+
+      // then
+      assertThat(show.getCancelledAt()).isEqualTo(cancelledAt);
+      assertThat(show.getCancelReason()).isEqualTo(reason);
+    }
+
+    @Test
+    @DisplayName("cancel 시 reason이 null이면 cancelReason은 null")
+    void cancelWithNullReason() {
+      // given
+      ShowInstance show =
+          ShowInstance.create(venue, "레미제라블", startAt, endAt, salesOpenAt, salesCloseAt);
+      LocalDateTime cancelledAt = LocalDateTime.of(2025, 5, 10, 12, 0);
+
+      // when
+      show.cancel(null, cancelledAt);
+
+      // then
+      assertThat(show.getStatus()).isEqualTo(ShowStatus.CANCELLED);
+      assertThat(show.getCancelReason()).isNull();
     }
 
     @Test
@@ -311,7 +366,7 @@ class ShowInstanceTest {
           ShowInstance.create(venue, "레미제라블", startAt, endAt, salesOpenAt, salesCloseAt);
 
       // when & then
-      assertThatThrownBy(show::close)
+      assertThatThrownBy(() -> show.close(LocalDateTime.now()))
           .isInstanceOf(BusinessException.class)
           .extracting("errorCode")
           .isEqualTo(ErrorCode.INVALID_SHOW_STATUS);
@@ -324,7 +379,7 @@ class ShowInstanceTest {
       ShowInstance show =
           ShowInstance.create(venue, "레미제라블", startAt, endAt, salesOpenAt, salesCloseAt);
       show.open();
-      show.close();
+      show.close(LocalDateTime.now());
 
       // when & then
       assertThatThrownBy(show::open)
@@ -339,7 +394,7 @@ class ShowInstanceTest {
       // given
       ShowInstance show =
           ShowInstance.create(venue, "레미제라블", startAt, endAt, salesOpenAt, salesCloseAt);
-      show.cancel();
+      show.cancel("취소 사유", LocalDateTime.now());
 
       // when & then
       assertThatThrownBy(show::open)
@@ -383,7 +438,7 @@ class ShowInstanceTest {
       ShowInstance show =
           ShowInstance.create(venue, "레미제라블", startAt, endAt, salesOpenAt, salesCloseAt);
       show.open();
-      show.close();
+      show.close(LocalDateTime.now());
 
       // when & then
       assertThat(show.isReservable()).isFalse();
@@ -400,7 +455,8 @@ class ShowInstanceTest {
       // given
       ShowInstance show1 =
           ShowInstance.reconstitute(
-              1L, venue, "레미제라블", startAt, endAt, null, null, ShowStatus.SCHEDULED);
+              1L, venue, "레미제라블", startAt, endAt, null, null, ShowStatus.SCHEDULED, null, null,
+              null);
 
       ShowInstance show2 =
           ShowInstance.reconstitute(
@@ -411,7 +467,10 @@ class ShowInstanceTest {
               endAt.plusDays(1),
               null,
               null,
-              ShowStatus.OPEN);
+              ShowStatus.OPEN,
+              null,
+              null,
+              null);
 
       // when & then
       assertThat(show1).isEqualTo(show2).hasSameHashCodeAs(show2);
@@ -423,11 +482,13 @@ class ShowInstanceTest {
       // given
       ShowInstance show1 =
           ShowInstance.reconstitute(
-              1L, venue, "레미제라블", startAt, endAt, null, null, ShowStatus.SCHEDULED);
+              1L, venue, "레미제라블", startAt, endAt, null, null, ShowStatus.SCHEDULED, null, null,
+              null);
 
       ShowInstance show2 =
           ShowInstance.reconstitute(
-              2L, venue, "레미제라블", startAt, endAt, null, null, ShowStatus.SCHEDULED);
+              2L, venue, "레미제라블", startAt, endAt, null, null, ShowStatus.SCHEDULED, null, null,
+              null);
 
       // when & then
       assertThat(show1).isNotEqualTo(show2);
