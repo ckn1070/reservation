@@ -57,7 +57,10 @@ class ShowInstanceEntityMapperTest {
               now.plusDays(7).plusHours(3),
               "SCHEDULED",
               now.plusDays(1),
-              now.plusDays(6));
+              now.plusDays(6),
+              null,
+              null,
+              null);
 
       // when
       ShowInstance domain = mapper.toDomain(jpaEntity, venue);
@@ -87,6 +90,9 @@ class ShowInstanceEntityMapperTest {
               now.plusDays(7).plusHours(2),
               "OPEN",
               null,
+              null,
+              null,
+              null,
               null);
 
       // when
@@ -107,6 +113,37 @@ class ShowInstanceEntityMapperTest {
 
       // then
       assertThat(domain).isNull();
+    }
+
+    @Test
+    @DisplayName("마감/취소 필드가 있는 JpaEntity를 Domain으로 변환 성공")
+    void toDomainWithCloseAndCancelFieldsSuccess() {
+      // given
+      LocalDateTime closedAt = now.minusHours(2);
+      LocalDateTime cancelledAt = now.minusHours(1);
+      String cancelReason = "출연자 부상";
+
+      ShowInstanceJpaEntity jpaEntity =
+          ShowInstanceJpaEntity.reconstitute(
+              1L,
+              venue.getId(),
+              "뮤지컬 레미제라블",
+              now.plusDays(7),
+              now.plusDays(7).plusHours(3),
+              "CANCELLED",
+              now.plusDays(1),
+              now.plusDays(6),
+              closedAt,
+              cancelledAt,
+              cancelReason);
+
+      // when
+      ShowInstance domain = mapper.toDomain(jpaEntity, venue);
+
+      // then
+      assertThat(domain.getClosedAt()).isEqualTo(closedAt);
+      assertThat(domain.getCancelledAt()).isEqualTo(cancelledAt);
+      assertThat(domain.getCancelReason()).isEqualTo(cancelReason);
     }
   }
 
@@ -155,7 +192,10 @@ class ShowInstanceEntityMapperTest {
               now.plusDays(7).plusHours(3),
               now.plusDays(1),
               now.plusDays(6),
-              ShowStatus.OPEN);
+              ShowStatus.OPEN,
+              null,
+              null,
+              null);
 
       // when
       ShowInstanceJpaEntity jpaEntity = mapper.toJpaEntity(domain);
@@ -191,6 +231,37 @@ class ShowInstanceEntityMapperTest {
       // then
       assertThat(jpaEntity).isNull();
     }
+
+    @Test
+    @DisplayName("마감/취소 필드가 있는 Domain을 JpaEntity로 변환 성공")
+    void toJpaEntityWithCloseAndCancelFieldsSuccess() {
+      // given
+      LocalDateTime closedAt = now.minusHours(2);
+      LocalDateTime cancelledAt = now.minusHours(1);
+      String cancelReason = "공연장 시설 문제";
+
+      ShowInstance domain =
+          ShowInstance.reconstitute(
+              1L,
+              venue,
+              "뮤지컬",
+              now.plusDays(7),
+              now.plusDays(7).plusHours(3),
+              now.plusDays(1),
+              now.plusDays(6),
+              ShowStatus.CANCELLED,
+              closedAt,
+              cancelledAt,
+              cancelReason);
+
+      // when
+      ShowInstanceJpaEntity jpaEntity = mapper.toJpaEntity(domain);
+
+      // then
+      assertThat(jpaEntity.getClosedAt()).isEqualTo(closedAt);
+      assertThat(jpaEntity.getCancelledAt()).isEqualTo(cancelledAt);
+      assertThat(jpaEntity.getCancelReason()).isEqualTo(cancelReason);
+    }
   }
 
   @Nested
@@ -222,7 +293,10 @@ class ShowInstanceEntityMapperTest {
               jpaEntity.getEndAt(),
               jpaEntity.getStatus(),
               jpaEntity.getSalesOpenAt(),
-              jpaEntity.getSalesCloseAt());
+              jpaEntity.getSalesCloseAt(),
+              null,
+              null,
+              null);
       ShowInstance result = mapper.toDomain(savedEntity, venue);
 
       // then

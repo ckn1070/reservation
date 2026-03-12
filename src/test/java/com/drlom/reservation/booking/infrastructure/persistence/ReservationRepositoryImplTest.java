@@ -217,4 +217,91 @@ class ReservationRepositoryImplTest {
       assertThat(results).isEmpty();
     }
   }
+
+  @Nested
+  @DisplayName("findByShowInstanceIdAndStatusIn 테스트")
+  class FindByShowInstanceIdAndStatusInTest {
+
+    @Test
+    @DisplayName("PENDING + CONFIRMED 상태의 예약만 조회됨")
+    void findPendingAndConfirmedReservations() {
+      // given
+      Reservation pending = Reservation.create(1L, 100L);
+      pending.addItem(10L, 50000L, "KRW");
+      reservationRepository.save(pending);
+
+      Reservation confirmed = Reservation.create(2L, 100L);
+      confirmed.addItem(11L, 60000L, "KRW");
+      confirmed.confirm(LocalDateTime.now());
+      reservationRepository.save(confirmed);
+
+      Reservation cancelled = Reservation.create(3L, 100L);
+      cancelled.addItem(12L, 70000L, "KRW");
+      cancelled.cancel("테스트 취소", LocalDateTime.now());
+      reservationRepository.save(cancelled);
+
+      // when
+      List<Reservation> results =
+          reservationRepository.findByShowInstanceIdAndStatusIn(
+              100L, List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED));
+
+      // then
+      assertThat(results).hasSize(2);
+      assertThat(results)
+          .extracting(Reservation::getStatus)
+          .containsExactlyInAnyOrder(ReservationStatus.PENDING, ReservationStatus.CONFIRMED);
+    }
+
+    @Test
+    @DisplayName("CANCELLED 상태 예약은 조회에서 제외됨")
+    void cancelledReservationsExcluded() {
+      // given
+      Reservation cancelled = Reservation.create(1L, 100L);
+      cancelled.addItem(10L, 50000L, "KRW");
+      cancelled.cancel("테스트 취소", LocalDateTime.now());
+      reservationRepository.save(cancelled);
+
+      // when
+      List<Reservation> results =
+          reservationRepository.findByShowInstanceIdAndStatusIn(
+              100L, List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED));
+
+      // then
+      assertThat(results).isEmpty();
+    }
+
+    @Test
+    @DisplayName("다른 showInstanceId의 예약은 조회되지 않음")
+    void differentShowInstanceIdExcluded() {
+      // given
+      Reservation reservation1 = Reservation.create(1L, 100L);
+      reservation1.addItem(10L, 50000L, "KRW");
+      reservationRepository.save(reservation1);
+
+      Reservation reservation2 = Reservation.create(1L, 200L);
+      reservation2.addItem(11L, 60000L, "KRW");
+      reservationRepository.save(reservation2);
+
+      // when
+      List<Reservation> results =
+          reservationRepository.findByShowInstanceIdAndStatusIn(
+              100L, List.of(ReservationStatus.PENDING));
+
+      // then
+      assertThat(results).hasSize(1);
+      assertThat(results.getFirst().getShowInstanceId()).isEqualTo(100L);
+    }
+
+    @Test
+    @DisplayName("매칭되는 예약이 없으면 빈 리스트 반환")
+    void noMatchingReservationsReturnsEmpty() {
+      // when
+      List<Reservation> results =
+          reservationRepository.findByShowInstanceIdAndStatusIn(
+              999L, List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED));
+
+      // then
+      assertThat(results).isEmpty();
+    }
+  }
 }
