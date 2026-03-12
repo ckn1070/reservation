@@ -6,11 +6,15 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.drlom.reservation.booking.application.dto.command.CancelShowInstanceCommand;
+import com.drlom.reservation.booking.application.dto.command.CloseShowInstanceCommand;
 import com.drlom.reservation.booking.application.dto.command.CreateShowInstanceCommand;
 import com.drlom.reservation.booking.application.dto.command.OpenShowInstanceCommand;
 import com.drlom.reservation.booking.application.dto.result.ShowInstanceResult;
 import com.drlom.reservation.booking.application.dto.result.ShowSlotsResult;
 import com.drlom.reservation.booking.application.dto.result.SlotDetailResult;
+import com.drlom.reservation.booking.application.usecase.CancelShowInstanceUseCase;
+import com.drlom.reservation.booking.application.usecase.CloseShowInstanceUseCase;
 import com.drlom.reservation.booking.application.usecase.CreateShowInstanceUseCase;
 import com.drlom.reservation.booking.application.usecase.GetShowInstancesUseCase;
 import com.drlom.reservation.booking.application.usecase.GetShowSlotsUseCase;
@@ -46,6 +50,8 @@ class ShowControllerTest {
   @Autowired private ObjectMapper objectMapper;
   @MockitoBean private CreateShowInstanceUseCase createShowInstanceUseCase;
   @MockitoBean private OpenShowInstanceUseCase openShowInstanceUseCase;
+  @MockitoBean private CloseShowInstanceUseCase closeShowInstanceUseCase;
+  @MockitoBean private CancelShowInstanceUseCase cancelShowInstanceUseCase;
   @MockitoBean private GetShowInstancesUseCase getShowInstancesUseCase;
   @MockitoBean private GetShowSlotsUseCase getShowSlotsUseCase;
 
@@ -821,6 +827,222 @@ class ShowControllerTest {
           .andExpect(jsonPath("$.slots[0].seatCode").value("A-1"))
           .andExpect(jsonPath("$.slots[0].gradeName").doesNotExist())
           .andExpect(jsonPath("$.slots[0].priceAmount").value(55000));
+    }
+  }
+
+  @Nested
+  @DisplayName("POST /api/shows/{id}/close")
+  class CloseShowInstance {
+
+    @Test
+    @DisplayName("ADMIN 권한으로 공연 회차 마감 성공")
+    @WithMockUser(roles = "ADMIN")
+    void closeShowInstance_success() throws Exception {
+      // given
+      ShowInstanceResult result =
+          ShowInstanceResult.builder()
+              .id(1L)
+              .venueId(1L)
+              .title("뮤지컬 레미제라블")
+              .startAt(now.plusDays(7))
+              .endAt(now.plusDays(7).plusHours(3))
+              .status(ShowStatus.CLOSED)
+              .closedAt(now)
+              .build();
+
+      given(closeShowInstanceUseCase.execute(any(CloseShowInstanceCommand.class)))
+          .willReturn(result);
+
+      // when & then
+      mockMvc
+          .perform(post("/api/shows/1/close").with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.id").value(1))
+          .andExpect(jsonPath("$.status").value("CLOSED"))
+          .andExpect(jsonPath("$.closedAt").exists());
+    }
+
+    @Test
+    @DisplayName("SUPER_ADMIN 권한으로 공연 회차 마감 성공")
+    @WithMockUser(roles = "SUPER_ADMIN")
+    void closeShowInstance_asSuperAdmin_success() throws Exception {
+      // given
+      ShowInstanceResult result =
+          ShowInstanceResult.builder()
+              .id(1L)
+              .venueId(1L)
+              .title("뮤지컬 레미제라블")
+              .startAt(now.plusDays(7))
+              .endAt(now.plusDays(7).plusHours(3))
+              .status(ShowStatus.CLOSED)
+              .closedAt(now)
+              .build();
+
+      given(closeShowInstanceUseCase.execute(any(CloseShowInstanceCommand.class)))
+          .willReturn(result);
+
+      // when & then
+      mockMvc
+          .perform(post("/api/shows/1/close").with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.status").value("CLOSED"));
+    }
+
+    @Test
+    @DisplayName("인증 없이 공연 회차 마감 시 401 에러")
+    void closeShowInstance_unauthorized() throws Exception {
+      // when & then
+      mockMvc
+          .perform(post("/api/shows/1/close").with(csrf()))
+          .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("USER 권한으로 공연 회차 마감 시 403 에러")
+    @WithMockUser(roles = "USER")
+    void closeShowInstance_forbidden() throws Exception {
+      // when & then
+      mockMvc
+          .perform(post("/api/shows/1/close").with(csrf()))
+          .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 공연 회차 마감 시 404 에러")
+    @WithMockUser(roles = "ADMIN")
+    void closeShowInstance_notFound() throws Exception {
+      // given
+      given(closeShowInstanceUseCase.execute(any(CloseShowInstanceCommand.class)))
+          .willThrow(new BusinessException(ErrorCode.SHOW_INSTANCE_NOT_FOUND));
+
+      // when & then
+      mockMvc
+          .perform(post("/api/shows/999/close").with(csrf()))
+          .andExpect(status().isNotFound());
+    }
+  }
+
+  @Nested
+  @DisplayName("POST /api/shows/{id}/cancel")
+  class CancelShowInstance {
+
+    @Test
+    @DisplayName("ADMIN 권한으로 공연 취소 성공")
+    @WithMockUser(roles = "ADMIN")
+    void cancelShowInstance_success() throws Exception {
+      // given
+      Map<String, Object> request = Map.of("reason", "출연자 부상으로 인한 공연 취소");
+
+      ShowInstanceResult result =
+          ShowInstanceResult.builder()
+              .id(1L)
+              .venueId(1L)
+              .title("뮤지컬 레미제라블")
+              .startAt(now.plusDays(7))
+              .endAt(now.plusDays(7).plusHours(3))
+              .status(ShowStatus.CANCELLED)
+              .cancelledAt(now)
+              .cancelReason("출연자 부상으로 인한 공연 취소")
+              .build();
+
+      given(cancelShowInstanceUseCase.execute(any(CancelShowInstanceCommand.class)))
+          .willReturn(result);
+
+      // when & then
+      mockMvc
+          .perform(
+              post("/api/shows/1/cancel")
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(objectMapper.writeValueAsString(request)))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.id").value(1))
+          .andExpect(jsonPath("$.status").value("CANCELLED"))
+          .andExpect(jsonPath("$.cancelledAt").exists())
+          .andExpect(jsonPath("$.cancelReason").value("출연자 부상으로 인한 공연 취소"));
+    }
+
+    @Test
+    @DisplayName("SUPER_ADMIN 권한으로 공연 취소 성공")
+    @WithMockUser(roles = "SUPER_ADMIN")
+    void cancelShowInstance_asSuperAdmin_success() throws Exception {
+      // given
+      Map<String, Object> request = Map.of("reason", "공연장 시설 문제");
+
+      ShowInstanceResult result =
+          ShowInstanceResult.builder()
+              .id(1L)
+              .venueId(1L)
+              .title("뮤지컬 레미제라블")
+              .startAt(now.plusDays(7))
+              .endAt(now.plusDays(7).plusHours(3))
+              .status(ShowStatus.CANCELLED)
+              .cancelledAt(now)
+              .cancelReason("공연장 시설 문제")
+              .build();
+
+      given(cancelShowInstanceUseCase.execute(any(CancelShowInstanceCommand.class)))
+          .willReturn(result);
+
+      // when & then
+      mockMvc
+          .perform(
+              post("/api/shows/1/cancel")
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(objectMapper.writeValueAsString(request)))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.status").value("CANCELLED"));
+    }
+
+    @Test
+    @DisplayName("인증 없이 공연 취소 시 401 에러")
+    void cancelShowInstance_unauthorized() throws Exception {
+      // given
+      Map<String, Object> request = Map.of("reason", "취소 사유");
+
+      // when & then
+      mockMvc
+          .perform(
+              post("/api/shows/1/cancel")
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(objectMapper.writeValueAsString(request)))
+          .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("USER 권한으로 공연 취소 시 403 에러")
+    @WithMockUser(roles = "USER")
+    void cancelShowInstance_forbidden() throws Exception {
+      // given
+      Map<String, Object> request = Map.of("reason", "취소 사유");
+
+      // when & then
+      mockMvc
+          .perform(
+              post("/api/shows/1/cancel")
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(objectMapper.writeValueAsString(request)))
+          .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("취소 사유 누락 시 400 에러")
+    @WithMockUser(roles = "ADMIN")
+    void cancelShowInstance_missingReason() throws Exception {
+      // given - reason 누락
+      Map<String, Object> request = Map.of();
+
+      // when & then
+      mockMvc
+          .perform(
+              post("/api/shows/1/cancel")
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(objectMapper.writeValueAsString(request)))
+          .andExpect(status().isBadRequest());
     }
   }
 }
