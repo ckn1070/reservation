@@ -91,7 +91,10 @@ class CreateShowInstanceUseCaseTest {
               validCommand.getEndAt(),
               validCommand.getSalesOpenAt(),
               validCommand.getSalesCloseAt(),
-              ShowStatus.SCHEDULED);
+              ShowStatus.SCHEDULED,
+              null,
+              null,
+              null);
 
       when(showInstanceRepository.save(any(ShowInstance.class))).thenReturn(savedShow);
 
@@ -140,7 +143,10 @@ class CreateShowInstanceUseCaseTest {
               commandWithoutSalesTime.getEndAt(),
               null,
               null,
-              ShowStatus.SCHEDULED);
+              ShowStatus.SCHEDULED,
+              null,
+              null,
+              null);
 
       when(showInstanceRepository.save(any(ShowInstance.class))).thenReturn(savedShow);
 
@@ -170,7 +176,10 @@ class CreateShowInstanceUseCaseTest {
               validCommand.getEndAt(),
               validCommand.getSalesOpenAt(),
               validCommand.getSalesCloseAt(),
-              ShowStatus.SCHEDULED);
+              ShowStatus.SCHEDULED,
+              null,
+              null,
+              null);
 
       when(showInstanceRepository.save(any(ShowInstance.class))).thenReturn(savedShow);
 
@@ -248,7 +257,10 @@ class CreateShowInstanceUseCaseTest {
               validCommand.getEndAt(),
               null,
               null,
-              ShowStatus.SCHEDULED);
+              ShowStatus.SCHEDULED,
+              null,
+              null,
+              null);
 
       when(showInstanceRepository.findOverlappingShows(eq(1L), any(), any()))
           .thenReturn(List.of(existingShow));
