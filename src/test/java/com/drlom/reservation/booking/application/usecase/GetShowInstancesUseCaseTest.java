@@ -44,7 +44,10 @@ class GetShowInstancesUseCaseTest {
         now.plusDays(id).plusHours(3),
         now.plusDays(1),
         now.plusDays(id).minusDays(1),
-        status);
+        status,
+        null,
+        null,
+        null);
   }
 
   @Nested
