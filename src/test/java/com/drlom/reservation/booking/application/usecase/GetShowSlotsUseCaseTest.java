@@ -56,7 +56,10 @@ class GetShowSlotsUseCaseTest {
         now.plusDays(7).plusHours(3),
         now.plusDays(1),
         now.plusDays(6),
-        status);
+        status,
+        null,
+        null,
+        null);
   }
 
   private ResourceSlot createSlot(Long id, Long showInstanceId, Long seatId, SlotStatus status) {
