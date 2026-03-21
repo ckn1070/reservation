@@ -71,7 +71,8 @@ class HoldSlotsUseCaseTest {
         ShowInstance.reconstitute(
             100L, venue, "뮤지컬 레미제라블",
             now.plusDays(7), now.plusDays(7).plusHours(3),
-            now.plusDays(1), now.plusDays(6), ShowStatus.OPEN);
+            now.plusDays(1), now.plusDays(6), ShowStatus.OPEN,
+            null, null, null);
 
     slot1 =
         ResourceSlot.reconstitute(1L, 100L, 10L, 1L, 50000L, "KRW", SlotStatus.OPEN);
@@ -421,7 +422,8 @@ class HoldSlotsUseCaseTest {
           ShowInstance.reconstitute(
               100L, venue, "뮤지컬 레미제라블",
               now.plusDays(7), now.plusDays(7).plusHours(3),
-              null, null, ShowStatus.SCHEDULED);
+              null, null, ShowStatus.SCHEDULED,
+              null, null, null);
 
       when(resourceSlotRepository.findAllByIds(List.of(1L, 2L)))
           .thenReturn(List.of(slot1, slot2));
@@ -442,7 +444,8 @@ class HoldSlotsUseCaseTest {
           ShowInstance.reconstitute(
               100L, venue, "뮤지컬 레미제라블",
               now.plusDays(7), now.plusDays(7).plusHours(3),
-              null, null, ShowStatus.CLOSED);
+              null, null, ShowStatus.CLOSED,
+              null, null, null);
 
       when(resourceSlotRepository.findAllByIds(List.of(1L, 2L)))
           .thenReturn(List.of(slot1, slot2));
