@@ -72,7 +72,10 @@ class OpenShowInstanceUseCaseTest {
             now.plusDays(7).plusHours(3),
             now.plusDays(1),
             now.plusDays(6),
-            ShowStatus.SCHEDULED);
+            ShowStatus.SCHEDULED,
+            null,
+            null,
+            null);
 
     validCommand = OpenShowInstanceCommand.builder().showInstanceId(1L).build();
   }
@@ -218,7 +221,10 @@ class OpenShowInstanceUseCaseTest {
               now.plusDays(7).plusHours(3),
               null,
               null,
-              ShowStatus.OPEN);
+              ShowStatus.OPEN,
+              null,
+              null,
+              null);
 
       when(showInstanceRepository.findById(2L)).thenReturn(Optional.of(openShow));
 
@@ -247,7 +253,10 @@ class OpenShowInstanceUseCaseTest {
               now.plusDays(7).plusHours(3),
               null,
               null,
-              ShowStatus.CLOSED);
+              ShowStatus.CLOSED,
+              null,
+              null,
+              null);
 
       when(showInstanceRepository.findById(3L)).thenReturn(Optional.of(closedShow));
 
@@ -276,7 +285,10 @@ class OpenShowInstanceUseCaseTest {
               now.plusDays(7).plusHours(3),
               null,
               null,
-              ShowStatus.CANCELLED);
+              ShowStatus.CANCELLED,
+              null,
+              null,
+              null);
 
       when(showInstanceRepository.findById(4L)).thenReturn(Optional.of(cancelledShow));
 
