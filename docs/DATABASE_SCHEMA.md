@@ -483,6 +483,9 @@ LIMIT 1;
 | `status` | `VARCHAR(20)` | NO | `'SCHEDULED'` | 회차 상태 |
 | `sales_open_at` | `TIMESTAMP(6)` | YES | - | 예매 오픈 시각 |
 | `sales_close_at` | `TIMESTAMP(6)` | YES | - | 예매 마감 시각 |
+| `closed_at` | `TIMESTAMP(6)` | YES | - | 예매 마감 시각 (관리자 마감 시 기록) |
+| `cancelled_at` | `TIMESTAMP(6)` | YES | - | 취소 시각 |
+| `cancel_reason` | `VARCHAR(200)` | YES | - | 취소 사유 |
 
 #### status 값
 
@@ -844,21 +847,23 @@ WHERE status = 'HELD' AND expires_at < NOW();
 ### show_instances.status
 
 ```
-   ┌───────────┐
-   │ SCHEDULED │
-   └─────┬─────┘
-         │ (sales_open_at 도달)
-         ▼
-   ┌───────────┐
-   │   OPEN    │
-   └─────┬─────┘
-         │ (sales_close_at 도달 또는 수동)
-    ┌────┴────┐
-    │         │
-    ▼         ▼
-┌────────┐ ┌───────────┐
-│ CLOSED │ │ CANCELLED │
-└────────┘ └───────────┘
+                ┌───────────┐
+                │ SCHEDULED │
+                └──────┬──────┘
+                       │ open()
+                       ▼
+                ┌───────────┐
+     ┌──────────│   OPEN    │──────────┐
+     │          └──────┬──────┘          │
+     │ cancel()        │ close()         │ cancel()
+     │                 ▼                 │
+     │          ┌───────────┐            │
+     │          │  CLOSED   │            │
+     │          └───────────┘            │
+     ▼                                   ▼
+┌───────────┐                     ┌───────────┐
+│ CANCELLED │                     │ CANCELLED │
+└───────────┘                     └───────────┘
 ```
 
 ### reservations.status
