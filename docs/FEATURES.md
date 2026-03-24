@@ -75,6 +75,8 @@
 | 회차 생성 | POST | `/api/shows` | 공연 회차 등록 |
 | 회차 오픈 | POST | `/api/shows/{id}/open` | SCHEDULED → OPEN 전환, 좌석 슬롯 자동 생성 |
 | 좌석 현황 조회 | GET | `/api/shows/{id}/slots` | OPEN 공연의 좌석 슬롯 목록, 좌석 정보, 가격, 상태 |
+| 회차 마감 | POST | `/api/shows/{id}/close` | OPEN → CLOSED 전환, 기존 예약 유지 |
+| 공연 취소 | POST | `/api/shows/{id}/cancel` | SCHEDULED/OPEN → CANCELLED, 활성 예약 일괄 취소 |
 | 좌석 임시 점유 | POST | `/api/reservations` | 좌석 1~10개를 10분간 임시 점유 (결제 전 선점) |
 | 예약 확정 | POST | `/api/reservations/{id}/confirm` | 결제 완료 후 예약 확정 |
 | 예약 취소 | POST | `/api/reservations/{id}/cancel` | PENDING/CONFIRMED 예약 취소 |
@@ -82,7 +84,9 @@
 | 예약 상세 조회 | GET | `/api/reservations/{id}` | 특정 예약 상세 (소유권 검증) |
 
 **주요 특징**:
-- 공연 회차 상태 관리 (SCHEDULED → OPEN → CLOSED)
+- 공연 회차 상태 관리 (SCHEDULED → OPEN → CLOSED / CANCELLED)
+- 공연 마감 시 슬롯 CLOSED, 기존 예약 유지
+- 공연 취소 시 활성 예약 일괄 취소 + Lock 삭제 + History 기록
 - VENUE 타입만 공연장으로 허용
 - 동일 공연장/시간대 중복 방지
 - 회차 오픈 시 좌석별 예약 슬롯 자동 생성
