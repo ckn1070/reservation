@@ -230,7 +230,118 @@ public void execute() {
 
 ---
 
-### 5. GetMyReservationsUseCase (내 예약 목록 조회)
+### 5. CloseShowInstanceUseCase (공연 회차 마감)
+
+**목적**: OPEN 상태의 공연 회차를 CLOSED로 전환하고, 예약 슬롯을 마감
+
+**트랜잭션 순서**:
+```java
+@Transactional
+public ShowInstanceResult execute(CloseShowInstanceCommand command) {
+    // 1. Command 검증
+    command.validate();
+
+    // 2. ShowInstance 조회
+    ShowInstance showInstance = showInstanceRepository.findById(command.getShowInstanceId())
+        .orElseThrow(() -> new BusinessException(ErrorCode.SHOW_INSTANCE_NOT_FOUND));
+
+    // 3. 상태 전이 (OPEN → CLOSED, 도메인에서 검증)
+    LocalDateTime now = LocalDateTime.now();
+    showInstance.close(now); // closedAt 기록
+
+    // 4. ResourceSlot 일괄 마감 (OPEN → CLOSED)
+    List<ResourceSlot> slots = resourceSlotRepository.findByShowInstanceId(showInstance.getId());
+    List<ResourceSlot> openSlots = slots.stream()
+        .filter(ResourceSlot::isAvailable)
+        .toList();
+    openSlots.forEach(ResourceSlot::close);
+    resourceSlotRepository.saveAll(openSlots);
+
+    // 5. ShowInstance 저장 + 결과 반환
+    showInstanceRepository.save(showInstance);
+    return ShowInstanceResult.from(showInstance);
+}
+```
+
+**핵심 포인트**:
+- ✅ **기존 예약 유지**: PENDING/CONFIRMED 예약은 그대로 유지 (TTL 만료 시 자동 해제)
+- ✅ **OPEN 슬롯만 마감**: 이미 CLOSED인 슬롯은 스킵
+- ✅ **closedAt 기록**: 마감 시각을 도메인 엔터티에 기록
+
+---
+
+### 6. CancelShowInstanceUseCase (공연 취소)
+
+**목적**: SCHEDULED 또는 OPEN 상태의 공연을 취소하고, 활성 예약을 일괄 취소
+
+**트랜잭션 순서**:
+```java
+@Transactional
+public ShowInstanceResult execute(CancelShowInstanceCommand command) {
+    // 1. Command 검증
+    command.validate();
+
+    // 2. ShowInstance 조회
+    ShowInstance showInstance = showInstanceRepository.findById(command.getShowInstanceId())
+        .orElseThrow(() -> new BusinessException(ErrorCode.SHOW_INSTANCE_NOT_FOUND));
+
+    // 3. 상태 전이 (SCHEDULED/OPEN → CANCELLED, 도메인에서 검증)
+    LocalDateTime now = LocalDateTime.now();
+    showInstance.cancel(command.getReason(), now); // cancelReason + cancelledAt 기록
+
+    // 4. ResourceSlot 일괄 마감 (OPEN → CLOSED)
+    List<ResourceSlot> slots = resourceSlotRepository.findByShowInstanceId(showInstance.getId());
+    List<ResourceSlot> openSlots = slots.stream()
+        .filter(ResourceSlot::isAvailable)
+        .toList();
+    openSlots.forEach(ResourceSlot::close);
+    resourceSlotRepository.saveAll(openSlots);
+
+    // 5. 활성 예약 조회 (PENDING + CONFIRMED)
+    List<Reservation> activeReservations = reservationRepository
+        .findByShowInstanceIdAndStatusIn(showInstance.getId(),
+            List.of(ReservationStatus.PENDING, ReservationStatus.CONFIRMED));
+
+    if (!activeReservations.isEmpty()) {
+        // 6. Lock 배치 조회 + 그룹핑
+        List<Long> reservationIds = activeReservations.stream()
+            .map(Reservation::getId).toList();
+        List<ResourceSlotLock> locks = lockRepository.findAllByReservationIds(reservationIds);
+        Map<Long, List<ResourceSlotLock>> locksByReservationId = locks.stream()
+            .collect(Collectors.groupingBy(ResourceSlotLock::getReservationId));
+
+        // 7. 각 예약별: Lock History(CANCELLED) + Lock 삭제 + Reservation 취소
+        String cancelReason = "공연 취소: " + command.getReason();
+        for (Reservation reservation : activeReservations) {
+            List<ResourceSlotLock> reservationLocks =
+                locksByReservationId.getOrDefault(reservation.getId(), List.of());
+            for (ResourceSlotLock lock : reservationLocks) {
+                ResourceSlotLockHistory history =
+                    ResourceSlotLockHistory.fromLock(lock, LockAction.CANCELLED, cancelReason, now);
+                lockHistoryRepository.save(history);
+                lockRepository.delete(lock);
+            }
+            reservation.cancel(cancelReason, now);
+            reservationRepository.save(reservation);
+        }
+    }
+
+    // 8. ShowInstance 저장 + 결과 반환
+    showInstanceRepository.save(showInstance);
+    return ShowInstanceResult.from(showInstance);
+}
+```
+
+**핵심 포인트**:
+- ✅ **캐스케이드 취소**: ShowInstance → Slot 마감 → Lock History + 삭제 → Reservation 취소
+- ✅ **배치 조회**: Lock을 예약 ID 목록으로 한 번에 조회 (N+1 방지)
+- ✅ **취소 사유 전파**: "공연 취소: {관리자 사유}" 접두사로 예약에 전달
+- ✅ **Lock History**: CANCELLED 액션으로 감사 추적 (기존 RELEASED/EXPIRED와 구분)
+- ✅ **SCHEDULED 취소**: 예약/Lock이 없는 상태에서도 정상 처리
+
+---
+
+### 7. GetMyReservationsUseCase (내 예약 목록 조회)
 
 **목적**: 인증된 사용자의 예약 목록을 Lock 만료 시각 포함하여 조회
 
@@ -254,7 +365,7 @@ public List<ReservationResult> execute(Long userId, ReservationStatus status) {
 
 ---
 
-### 6. GetReservationDetailUseCase (예약 상세 조회)
+### 8. GetReservationDetailUseCase (예약 상세 조회)
 
 **목적**: 특정 예약의 상세 정보를 소유권 검증 후 조회
 
@@ -284,6 +395,8 @@ public ReservationResult execute(Long userId, Long reservationId) {
 | **HoldSlots** | Reservation 생성 → Lock INSERT | uk_lock_slot UNIQUE | HELD 이력 |
 | **ConfirmReservation** | Lock CONFIRMED → Reservation CONFIRMED | 낙관적 락 (version) | CONFIRMED 이력 |
 | **CancelReservation** | Lock 삭제 → Reservation CANCELLED | 소유권 검증 | RELEASED 이력 |
+| **CloseShowInstance** | ShowInstance CLOSED → Slot 일괄 CLOSED | ADMIN 권한 | - |
+| **CancelShowInstance** | ShowInstance CANCELLED → Slot CLOSED → Lock 삭제 → Reservation CANCELLED | ADMIN 권한 | CANCELLED 이력 |
 | **ReleaseExpiredLocks** | Lock 해제 → Reservation CANCELLED | 배치 단일 스레드 | EXPIRED 이력 |
 | **GetMyReservations** | 예약 조회 → Lock 배치 조회 | readOnly | - |
 | **GetReservationDetail** | 예약 조회 → 소유권 검증 → Lock 조회 | readOnly | - |
