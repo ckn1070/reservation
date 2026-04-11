@@ -127,6 +127,7 @@ export SPRING_RSV_JWT_SECRET=your_jwt_secret_base64_encoded
 - [x] **예약 취소**: 예약 취소(CANCELLED) 워크플로우
 - [x] **만료 락 자동 해제**: Spring Scheduler로 1분 주기 만료 Lock 삭제 + Reservation 취소
 - [x] **예약 조회**: 내 예약 목록 조회(상태 필터) + 예약 상세 조회(소유권 검증)
+- [x] **공연 마감/취소**: 관리자 마감(OPEN→CLOSED) + 공연 취소(활성 예약 일괄 취소, Lock 캐스케이드 삭제)
 - [ ] **이벤트 기반 아키텍처**: Spring Events를 활용한 BC 간 비동기 통신
 
 ## 상세 문서

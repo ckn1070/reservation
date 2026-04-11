@@ -18,12 +18,13 @@
 - [8. 내 예약 목록 조회 (Get My Reservations)](#8-내-예약-목록-조회-get-my-reservations)
 - [9. 예약 상세 조회 (Get Reservation Detail)](#9-예약-상세-조회-get-reservation-detail)
 - [10. 만료 락 자동 해제 (Release Expired Locks)](#10-만료-락-자동-해제-release-expired-locks)
+- [11. 공연 회차 마감 (Close Show Instance)](#11-공연-회차-마감-close-show-instance)
+- [12. 공연 취소 (Cancel Show Instance)](#12-공연-취소-cancel-show-instance)
 - [에러 코드 체계](#에러-코드-체계)
 - [데이터 모델](#데이터-모델)
 - [관련 파일 위치](#관련-파일-위치)
 
 ---
-d
 
 ## API 엔드포인트 요약
 
@@ -35,6 +36,8 @@ d
 | 공연 회차 생성    | POST | `/api/shows`            | 201 Created | ADMIN 이상 | 새 공연 회차 등록                       |
 | 공연 회차 오픈    | POST | `/api/shows/{id}/open`  | 200 OK      | ADMIN 이상 | SCHEDULED → OPEN 전환, 좌석 슬롯 자동 생성 |
 | 좌석 현황 조회    | GET  | `/api/shows/{id}/slots` | 200 OK      | 인증된 사용자  | OPEN 공연의 좌석 슬롯 목록, 좌석 정보, 가격, 상태 |
+| 공연 회차 마감    | POST | `/api/shows/{id}/close` | 200 OK      | ADMIN 이상 | OPEN → CLOSED 전환, 기존 예약 유지 |
+| 공연 취소        | POST | `/api/shows/{id}/cancel` | 200 OK     | ADMIN 이상 | SCHEDULED/OPEN → CANCELLED, 활성 예약 일괄 취소 |
 | 좌석 임시 점유    | POST | `/api/reservations`     | 201 Created | 인증된 사용자  | 좌석 1~10개를 10분간 임시 점유             |
 | 예약 확정       | POST | `/api/reservations/{id}/confirm` | 200 OK | 인증된 사용자  | PENDING 상태의 예약을 결제 후 확정          |
 | 예약 취소       | POST | `/api/reservations/{id}/cancel`  | 200 OK | 인증된 사용자  | PENDING/CONFIRMED 예약을 취소           |
@@ -138,6 +141,9 @@ GET /api/shows?venueId=1&status=OPEN     → 공연장 + 상태 복합 필터
     "salesOpenAt": "2026-02-01T10:00:00",
     "salesCloseAt": "2026-02-28T23:59:59",
     "status": "OPEN",
+    "closedAt": null,
+    "cancelledAt": null,
+    "cancelReason": null,
     "totalSlots": null
   }
 ]
@@ -229,7 +235,10 @@ Authorization: Bearer {accessToken}
   "endAt": "2026-03-01T22:00:00",
   "salesOpenAt": "2026-02-01T10:00:00",
   "salesCloseAt": "2026-02-28T23:59:59",
-  "status": "SCHEDULED"
+  "status": "SCHEDULED",
+  "closedAt": null,
+  "cancelledAt": null,
+  "cancelReason": null
 }
 ```
 
@@ -244,7 +253,10 @@ Authorization: Bearer {accessToken}
   "endAt": "2026-03-01T22:00:00",
   "salesOpenAt": null,
   "salesCloseAt": null,
-  "status": "SCHEDULED"
+  "status": "SCHEDULED",
+  "closedAt": null,
+  "cancelledAt": null,
+  "cancelReason": null
 }
 ```
 
@@ -358,6 +370,9 @@ Authorization: Bearer {accessToken}
   "salesOpenAt": "2026-02-01T10:00:00",
   "salesCloseAt": "2026-02-28T23:59:59",
   "status": "OPEN",
+  "closedAt": null,
+  "cancelledAt": null,
+  "cancelReason": null,
   "totalSlots": 500
 }
 ```
@@ -981,7 +996,7 @@ Authorization: Bearer {accessToken}
 |------|--------|------|
 | RELEASED | 사용자 직접 취소 | 사용자가 잠금을 해제 |
 | EXPIRED | 시스템 자동 취소 (TTL 만료) | 기존 ReleaseExpiredLocks |
-| CANCELLED | 관리자/시스템 강제 취소 | 향후 확장 |
+| CANCELLED | 관리자/시스템 강제 취소 | 공연 취소 시 활성 Lock 일괄 취소 |
 
 ### Lock 없는 예약 처리
 
@@ -1186,6 +1201,253 @@ booking/
 
 ---
 
+## 11. 공연 회차 마감 (Close Show Instance)
+
+OPEN 상태의 공연 회차를 CLOSED로 전환합니다. 기존 예약(PENDING, CONFIRMED)은 유지됩니다.
+
+### 엔드포인트
+
+```
+POST /api/shows/{id}/close
+```
+
+### 요청 (Request)
+
+**Headers**:
+
+```
+Authorization: Bearer {accessToken}
+```
+
+**Path Parameter**:
+| 파라미터 | 타입 | 설명 |
+|---------|------|------|
+| id | Long | 공연 회차 ID |
+
+**Body**: 없음
+
+### 응답 (Response)
+
+**성공 (200 OK)**:
+
+```json
+{
+  "id": 1,
+  "venueId": 1,
+  "title": "뮤지컬 레미제라블",
+  "startAt": "2026-03-01T19:00:00",
+  "endAt": "2026-03-01T22:00:00",
+  "salesOpenAt": "2026-02-01T10:00:00",
+  "salesCloseAt": "2026-02-28T23:59:59",
+  "status": "CLOSED",
+  "closedAt": "2026-03-01T18:00:00",
+  "cancelledAt": null,
+  "cancelReason": null,
+  "totalSlots": null
+}
+```
+
+**실패 응답**:
+| HTTP 상태 | 에러 코드 | 상황 |
+|-----------|---------|------|
+| 400 Bad Request | `INVALID_SHOW_STATUS` | OPEN이 아닌 상태에서 마감 시도 |
+| 401 Unauthorized | - | 인증 토큰 없음/만료 |
+| 403 Forbidden | - | 권한 없음 (ADMIN 아님) |
+| 404 Not Found | `SHOW_INSTANCE_NOT_FOUND` | 공연 회차가 존재하지 않음 |
+
+### 비즈니스 로직 흐름
+
+```
+1. Command 검증
+   └─ showInstanceId: @NotNull
+
+2. ShowInstance 조회
+   └─ showInstanceRepository.findById(id)
+      └─ 없으면: SHOW_INSTANCE_NOT_FOUND 예외
+
+3. 상태 전이
+   └─ showInstance.close(now)
+      └─ OPEN이 아니면: INVALID_SHOW_STATUS 예외
+      └─ closedAt 기록
+
+4. ResourceSlot 일괄 마감
+   └─ resourceSlotRepository.findByShowInstanceId(id)
+   └─ OPEN 슬롯만 close() → CLOSED
+
+5. 저장 및 응답
+   └─ showInstanceRepository.save(showInstance)
+```
+
+### Close vs Cancel 비교
+
+| 항목 | Close (마감) | Cancel (취소) |
+|------|-------------|--------------|
+| **전이** | OPEN → CLOSED | SCHEDULED/OPEN → CANCELLED |
+| **PENDING 예약** | 유지 (TTL 만료 시 자동 해제) | 일괄 취소 |
+| **CONFIRMED 예약** | 유지 | 일괄 취소 |
+| **Lock** | 유지 (TTL/확정으로 자연 소멸) | 일괄 삭제 + History 기록 |
+| **취소 사유** | 없음 | 필수 (관리자 입력) |
+
+### 관련 파일 위치
+
+```
+booking/
+├── presentation/
+│   └── controller/
+│       └── ShowController.java           # POST /{id}/close 엔드포인트
+├── application/
+│   ├── usecase/
+│   │   └── CloseShowInstanceUseCase.java # 마감 비즈니스 로직
+│   └── dto/command/
+│       └── CloseShowInstanceCommand.java # 마감 Command
+└── domain/
+    └── ShowInstance.java                 # close(closedAt) 메서드
+```
+
+---
+
+## 12. 공연 취소 (Cancel Show Instance)
+
+SCHEDULED 또는 OPEN 상태의 공연 회차를 CANCELLED로 전환합니다. 활성 예약(PENDING, CONFIRMED)이 일괄 취소되고 Lock이 해제됩니다.
+
+### 엔드포인트
+
+```
+POST /api/shows/{id}/cancel
+```
+
+### 요청 (Request)
+
+**Headers**:
+
+```
+Content-Type: application/json
+Authorization: Bearer {accessToken}
+```
+
+**Path Parameter**:
+| 파라미터 | 타입 | 설명 |
+|---------|------|------|
+| id | Long | 공연 회차 ID |
+
+**Body** (`CancelShowInstanceWebRequest`):
+
+```json
+{
+  "reason": "출연자 부상으로 인한 공연 취소"
+}
+```
+
+**필드 검증**:
+| 필드 | 타입 | 필수 | 검증 규칙 |
+|------|------|------|----------|
+| reason | String | ✅ | 최대 200자 |
+
+### 응답 (Response)
+
+**성공 (200 OK)**:
+
+```json
+{
+  "id": 1,
+  "venueId": 1,
+  "title": "뮤지컬 레미제라블",
+  "startAt": "2026-03-01T19:00:00",
+  "endAt": "2026-03-01T22:00:00",
+  "salesOpenAt": "2026-02-01T10:00:00",
+  "salesCloseAt": "2026-02-28T23:59:59",
+  "status": "CANCELLED",
+  "closedAt": null,
+  "cancelledAt": "2026-02-15T10:00:00",
+  "cancelReason": "출연자 부상으로 인한 공연 취소",
+  "totalSlots": null
+}
+```
+
+**실패 응답**:
+| HTTP 상태 | 에러 코드 | 상황 |
+|-----------|---------|------|
+| 400 Bad Request | `INVALID_SHOW_STATUS` | CLOSED 또는 이미 CANCELLED 상태에서 취소 시도 |
+| 400 Bad Request | `INVALID_INPUT_VALUE` | 취소 사유 누락 또는 200자 초과 |
+| 401 Unauthorized | - | 인증 토큰 없음/만료 |
+| 403 Forbidden | - | 권한 없음 (ADMIN 아님) |
+| 404 Not Found | `SHOW_INSTANCE_NOT_FOUND` | 공연 회차가 존재하지 않음 |
+
+### 비즈니스 로직 흐름
+
+```
+1. Command 검증
+   └─ showInstanceId: @NotNull, reason: @NotBlank
+
+2. ShowInstance 조회
+   └─ showInstanceRepository.findById(id)
+      └─ 없으면: SHOW_INSTANCE_NOT_FOUND 예외
+
+3. 상태 전이
+   └─ showInstance.cancel(reason, now)
+      └─ CLOSED/CANCELLED이면: INVALID_SHOW_STATUS 예외
+      └─ cancelReason + cancelledAt 기록
+
+4. ResourceSlot 일괄 마감
+   └─ OPEN 슬롯만 close() → CLOSED
+
+5. 활성 예약 조회 (PENDING + CONFIRMED)
+   └─ reservationRepository.findByShowInstanceIdAndStatusIn()
+   └─ 없으면: 7단계로 건너뜀
+
+6. Lock 배치 조회 + 캐스케이드 처리
+   └─ lockRepository.findAllByReservationIds()
+   └─ 각 Lock: History(CANCELLED) + Hard Delete
+   └─ 각 Reservation: cancel("공연 취소: {reason}", now)
+
+7. 저장 및 응답
+   └─ showInstanceRepository.save(showInstance)
+```
+
+### 취소 캐스케이드 상세
+
+```
+ShowInstance.cancel(reason, now)     → CANCELLED 상태 전이
+    ↓
+ResourceSlot.close()                → OPEN → CLOSED
+    ↓
+활성 예약 조회                         → PENDING + CONFIRMED
+    ↓
+각 Lock → History(CANCELLED) → Delete → uk_lock_slot 해제
+    ↓
+각 Reservation → cancel("공연 취소: {reason}", now)
+```
+
+**LockAction 구분**:
+
+| 액션 | 트리거 | 설명 |
+|------|--------|------|
+| HELD | 좌석 선점 시 | 좌석 임시 점유 |
+| CONFIRMED | 예약 확정 시 | 결제 완료 |
+| RELEASED | 사용자 직접 취소 | 사용자가 잠금 해제 |
+| EXPIRED | 시스템 자동 취소 (TTL 만료) | 배치 처리 |
+| CANCELLED | 관리자 공연 취소 | 공연 취소에 의한 강제 해제 |
+
+### 관련 파일 위치
+
+```
+booking/
+├── presentation/
+│   ├── controller/
+│   │   └── ShowController.java                # POST /{id}/cancel 엔드포인트
+│   └── dto/
+│       └── CancelShowInstanceWebRequest.java  # 취소 요청 DTO
+├── application/
+│   ├── usecase/
+│   │   └── CancelShowInstanceUseCase.java     # 취소 비즈니스 로직
+│   └── dto/command/
+│       └── CancelShowInstanceCommand.java     # 취소 Command
+└── domain/
+    └── ShowInstance.java                      # cancel(reason, cancelledAt) 메서드
+```
+
+---
+
 ## 에러 코드 체계
 
 ### 공연 회차 관련 (BKG-40xx)
@@ -1237,8 +1499,9 @@ booking/
 
 - ID 기반 Entity
 - 공연장(VENUE) 참조 (Catalog BC)
-- 상태 전이 로직 포함
+- 상태 전이 로직 포함 (close(closedAt), cancel(reason, cancelledAt))
 - 비즈니스 규칙 검증
+- 마감/취소 메타데이터: closedAt (마감 시각), cancelledAt (취소 시각), cancelReason (취소 사유, max 200자)
 
 **ShowStatus (Value Object/Enum)**:
 
@@ -1298,7 +1561,7 @@ Booking BC                         Catalog BC
 booking/
 ├── presentation/
 │   ├── controller/
-│   │   ├── ShowController.java              # /api/shows, /api/shows/{id}/open, /api/shows/{id}/slots
+│   │   ├── ShowController.java              # /api/shows, /api/shows/{id}/open, /api/shows/{id}/slots, /api/shows/{id}/close, /api/shows/{id}/cancel
 │   │   └── ReservationController.java       # /api/reservations
 │   └── dto/
 │       ├── CreateShowInstanceWebRequest.java
@@ -1307,6 +1570,7 @@ booking/
 │       ├── SlotDetailWebResponse.java       # 개별 슬롯 응답
 │       ├── HoldSlotsWebRequest.java         # 좌석 점유 요청
 │       ├── CancelReservationWebRequest.java # 예약 취소 요청
+│       ├── CancelShowInstanceWebRequest.java # 공연 취소 요청
 │       ├── ReservationWebResponse.java      # 예약 응답
 │       └── ReservationItemWebResponse.java  # 예약 항목 응답
 ├── application/
@@ -1315,6 +1579,8 @@ booking/
 │   │   ├── CreateShowInstanceUseCase.java
 │   │   ├── OpenShowInstanceUseCase.java
 │   │   ├── GetShowSlotsUseCase.java         # 좌석 현황 조회
+│   │   ├── CloseShowInstanceUseCase.java   # 공연 회차 마감
+│   │   ├── CancelShowInstanceUseCase.java  # 공연 취소
 │   │   ├── HoldSlotsUseCase.java            # 좌석 임시 점유
 │   │   ├── ConfirmReservationUseCase.java  # 예약 확정
 │   │   ├── CancelReservationUseCase.java  # 예약 취소
@@ -1330,6 +1596,8 @@ booking/
 │       ├── command/
 │       │   ├── CreateShowInstanceCommand.java
 │       │   ├── OpenShowInstanceCommand.java
+│       │   ├── CloseShowInstanceCommand.java # 마감 Command
+│       │   ├── CancelShowInstanceCommand.java # 취소 Command
 │       │   ├── HoldSlotsCommand.java        # 좌석 점유 Command
 │       │   ├── ConfirmReservationCommand.java # 예약 확정 Command
 │       │   └── CancelReservationCommand.java  # 예약 취소 Command
@@ -1402,7 +1670,7 @@ catalog/
 | 계층             | 테스트 클래스                                     | 테스트 수   |
 |----------------|-----------------------------------------------|---------|
 | Domain         | ShowStatusTest                                | 25      |
-| Domain         | ShowInstanceTest                              | 27      |
+| Domain         | ShowInstanceTest                              | 30      |
 | Domain         | SlotStatusTest                                | 9       |
 | Domain         | ResourceSlotTest                              | 21      |
 | Domain         | ReservationStatusTest                         | 13      |
@@ -1418,19 +1686,21 @@ catalog/
 | Application    | HoldSlotsUseCaseTest                          | 16      |
 | Application    | ConfirmReservationUseCaseTest                 | 11      |
 | Application    | CancelReservationUseCaseTest                  | 12      |
+| Application    | CloseShowInstanceUseCaseTest                  | 8       |
+| Application    | CancelShowInstanceUseCaseTest                 | 12      |
 | Application    | GetMyReservationsUseCaseTest                  | 8       |
 | Application    | GetReservationDetailUseCaseTest               | 8       |
 | Application    | ReleaseExpiredLocksUseCaseTest                | 6       |
-| Infrastructure | ShowInstanceEntityMapperTest                  | 8       |
+| Infrastructure | ShowInstanceEntityMapperTest                  | 10      |
 | Infrastructure | ResourceSlotEntityMapperTest                  | 9       |
 | Infrastructure | ReservationEntityMapperTest                   | 8       |
 | Infrastructure | ResourceSlotLockEntityMapperTest              | 8       |
 | Infrastructure | ResourceSlotLockHistoryEntityMapperTest        | 8       |
 | Infrastructure | ShowInstanceRepositoryImplTest                | 9       |
 | Infrastructure | ResourceJpaRepositoryTest                     | 3       |
-| Infrastructure | ReservationRepositoryImplTest                 | 11      |
+| Infrastructure | ReservationRepositoryImplTest                 | 15      |
 | Infrastructure | ResourceSlotLockRepositoryImplTest            | 15      |
-| Presentation   | ShowControllerTest                            | 32      |
+| Presentation   | ShowControllerTest                            | 42      |
 | Presentation   | ReservationControllerTest                     | 29      |
 | Integration    | CreateShowInstanceIntegrationTest             | 7       |
 | Integration    | OpenShowInstanceIntegrationTest               | 10      |
@@ -1440,5 +1710,7 @@ catalog/
 | Integration    | ConfirmReservationIntegrationTest              | 4       |
 | Integration    | CancelReservationIntegrationTest               | 4       |
 | Integration    | GetMyReservationsIntegrationTest               | 7       |
+| Integration    | CloseShowInstanceIntegrationTest               | 4       |
+| Integration    | CancelShowInstanceIntegrationTest              | 8       |
 | Integration    | ReleaseExpiredLocksIntegrationTest             | 4       |
-| **합계**         |                                               | **486** |
+| **합계**         |                                               | **527** |
