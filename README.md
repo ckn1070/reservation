@@ -1,106 +1,42 @@
 # Reservation System
 
-공연/이벤트 좌석 예약 시스템 — Spring Boot 기반 백엔드
+공연/이벤트 좌석 예약을 위한 Spring Boot 기반 백엔드입니다.
+인기 공연 예매처럼 같은 좌석에 동시 요청이 몰리는 상황에서 좌석 단위 데이터 무결성을 지키는 것을 핵심 목표로 합니다.
 
-## 프로젝트 소개
+## 핵심 기능
 
-인기 공연의 티켓 오픈 시 수천~수만 명이 동시에 접속하는 상황에서, **좌석 단위의 데이터 무결성**을 보장하는 예약 시스템입니다.
-
-- **동시성 제어**: 같은 좌석에 대한 동시 예약 시도를 DB + Application 레벨에서 완벽 차단
-- **계층적 리소스 관리**: 공연장 → 층 → 열 → 좌석의 트리 구조를 Closure Table로 효율 쿼리
-- **동적 가격 정책**: 좌석 등급, 시간대, 요일, 프로모션에 따른 우선순위 기반 가격 적용
-- **도메인 경계 분리**: DDD 기반 Bounded Context로 명확한 책임 분리
+- JWT 기반 회원가입, 로그인, 토큰 재발급, 로그아웃, 비밀번호 변경, 관리자 생성
+- 공연장, 층, 열, 좌석을 `VENUE -> FLOOR -> ROW -> SEAT` 계층으로 관리
+- Closure Table 기반 상하위 리소스 조회
+- 좌석 등급, 리소스 정책, 기간/우선순위 기반 요금 관리
+- 공연 회차 생성, 오픈, 마감, 취소
+- 좌석 임시 점유, 예약 확정, 예약 취소, 내 예약 조회
+- DB `UNIQUE` 제약과 애플리케이션 검증을 함께 사용하는 좌석 잠금 동시성 제어
+- 만료된 좌석 잠금 자동 해제 스케줄러
 
 ## 기술 스택
 
 | 분류 | 기술 |
-|------|------|
+| --- | --- |
 | Language | Java 21 |
 | Framework | Spring Boot 4.0.1 |
+| Build | Maven Wrapper |
 | Persistence | Spring Data JPA, Flyway |
-| Security | Spring Security, JWT (jjwt) |
-| Database | MySQL 8.0+ |
-| API Docs | Swagger/OpenAPI (springdoc) |
-| Build | Maven |
-| Test | JUnit 5, Mockito, H2 |
-| Code Quality | JaCoCo, SonarQube, google-java-format |
+| Database | MySQL 8.0+, H2(test) |
+| Security | Spring Security, JWT(jjwt) |
+| API Docs | springdoc-openapi |
+| Test | JUnit 5, Mockito, Spring Boot test starters |
+| Quality | JaCoCo, SonarQube |
 
-## 아키텍처
+## 실행
 
-### Bounded Context 구조
-
-```mermaid
-flowchart LR
-    subgraph identity["Identity BC"]
-        i1["User · Role · JWT"]
-    end
-
-    subgraph catalog["Catalog BC"]
-        cat1["Resource · SeatGrade<br/>Policy · Rate"]
-    end
-
-    subgraph booking["Booking BC"]
-        b1["ShowInstance · Slot<br/>Reservation · Lock"]
-    end
-
-    booking -- "CatalogQueryPort" --> catalog
-```
-
-Common 모듈(Security, Config, Error Handling)이 전체 애플리케이션에 공통 기능을 제공합니다.
-
-### 계층 구조 (각 BC 공통)
-
-```mermaid
-flowchart TB
-    P["Presentation<br/>Controller · Web DTO"] --> A["Application<br/>UseCase · Command/Result"]
-    A --> D["Domain<br/>Entity · VO · Repository Interface"]
-    I["Infrastructure<br/>JPA Entity · Mapper · Repository Impl"] -.->|implements| D
-```
-
-- **Domain**: 순수 Java, 외부 의존성 없음
-- **Infrastructure**: Domain 인터페이스를 구현 (의존성 역전)
-- **BC 간 통신**: Outbound Port 인터페이스로 격리 (직접 참조 금지)
-
-### 예약 프로세스
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Booking as Booking BC
-    participant Catalog as Catalog BC
-    participant DB
-
-    User->>Booking: 좌석 선점 요청 (1~10석)
-    Booking->>Catalog: CatalogQueryPort: 좌석/가격 조회
-    Catalog-->>Booking: 좌석 상세 + 적용 가격
-    Booking->>DB: 1차 방어: exists 체크
-    Booking->>DB: Reservation + Lock 생성
-    Note over DB: 2차 방어: UNIQUE 제약으로<br/>Race Condition 차단
-    Booking-->>User: 임시 점유 완료 (HELD, 10분 TTL)
-    User->>Booking: 결제 완료
-    Booking-->>User: 예약 확정 (CONFIRMED)
-```
-
-## 핵심 기술 구현
-
-| 기능 | 구현 방식 | 핵심 포인트 |
-|------|----------|------------|
-| **인증/인가** | JWT (Access + Refresh Token) | Token Rotation, Role Hierarchy (`SUPER_ADMIN > ADMIN > USER`) |
-| **계층적 리소스** | Closure Table 패턴 | 조상-자손 관계를 별도 테이블에 저장, O(1) JOIN 계층 쿼리 |
-| **동적 가격** | 우선순위 기반 정책 매칭 | `PROMOTION > OVERRIDE > BASE`, SQL Projection으로 적용 가격 결정 |
-| **회차 관리** | ShowInstance + ResourceSlot | 회차 오픈 시 좌석별 슬롯 자동 생성, 상태 전이 (`SCHEDULED → OPEN → CLOSED`) |
-| **동시성 제어** | 2단계 방어 | Application `exists` 체크 + DB `UNIQUE` 제약, Aggregate Root로 트랜잭션 일관성 |
-| **BC 간 통신** | Outbound Port 패턴 | `CatalogQueryPort` 인터페이스로 BC 격리, Infrastructure에서 연결 |
-
-## 실행 방법
-
-### 사전 요구사항
+### 요구 사항
 
 - Java 21
 - MySQL 8.0+
-- Maven 3.8+
+- Maven Wrapper 사용 가능 환경
 
-### 환경 변수 설정
+### 환경 변수
 
 ```bash
 export SPRING_RSV_DB_URL=jdbc:mysql://localhost:3306/reservation?useSSL=false&serverTimezone=UTC
@@ -109,33 +45,31 @@ export SPRING_RSV_DB_PASSWORD=your_db_password
 export SPRING_RSV_JWT_SECRET=your_jwt_secret_base64_encoded
 ```
 
-### 빌드 및 실행
+선택 환경 변수:
 
 ```bash
-./mvnw clean package         # 빌드
-./mvnw spring-boot:run       # 실행
-./mvnw test                  # 테스트 + 커버리지 리포트
+export SWAGGER_AUTH_USERNAME=swagger-admin
+export SWAGGER_AUTH_PASSWORD=swagger-secret-123
 ```
 
-> 서버는 UTC 시간대로 동작합니다. API 문서: `http://localhost:8080/swagger-ui/index.html`
+### 명령
 
-## 향후 계획
+```bash
+./mvnw spring-boot:run
+./mvnw test
+./mvnw clean package
+```
 
-- [x] **좌석 선점 프로세스**: 좌석 임시 점유(HELD) + 10분 TTL + Reservation Aggregate Root
-- [x] **동시성 제어**: Application 레벨 exists 체크 + DB UNIQUE 제약 이중 방어
-- [x] **예약 확정**: 결제 후 확정(CONFIRMED) 워크플로우
-- [x] **예약 취소**: 예약 취소(CANCELLED) 워크플로우
-- [x] **만료 락 자동 해제**: Spring Scheduler로 1분 주기 만료 Lock 삭제 + Reservation 취소
-- [x] **예약 조회**: 내 예약 목록 조회(상태 필터) + 예약 상세 조회(소유권 검증)
-- [x] **공연 마감/취소**: 관리자 마감(OPEN→CLOSED) + 공연 취소(활성 예약 일괄 취소, Lock 캐스케이드 삭제)
-- [ ] **이벤트 기반 아키텍처**: Spring Events를 활용한 BC 간 비동기 통신
+API 문서는 개발 환경에서 `http://localhost:8080/swagger-ui.html` 또는 `http://localhost:8080/swagger-ui/index.html`로 확인합니다.
 
-## 상세 문서
+## 문서
 
-| 문서 | 내용 |
-|------|------|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | 아키텍처 상세, 프로젝트 구조, 의존성 방향, Port 패턴 |
-| [FEATURES.md](docs/FEATURES.md) | 전체 기능 목록 + 도메인별 상세 문서 |
-| [DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) | DB 스키마, 테이블 관계, 인덱스 전략 |
-| [TESTING_GUIDE.md](docs/TESTING_GUIDE.md) | 테스트 전략, 커버리지 기준, 레이어별 방식 |
-| [CODING_CONVENTIONS.md](docs/CODING_CONVENTIONS.md) | 코딩 컨벤션, 네이밍, API 설계 |
+문서는 [docs/000-index.md](docs/000-index.md)에서 시작합니다.
+
+- [docs/project/000-index.md](docs/project/000-index.md): 프로젝트 개요, 실행, 설정
+- [docs/domain/000-index.md](docs/domain/000-index.md): bounded context, 기능, 핵심 트랜잭션 흐름
+- [docs/api/000-index.md](docs/api/000-index.md): API 엔드포인트와 에러 코드
+- [docs/database/000-index.md](docs/database/000-index.md): DB 스키마, 상태 전이, 마이그레이션 메모
+- [docs/architecture/000-index.md](docs/architecture/000-index.md): 아키텍처 원칙과 계층 경계
+- [docs/tech-stack/000-index.md](docs/tech-stack/000-index.md): 기술 스택 사용 기준
+- [docs/workflow/000-index.md](docs/workflow/000-index.md): 개발/TDD/커밋 워크플로우
