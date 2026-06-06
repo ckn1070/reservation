@@ -91,7 +91,7 @@ Spring Framework는 MVC method validation과 Bean Validation을 지원합니다.
 
 - [100-current-stack.md](100-current-stack.md)
 - [300-testing-stack.md](300-testing-stack.md)
-- [../architecture/210-spring-boot-structure.md](../architecture/210-spring-boot-structure.md)
+- [../architecture/210-spring-boot-module-structure.md](../architecture/210-spring-boot-module-structure.md)
 
 ## 변경 로그
 

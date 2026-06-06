@@ -74,11 +74,18 @@ Common에 context 전용 비즈니스 규칙을 넣지 않습니다.
 
 ## 관련 문서
 
-- [../architecture/210-spring-boot-structure.md](../architecture/210-spring-boot-structure.md)
+- [100-domain-overview.md](100-domain-overview.md)
+- [../project/210-module-map.md](../project/210-module-map.md)
+- [../architecture/210-spring-boot-module-structure.md](../architecture/210-spring-boot-module-structure.md)
 - [../architecture/220-boundary-and-mapping-rules.md](../architecture/220-boundary-and-mapping-rules.md)
-- [../architecture/230-reservation-architecture.md](../architecture/230-reservation-architecture.md)
+- [../project/200-current-architecture.md](../project/200-current-architecture.md)
 
 ## 변경 로그
+
+### 2026-06-05
+
+- 도메인 개요 문서 추가에 맞춰 파일 번호를 `110`으로 변경했습니다.
+- reservation 고유 아키텍처 링크를 project 문서 링크로 교체했습니다.
 
 ### 2026-06-04
 

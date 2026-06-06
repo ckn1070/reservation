@@ -134,10 +134,16 @@ Bootstrap/Config는 다음을 담당합니다.
 ## 관련 문서
 
 - [100-architecture-principles.md](100-architecture-principles.md)
-- [210-spring-boot-structure.md](210-spring-boot-structure.md)
+- [110-architecture-concepts.md](110-architecture-concepts.md)
+- [210-spring-boot-module-structure.md](210-spring-boot-module-structure.md)
 - [220-boundary-and-mapping-rules.md](220-boundary-and-mapping-rules.md)
+- [../project/200-current-architecture.md](../project/200-current-architecture.md)
 
 ## 변경 로그
+
+### 2026-06-05
+
+- 아키텍처 개념 문서와 현재 프로젝트 아키텍처 문서 링크를 추가했습니다.
 
 ### 2026-06-04
 

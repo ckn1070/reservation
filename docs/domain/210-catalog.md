@@ -83,7 +83,7 @@ Booking은 `CatalogQueryPort`로 다음 정보를 조회합니다.
 ## 관련 문서
 
 - [../database/100-schema-overview.md](../database/100-schema-overview.md)
-- [../architecture/230-reservation-architecture.md](../architecture/230-reservation-architecture.md)
+- [../project/200-current-architecture.md](../project/200-current-architecture.md)
 
 ## 변경 로그
 

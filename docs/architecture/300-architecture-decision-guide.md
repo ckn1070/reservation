@@ -137,10 +137,16 @@ Domain 변환 우위:
 ## 관련 문서
 
 - [100-architecture-principles.md](100-architecture-principles.md)
+- [110-architecture-concepts.md](110-architecture-concepts.md)
 - [200-clean-architecture.md](200-clean-architecture.md)
 - [220-boundary-and-mapping-rules.md](220-boundary-and-mapping-rules.md)
+- [../workflow/110-design-workflow.md](../workflow/110-design-workflow.md)
 
 ## 변경 로그
+
+### 2026-06-05
+
+- 설계 워크플로우와 아키텍처 개념 문서 링크를 추가했습니다.
 
 ### 2026-06-04
 

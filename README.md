@@ -67,9 +67,11 @@ API 문서는 개발 환경에서 `http://localhost:8080/swagger-ui.html` 또는
 문서는 [docs/000-index.md](docs/000-index.md)에서 시작합니다.
 
 - [docs/project/000-index.md](docs/project/000-index.md): 프로젝트 개요, 실행, 설정
+- [docs/product/000-index.md](docs/product/000-index.md): 제품 목표, 기능 범위, 보류 범위
 - [docs/domain/000-index.md](docs/domain/000-index.md): bounded context, 기능, 핵심 트랜잭션 흐름
 - [docs/api/000-index.md](docs/api/000-index.md): API 엔드포인트와 에러 코드
 - [docs/database/000-index.md](docs/database/000-index.md): DB 스키마, 상태 전이, 마이그레이션 메모
 - [docs/architecture/000-index.md](docs/architecture/000-index.md): 아키텍처 원칙과 계층 경계
 - [docs/tech-stack/000-index.md](docs/tech-stack/000-index.md): 기술 스택 사용 기준
 - [docs/workflow/000-index.md](docs/workflow/000-index.md): 개발/TDD/커밋 워크플로우
+- [docs/work-items/000-index.md](docs/work-items/000-index.md): 기능, 버그, 개선, spike 작업 산출물

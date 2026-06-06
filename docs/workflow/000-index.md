@@ -5,6 +5,7 @@
 ## 현재 문서
 
 - [100-goal-and-method.md](100-goal-and-method.md): 사용자의 목표와 아이디어를 해석하고 더 나은 방법을 제안하는 협업 원칙입니다.
+- [110-design-workflow.md](110-design-workflow.md): 영향이 큰 설계 작업의 대안 비교, 검증, 중단 조건입니다.
 - [200-development-workflow.md](200-development-workflow.md): 개발 작업을 분석, 구현, 검증, 보고하는 기본 절차입니다.
 - [210-tdd-workflow.md](210-tdd-workflow.md): TDD 우선 개발 방식과 예외 처리 기준입니다.
 - [300-commit-workflow.md](300-commit-workflow.md): 커밋 단위, 메시지, 커밋 전 확인 기준입니다.
@@ -12,6 +13,7 @@
 ## 권장 읽기 순서
 
 - 작업 방식 자체를 정리하거나 조정할 때는 `100-goal-and-method.md`부터 읽습니다.
+- 아키텍처, 도메인 모델, DB 스키마, 기술 선택처럼 영향이 큰 작업은 `110-design-workflow.md`를 확인합니다.
 - 실제 코드 변경을 할 때는 `200-development-workflow.md`를 확인합니다.
 - 기능 추가, 버그 수정, 도메인 로직 변경은 `210-tdd-workflow.md`를 확인합니다.
 - 커밋을 만들거나 커밋 정책을 논의할 때는 `300-commit-workflow.md`를 확인합니다.
@@ -24,6 +26,10 @@
 - 이슈 및 작업 관리 워크플로우
 
 ## 변경 로그
+
+### 2026-06-05
+
+- 설계 워크플로우 문서를 추가하고 권장 읽기 순서에 반영했습니다.
 
 ### 2026-06-04
 

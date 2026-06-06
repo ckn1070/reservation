@@ -153,10 +153,15 @@ UploadImagePort
 ## 관련 문서
 
 - [200-clean-architecture.md](200-clean-architecture.md)
-- [210-spring-boot-structure.md](210-spring-boot-structure.md)
+- [210-spring-boot-module-structure.md](210-spring-boot-module-structure.md)
+- [../project/200-current-architecture.md](../project/200-current-architecture.md)
 - [../tech-stack/230-spring-data-jpa.md](../tech-stack/230-spring-data-jpa.md)
 
 ## 변경 로그
+
+### 2026-06-05
+
+- Spring Boot 모듈 구조 문서명 변경과 project 아키텍처 문서 분리를 반영했습니다.
 
 ### 2026-06-04
 

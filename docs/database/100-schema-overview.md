@@ -96,7 +96,7 @@ resource_slot_locks -> resource_slot_lock_history
 
 - [200-state-transitions.md](200-state-transitions.md)
 - [300-migration-notes.md](300-migration-notes.md)
-- [../domain/100-bounded-contexts.md](../domain/100-bounded-contexts.md)
+- [../domain/110-bounded-contexts.md](../domain/110-bounded-contexts.md)
 
 ## 변경 로그
 

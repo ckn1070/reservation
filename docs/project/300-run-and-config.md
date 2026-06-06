@@ -70,6 +70,10 @@ java -jar target/reservation-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
 
 ## 변경 로그
 
+### 2026-06-05
+
+- project 문서 그룹의 아키텍처 결정 문서와 번호가 충돌하지 않도록 파일 번호를 `300`으로 변경했습니다.
+
 ### 2026-06-04
 
 - 기존 README와 `application.properties` 기준 실행/설정 정보를 새 문서로 분리했습니다.

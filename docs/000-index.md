@@ -14,20 +14,24 @@
 ## 현재 문서 지도
 
 - [100-documentation-guide.md](100-documentation-guide.md): 문서 작성, 네이밍, 유지보수 규칙입니다.
-- [project/000-index.md](project/000-index.md): reservation 프로젝트 개요, 실행, 설정 문서의 목차입니다.
-- [domain/000-index.md](domain/000-index.md): bounded context, 기능, 트랜잭션 흐름 문서의 목차입니다.
-- [api/000-index.md](api/000-index.md): API 엔드포인트와 에러 코드 문서의 목차입니다.
-- [database/000-index.md](database/000-index.md): DB 스키마와 마이그레이션 문서의 목차입니다.
 - [workflow/000-index.md](workflow/000-index.md): 작업 워크플로우 관련 문서의 목차입니다.
 - [architecture/000-index.md](architecture/000-index.md): 아키텍처 원칙, Clean Architecture, 계층 경계 문서의 목차입니다.
 - [tech-stack/000-index.md](tech-stack/000-index.md): 현재 기술 스택과 기술별 Best Practice 문서의 목차입니다.
+- [project/000-index.md](project/000-index.md): 현재 프로젝트 결정, 모듈 지도, 실행과 설정 문서의 목차입니다.
+- [product/000-index.md](product/000-index.md): 제품 목표, 기능 범위, 보류 범위 문서의 목차입니다.
+- [domain/000-index.md](domain/000-index.md): 업무 지식, bounded context, 기능, 트랜잭션 흐름 문서의 목차입니다.
+- [api/000-index.md](api/000-index.md): API 엔드포인트와 에러 코드 문서의 목차입니다.
+- [database/000-index.md](database/000-index.md): DB 스키마와 마이그레이션 문서의 목차입니다.
+- [work-items/000-index.md](work-items/000-index.md): 기능, 버그, 개선, spike 작업 산출물 문서의 목차입니다.
 
 ## 읽는 방식
 
 - 처음 문서를 탐색할 때는 이 파일에서 시작합니다.
 - 특정 영역의 작업을 할 때는 해당 디렉터리의 `000-index.md`를 먼저 확인합니다.
 - 상세 문서는 현재 작업과 직접 관련된 문서만 읽습니다.
-- 도메인 지식은 `domain/`, 실행과 설정은 `project/`, 코드 구조는 `architecture/`, 기술 사용 기준은 `tech-stack/`에 둡니다.
+- 작업 절차는 `workflow/`, 코드 구조 원칙은 `architecture/`, 기술 사용 기준은 `tech-stack/`에 둡니다.
+- 현재 프로젝트 결정은 `project/`, 제품 범위는 `product/`, 업무 지식은 `domain/`에 둡니다.
+- API 계약은 `api/`, DB 구조와 migration은 `database/`, 작업 이력은 `work-items/`에 둡니다.
 
 ## 유지보수 원칙
 
@@ -35,9 +39,15 @@
 - 문서 내용이 바뀌면 연결된 목차, 예시, 체크리스트도 함께 확인합니다.
 - 코드와 문서가 충돌하면 충돌 내용을 먼저 드러내고, 어떤 쪽을 기준으로 갱신할지 결정합니다.
 - 반복적으로 발생하는 판단이나 절차는 문서화 후보로 봅니다.
-- 일반 규칙은 공통 문서에 두고, reservation 고유 지식은 `project/`, `domain/`, `api/`, `database/`에 둡니다.
+- 일반 규칙은 공통 문서에 두고, reservation 고유 지식은 `project/`, `product/`, `domain/`, `api/`, `database/`에 둡니다.
+- 확인할 수 없는 제품, 운영, 정책, 도메인 정보는 추측하지 않고 확인 필요 사항으로 남깁니다.
 
 ## 변경 로그
+
+### 2026-06-05
+
+- product, work-items 문서 그룹을 추가하고, project/domain/architecture의 역할을 현재 기준에 맞게 분리했습니다.
+- API와 database 문서 그룹을 reservation 고유 문서로 유지하면서 전체 문서 지도에 명시했습니다.
 
 ### 2026-06-04
 
